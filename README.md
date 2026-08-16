@@ -107,7 +107,9 @@ Intake refuses what cannot be sold to: placeholder domains (`example.com`, `your
 
 Acquisition then researches each lead with live search and drafts a specific pitch for your approval. It declines to write anything when the research turns up nothing concrete — a generic pitch is worse than no pitch.
 
-**Before you spend effort on marketplaces, read [docs/channel-math.md](docs/channel-math.md).** Reaching $5,000 through bid boards needs 400–3,000 competitive bids against boards that carry six postings; direct outreach needs seven conversations. [seeds/pitch.md](seeds/pitch.md) is the outreach that follows from that.
+**Read [docs/where-to-sell.md](docs/where-to-sell.md) first — it is worth more than any feature in this repo.** The same scoped build pays $242 on an INR-denominated board and $1,800–$5,000 from a US client: a 21× difference in how many deals you need, decided entirely by who you invoice.
+
+**Then [docs/channel-math.md](docs/channel-math.md) for the pricing and clock.** Reaching $5,000 through bid boards needs 400–3,000 competitive bids against boards that carry six postings; direct outreach needs seven conversations. [seeds/pitch.md](seeds/pitch.md) is the outreach that follows from that.
 
 ## Full autopilot
 
