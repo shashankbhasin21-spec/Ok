@@ -1,0 +1,25 @@
+[project]
+name = "earner"
+version = "0.1.0"
+description = "A framework for AI agents that do real, billable work and get paid through real payment rails."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.60",
+]
+
+[project.optional-dependencies]
+stripe = ["stripe>=12"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+earner = "earner.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["earner*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
