@@ -80,11 +80,23 @@ def test_trade_count_cap_blocks_overtrading(book):
     assert decision.allowed is False and "over the 3 cap" in decision.reason
 
 
-def test_max_open_positions_blocks_a_fourth(book):
+def test_max_independent_exposures_blocks_a_third(book):
+    """The cap counts independent bets, not raw positions."""
     risk = RiskManager(capital=100_000, max_positions=2, max_trades_per_day=99)
     book.record(Fill("a", "AAA", BUY, 1, 100.0))
     book.record(Fill("b", "BBB", BUY, 1, 100.0))
     assert risk.check(book, price=100.0).allowed is False
+
+
+def test_correlated_positions_do_not_consume_the_exposure_cap(book):
+    """Four bank stocks use one slot, so an uncorrelated trade still fits."""
+    risk = RiskManager(capital=1_000_000, max_positions=2, max_trades_per_day=99,
+                       stop_loss_pct=0.01, max_group_risk=0.5)
+    for i, sym in enumerate(["HDFCBANK", "ICICIBANK", "SBIN", "AXISBANK"]):
+        book.record(Fill(f"o{i}", sym, BUY, 10, 1000.0))
+
+    assert risk.exposure(book, marks={}).effective_bets == 1.0
+    assert risk.check(book, price=1000.0, symbol="TCS", marks={}).allowed is True
 
 
 def test_a_good_setup_is_allowed(book):
@@ -195,3 +207,70 @@ def test_stale_quotes_are_detectable():
     import time as _t
     assert is_stale(_t.time() - 30) is True
     assert is_stale(_t.time()) is False
+
+
+# ── portfolio risk: correlated positions are one bet ────────────────────────
+
+from earner.trading.risk import correlation_group  # noqa: E402
+
+
+def test_correlated_symbols_share_one_exposure_bucket():
+    assert correlation_group("HDFCBANK") == correlation_group("ICICIBANK") == "banking"
+    assert correlation_group("TCS") == correlation_group("INFY") == "it"
+    assert correlation_group("SOMEOBSCURECO").startswith("single:")
+
+
+def test_ten_bank_stocks_are_not_ten_independent_bets(book):
+    """The whole point of §13: a sector basket is one trade taken repeatedly."""
+    risk = RiskManager(capital=100_000, max_group_risk=0.10, stop_loss_pct=0.01,
+                       max_positions=10, max_trades_per_day=99)
+    for i, sym in enumerate(["HDFCBANK", "ICICIBANK", "SBIN", "AXISBANK"]):
+        book.record(Fill(f"o{i}", sym, BUY, 300, 1000.0))
+
+    exposure = risk.exposure(book, marks={})
+    assert exposure.effective_bets == 1.0, "four bank stocks are one exposure, not four"
+    assert "banking" in exposure.by_group
+
+    decision = risk.check(book, price=1000.0, symbol="KOTAKBANK", marks={})
+    assert decision.allowed is False
+    assert "move together" in decision.reason
+
+
+def test_uncorrelated_positions_do_count_separately(book):
+    risk = RiskManager(capital=100_000, stop_loss_pct=0.01, max_positions=10,
+                       max_trades_per_day=99)
+    book.record(Fill("a", "HDFCBANK", BUY, 100, 1000.0))
+    book.record(Fill("b", "TCS", BUY, 100, 1000.0))
+    book.record(Fill("c", "SUNPHARMA", BUY, 100, 1000.0))
+
+    assert risk.exposure(book, marks={}).effective_bets == 3.0
+
+
+def test_portfolio_risk_ceiling_blocks_stacking(book):
+    """Past ~30% total risk the median return falls and ruin rises."""
+    risk = RiskManager(capital=100_000, max_portfolio_risk=0.20,
+                       stop_loss_pct=0.01, max_positions=99, max_trades_per_day=99)
+    book.record(Fill("a", "TCS", BUY, 2000, 1000.0))   # 20% at risk already
+
+    decision = risk.check(book, price=1000.0, symbol="RELIANCE", marks={})
+    assert decision.allowed is False and "portfolio risk" in decision.reason
+
+
+def test_a_losing_streak_halts_the_engine(book):
+    """Four losses in a row usually means the regime turned, not bad luck."""
+    risk = RiskManager(capital=1_000_000, max_consecutive_losses=3, max_trades_per_day=99)
+    for i in range(3):
+        book.record(Fill(f"b{i}", f"SYM{i}", BUY, 10, 100.0))
+        book.record(Fill(f"s{i}", f"SYM{i}", SELL, 10, 95.0))     # each a loss
+
+    assert risk.consecutive_losses(book) == 3
+    assert risk.check(book, price=100.0).allowed is False
+    assert "regime has probably turned" in risk.halt_reason
+
+
+def test_aggressive_preset_is_bounded_not_maximal():
+    """'Aggressive' sits where growth peaks, not at 100% risk where it collapses."""
+    risk = RiskManager.aggressive(capital=100_000)
+    assert risk.max_portfolio_risk == 0.30
+    assert risk.risk_per_trade == 0.03
+    assert risk.max_portfolio_risk < 1.0, "100% portfolio risk is ~50% ruin and a lower median"
