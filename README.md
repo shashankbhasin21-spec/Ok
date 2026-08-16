@@ -86,6 +86,24 @@ Instagram fetches media from a public URL — it cannot read a local file. Rende
 earner publish --ref post-abc123 --video-url https://your-host/reel.mp4
 ```
 
+## Getting leads in
+
+```bash
+# a prospect you know of
+earner lead add --company "Northwind Logistics" --email ops@northwind.co.uk \
+  --notes "Freight quote desk is manual, 3-day turnaround" \
+  --evidence "Two open 'quote desk coordinator' roles on their careers page"
+
+# a real public job posting — Claude reads the page into a lead
+earner lead from-url --url https://www.upwork.com/jobs/~012345
+
+earner lead list
+```
+
+Intake refuses what cannot be sold to: placeholder domains (`example.com`, `yourcompany.com`), `test@` addresses, leads with no email *and* no website, and leads with no stated reason to make contact. A pipeline of invented prospects produces confident forecasts and zero cash, so it never gets one.
+
+Acquisition then researches each lead with live search and drafts a specific pitch for your approval. It declines to write anything when the research turns up nothing concrete — a generic pitch is worse than no pitch.
+
 ## Full autopilot
 
 ```bash

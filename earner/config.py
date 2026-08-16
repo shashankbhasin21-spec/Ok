@@ -25,7 +25,10 @@ class Config:
     currency: str = "usd"
 
     # What the firm sells. Shapes pricing, pitches and social content.
-    offer: str = "research, analysis and written deliverables for small businesses"
+    offer: str = (
+        "AI agents that do a specific business job end to end — inbound handling, "
+        "research, content, invoicing and follow-up — built, deployed and handed over"
+    )
 
     # Cost guardrails. A job that would spend more on tokens than it can bill
     # is not a business; these caps make that failure loud instead of silent.
@@ -79,9 +82,7 @@ def load(**overrides) -> Config:
         model=env.get("EARNER_MODEL", "claude-opus-5"),
         effort=env.get("EARNER_EFFORT", "high"),
         currency=env.get("EARNER_CURRENCY", "usd").lower(),
-        offer=env.get(
-            "EARNER_OFFER", "research, analysis and written deliverables for small businesses"
-        ),
+        offer=env.get("EARNER_OFFER", Config.offer),
         max_llm_cost_cents_per_job=int(env.get("EARNER_MAX_LLM_COST_CENTS", "200")),
         min_margin_cents=int(env.get("EARNER_MIN_MARGIN_CENTS", "100")),
         autonomous=env.get("EARNER_AUTONOMOUS", "0") == "1",

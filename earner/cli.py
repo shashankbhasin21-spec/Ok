@@ -61,6 +61,49 @@ def cmd_run(platform: Platform, args) -> int:
     return 0 if not any(r.errors for r in reports) else 1
 
 
+def cmd_lead(platform: Platform, args) -> int:
+    """Put a real prospect into the pipeline."""
+    from .leads import InvalidLead, Lead, from_posting, load_all, save
+
+    if args.action == "list":
+        leads = load_all(platform.cfg.inbox)
+        if not leads:
+            print("No leads. Add one: earner lead add --company X --email y@z.com --notes '...'")
+            return 0
+        for lead in leads:
+            worked = platform.ledger.conn.execute(
+                "SELECT status FROM opportunities WHERE external_ref=?", (lead.ref,)
+            ).fetchone()
+            print(
+                f"{lead.ref}  {lead.company[:28]:<28} {lead.email[:30]:<30} "
+                f"{(worked['status'] if worked else 'unworked')}"
+            )
+        return 0
+
+    try:
+        if args.action == "from-url":
+            lead = from_posting(args.url, platform.ceo.llm, platform.cfg.inbox)
+        else:
+            lead = Lead(
+                company=args.company or "",
+                email=args.email or "",
+                contact_name=args.contact or "",
+                website=args.website or "",
+                notes=args.notes or "",
+                evidence=args.evidence or "",
+                service=args.service or platform.cfg.offer,
+            )
+            save(lead, platform.cfg.inbox)
+    except InvalidLead as exc:
+        print(f"Rejected: {exc}")
+        return 1
+
+    print(f"Added {lead.ref}: {lead.company}" + (f" <{lead.email}>" if lead.email else ""))
+    print("Acquisition will research and draft a pitch on the next run:")
+    print("  earner run --approve cli")
+    return 0
+
+
 def cmd_connect(platform: Platform, args) -> int:
     """Wire up Gmail and Instagram, proving each credential works."""
     from pathlib import Path
@@ -216,6 +259,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--interval", type=float, default=900.0, help="seconds between loops")
     s.add_argument("--brief", action="store_true", help="CEO summary at the end")
     s.set_defaults(func=cmd_run)
+
+    s = sub.add_parser("lead", help="add or list real prospects")
+    s.add_argument("action", choices=["add", "list", "from-url"])
+    s.add_argument("--company")
+    s.add_argument("--email")
+    s.add_argument("--contact")
+    s.add_argument("--website")
+    s.add_argument("--notes", help="why they might buy")
+    s.add_argument("--evidence", help="what you observed that says they need this")
+    s.add_argument("--service", help="what to sell them (defaults to EARNER_OFFER)")
+    s.add_argument("--url", help="a real public job posting, for `from-url`")
+    s.set_defaults(func=cmd_lead)
 
     s = sub.add_parser("connect", help="connect Gmail and Instagram (validates credentials)")
     s.add_argument("--channel", choices=["gmail", "instagram"], help="connect just one")
