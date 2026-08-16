@@ -106,6 +106,27 @@ def load_all(inbox: Path) -> list[Lead]:
     return out
 
 
+def import_file(path: Path, inbox: Path) -> tuple[list[Lead], list[str]]:
+    """Import a captured batch of leads. Returns (added, skipped-with-reason).
+
+    Partial success is the right behaviour here: one malformed or duplicate
+    entry should not cost you the other five.
+    """
+    data = json.loads(Path(path).read_text())
+    rows = data["leads"] if isinstance(data, dict) else data
+    known = {f for f in Lead.__dataclass_fields__}
+
+    added, skipped = [], []
+    for row in rows:
+        lead = Lead(**{k: v for k, v in row.items() if k in known})
+        try:
+            save(lead, inbox)
+            added.append(lead)
+        except InvalidLead as exc:
+            skipped.append(f"{lead.company[:40]}: {exc}")
+    return added, skipped
+
+
 POSTING_SCHEMA = {
     "type": "object",
     "properties": {

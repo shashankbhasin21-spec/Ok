@@ -63,7 +63,7 @@ def cmd_run(platform: Platform, args) -> int:
 
 def cmd_lead(platform: Platform, args) -> int:
     """Put a real prospect into the pipeline."""
-    from .leads import InvalidLead, Lead, from_posting, load_all, save
+    from .leads import InvalidLead, Lead, from_posting, import_file, load_all, save
 
     if args.action == "list":
         leads = load_all(platform.cfg.inbox)
@@ -78,6 +78,15 @@ def cmd_lead(platform: Platform, args) -> int:
                 f"{lead.ref}  {lead.company[:28]:<28} {lead.email[:30]:<30} "
                 f"{(worked['status'] if worked else 'unworked')}"
             )
+        return 0
+
+    if args.action == "import":
+        added, skipped = import_file(args.file, platform.cfg.inbox)
+        for lead in added:
+            print(f"  + {lead.company[:60]}")
+        for reason in skipped:
+            print(f"  - skipped {reason}")
+        print(f"\nImported {len(added)} lead(s), skipped {len(skipped)}.")
         return 0
 
     try:
@@ -261,7 +270,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_run)
 
     s = sub.add_parser("lead", help="add or list real prospects")
-    s.add_argument("action", choices=["add", "list", "from-url"])
+    s.add_argument("action", choices=["add", "list", "import", "from-url"])
+    s.add_argument("--file", help="captured lead batch, for `import`")
     s.add_argument("--company")
     s.add_argument("--email")
     s.add_argument("--contact")

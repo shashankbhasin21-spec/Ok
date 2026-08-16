@@ -1,0 +1,55 @@
+{
+  "source": "https://www.freelancer.com/jobs/ai-agents",
+  "captured_at": "2026-08-16",
+  "note": "Live open postings captured from Freelancer's AI Agents board. Bid counts are what makes these hard - read competition before choosing where to spend effort.",
+  "leads": [
+    {
+      "company": "AI Powered Web Application Development (Freelancer project)",
+      "website": "https://www.freelancer.com/projects/ai-development/powered-web-application-development",
+      "source": "freelancer.com/jobs/ai-agents",
+      "notes": "Average bid $10/hr, 29 bids, 5 days left. Lowest competition on the board.",
+      "evidence": "Open posting seeking AI-powered web application development.",
+      "tags": ["marketplace", "low-competition", "hourly"]
+    },
+    {
+      "company": "AI Automation for Web Platform (Freelancer project)",
+      "website": "https://www.freelancer.com/projects/ai-automation/automation-for-web-platform",
+      "source": "freelancer.com/jobs/ai-agents",
+      "notes": "Average bid $242 fixed, 40 bids, 2 days left. Second-lowest competition.",
+      "evidence": "Open posting seeking AI automation built into an existing web platform.",
+      "tags": ["marketplace", "low-competition", "fixed"]
+    },
+    {
+      "company": "Hermes AI Setup for Customer Support (Freelancer project)",
+      "website": "https://www.freelancer.com/projects/ai-agents/hermes-setup-for-customer-support",
+      "source": "freelancer.com/jobs/ai-agents",
+      "notes": "Average bid $35/hr, 69 bids, 3 days left. Best hourly rate on the board.",
+      "evidence": "Open posting seeking an AI customer-support agent setup - closest match to our offer.",
+      "tags": ["marketplace", "medium-competition", "hourly", "best-fit"]
+    },
+    {
+      "company": "AI Manager for Task Automation (Freelancer project)",
+      "website": "https://www.freelancer.com/projects/ai-automation/manager-for-task-automation",
+      "source": "freelancer.com/jobs/ai-agents",
+      "notes": "Average bid $368 fixed, 201 bids, 12 hours left. Heavily contested.",
+      "evidence": "Open posting seeking an AI manager agent for task automation.",
+      "tags": ["marketplace", "high-competition", "fixed"]
+    },
+    {
+      "company": "Comprehensive AI Agentic Agent Team Setup (Freelancer project)",
+      "website": "https://www.freelancer.com/projects/ai-automation/comprehensive-full-agentic-trained-agent",
+      "source": "freelancer.com/jobs/ai-agents",
+      "notes": "Average bid $381 fixed, 202 bids, 1 day left. Highest value, heavily contested.",
+      "evidence": "Open posting seeking a full trained agent team - exactly what this platform is.",
+      "tags": ["marketplace", "high-competition", "fixed", "best-fit"]
+    },
+    {
+      "company": "Temporal-Driven AI Recruitment Platform (Freelancer project)",
+      "website": "https://www.freelancer.com/projects/api-developmet/temporal-driven-recruitment-platform",
+      "source": "freelancer.com/jobs/ai-agents",
+      "notes": "Average bid $18/hr, 236 bids, 20 hours left. Most contested on the board.",
+      "evidence": "Open posting seeking a Temporal-based AI recruitment platform.",
+      "tags": ["marketplace", "high-competition", "hourly"]
+    }
+  ]
+}

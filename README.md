@@ -98,11 +98,16 @@ earner lead add --company "Northwind Logistics" --email ops@northwind.co.uk \
 earner lead from-url --url https://www.upwork.com/jobs/~012345
 
 earner lead list
+
+# real postings captured from a live board (see docs/channel-math.md first)
+earner lead import --file seeds/leads-freelancer-2026-08-16.json
 ```
 
 Intake refuses what cannot be sold to: placeholder domains (`example.com`, `yourcompany.com`), `test@` addresses, leads with no email *and* no website, and leads with no stated reason to make contact. A pipeline of invented prospects produces confident forecasts and zero cash, so it never gets one.
 
 Acquisition then researches each lead with live search and drafts a specific pitch for your approval. It declines to write anything when the research turns up nothing concrete — a generic pitch is worse than no pitch.
+
+**Before you spend effort on marketplaces, read [docs/channel-math.md](docs/channel-math.md).** Reaching $5,000 through bid boards needs 400–3,000 competitive bids against boards that carry six postings; direct outreach needs seven conversations. [seeds/pitch.md](seeds/pitch.md) is the outreach that follows from that.
 
 ## Full autopilot
 

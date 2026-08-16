@@ -54,3 +54,24 @@ def test_a_website_only_lead_is_fine(cfg):
         notes="Front desk answers booking calls manually during surgery hours.",
     )
     assert save(lead, cfg.inbox).exists()
+
+
+def test_importing_a_batch_survives_duplicates(cfg, tmp_path):
+    """One bad row must not cost you the rest of the batch."""
+    import json
+
+    from earner.leads import import_file
+
+    batch = tmp_path / "batch.json"
+    batch.write_text(json.dumps({"leads": [
+        {"company": "Real One", "website": "https://realone.dev", "notes": "manual quote desk"},
+        {"company": "Real Two", "website": "https://realtwo.dev", "notes": "slow inbox"},
+        {"company": "Fake", "email": "test@example.com", "notes": "invented"},
+    ]}))
+
+    added, skipped = import_file(batch, cfg.inbox)
+    assert [lead.company for lead in added] == ["Real One", "Real Two"]
+    assert len(skipped) == 1 and "placeholder domain" in skipped[0]
+
+    added, skipped = import_file(batch, cfg.inbox)
+    assert added == [] and len(skipped) == 3, "re-importing must add nothing"
