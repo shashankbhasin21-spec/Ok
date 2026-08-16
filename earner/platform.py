@@ -6,6 +6,7 @@ import time
 
 from . import approval, config, goals
 from .agents.acquisition import AcquisitionAgent
+from .agents.bidding import BiddingAgent
 from .agents.collections import CollectionsAgent
 from .agents.growth import GrowthAgent
 from .agents.quality import QualityAgent
@@ -20,6 +21,7 @@ from .payments import build_provider
 # Order matters: sell, deliver, build, market, collect, then inspect.
 STAFF = [
     AcquisitionAgent,
+    BiddingAgent,
     ServiceDeskAgent,
     ContentStudioAgent,
     GrowthAgent,

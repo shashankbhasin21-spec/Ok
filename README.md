@@ -111,6 +111,30 @@ Acquisition then researches each lead with live search and drafts a specific pit
 
 **Then [docs/channel-math.md](docs/channel-math.md) for the pricing and clock.** Reaching $5,000 through bid boards needs 400–3,000 competitive bids against boards that carry six postings; direct outreach needs seven conversations. [seeds/pitch.md](seeds/pitch.md) is the outreach that follows from that.
 
+## Automated bidding
+
+```bash
+mkdir -p .earner/inbox/boards
+echo '{"urls": ["https://www.freelancer.com/jobs/ai-agents"]}' > .earner/inbox/boards/default.json
+earner run --approve cli
+```
+
+The bidder scans each board, scores every posting, and drafts bids only for the ones worth an hour of your time. Drafts land in `outbox/bid-*.md` with the submit URL and amount.
+
+**It drafts; it does not submit.** Freelancer and Upwork have no public bid-submission API and their terms prohibit automated bidding — an account ban costs more than any bid wins. You paste the draft yourself.
+
+Scoring is plain arithmetic, not a model judgement, because the two facts that decide whether a bid is winnable are countable:
+
+| Rule | Why |
+|---|---|
+| Skip over 45 bids | Per-bid win rate falls under ~2% — a lottery ticket, not a pipeline |
+| Skip under $150 top-of-range | The bid costs more to write than it pays |
+| Skip when no budget is stated | Cannot price it without guessing |
+| Bid at 85% of the client's range | On these boards the low bid signals the acceptance criteria went unread |
+| Convert currency before comparing | A ₹37,500 ceiling is ~$390, not $37,500 |
+
+Against the six live postings captured in `seeds/`, it bids on two and refuses four.
+
 ## Full autopilot
 
 ```bash

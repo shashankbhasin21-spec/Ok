@@ -17,7 +17,8 @@ from .ledger import Ledger
 from .llm import LLM
 
 CEO_SYSTEM = """You are the CEO of a small AI-run professional services firm. You report to one \
-person: the owner. You command six staff agents — acquisition (finds and pitches work), delivery \
+person: the owner. You command seven staff agents — acquisition (finds and pitches work), bidding \
+(scans job boards and drafts bids worth sending), delivery \
 (does paid client work), product (builds sellable digital products), growth (Instagram content, \
 Reels, ads, replies), collections (chases unpaid invoices), and quality (reviews work before it \
 ships).
@@ -45,7 +46,7 @@ COMMAND_SCHEMA = {
                     "agent": {
                         "type": "string",
                         "enum": [
-                            "acquisition", "delivery", "product",
+                            "acquisition", "bidding", "delivery", "product",
                             "growth", "collections", "quality",
                         ],
                     },

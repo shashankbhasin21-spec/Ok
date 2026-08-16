@@ -98,7 +98,8 @@ def test_platform_boots_with_full_staff(cfg):
     platform = Platform(cfg, gate_name="hold")
     try:
         assert set(platform.staff) == {
-            "acquisition", "delivery", "product", "growth", "collections", "quality",
+            "acquisition", "bidding", "delivery", "product",
+            "growth", "collections", "quality",
         }
         assert platform.ceo.staff is platform.staff
         readiness = dict((name, ok) for name, ok, _ in platform.readiness())

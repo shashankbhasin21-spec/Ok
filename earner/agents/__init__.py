@@ -1,6 +1,7 @@
 """The staff."""
 
 from .acquisition import AcquisitionAgent  # noqa: F401
+from .bidding import BiddingAgent  # noqa: F401
 from .collections import CollectionsAgent  # noqa: F401
 from .growth import GrowthAgent  # noqa: F401
 from .quality import QualityAgent  # noqa: F401
