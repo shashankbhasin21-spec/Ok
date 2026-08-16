@@ -26,6 +26,22 @@ IMAP_HOST = "imap.gmail.com"
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
 
+# Ingestion is label-scoped by default. A real inbox is mostly bank alerts,
+# receipts and newsletters; pointing an agent at all of it would turn an OTP
+# notification into a priced client job. You route work to this label (a Gmail
+# filter does it automatically) and the firm sees only that.
+REQUEST_LABEL = "earner/requests"
+
+# Belt and braces for anything that reaches the label by accident.
+NOISE_SENDERS = (
+    "noreply", "no-reply", "no_reply", "donotreply", "notification", "alerts@",
+    "mailer-daemon", "postmaster", "newsletter", "updates@", "billing@",
+)
+NOISE_SUBJECTS = (
+    "otp", "one-time password", "verification code", "verify your", "password reset",
+    "statement", "was debited", "was credited", "unsubscribe", "order confirmed",
+)
+
 
 @dataclass
 class Mail:
@@ -47,13 +63,16 @@ class GmailChannel:
 
     # ------------------------------------------------------------------ inbound
 
-    def fetch(self, *, label: str = "INBOX", limit: int = 25, unread_only: bool = True) -> list[Mail]:
+    def fetch(self, *, label: str | None = None, limit: int = 25, unread_only: bool = True) -> list[Mail]:
+        """Read mail from one label. Returns [] if the label does not exist."""
         if not self.enabled:
             return []
         conn = imaplib.IMAP4_SSL(IMAP_HOST)
         try:
             conn.login(self.user, self.password)
-            conn.select(label)
+            status, _ = conn.select(f'"{label or REQUEST_LABEL}"')
+            if status != "OK":
+                return []  # label not created yet — nothing to ingest, not an error
             status, data = conn.search(None, "UNSEEN" if unread_only else "ALL")
             if status != "OK":
                 return []
@@ -93,8 +112,18 @@ class GmailChannel:
             body=_strip_quoted(body).strip(),
         )
 
-    def ingest_requests(self) -> int:
-        """Turn unread mail into briefs the delivery agent will pick up.
+    def is_noise(self, mail: Mail) -> bool:
+        """Automated mail is never a client brief."""
+        sender = (mail.sender or "").lower()
+        subject = (mail.subject or "").lower()
+        if any(marker in sender for marker in NOISE_SENDERS):
+            return True
+        if any(marker in subject for marker in NOISE_SUBJECTS):
+            return True
+        return len(mail.body.split()) < 12  # too short to scope work from
+
+    def ingest_requests(self, *, label: str | None = None) -> int:
+        """Turn labelled mail into briefs the delivery agent will pick up.
 
         Deduplicated on the RFC Message-ID, so re-running never re-bills a
         client for an email you already turned into a job.
@@ -105,8 +134,8 @@ class GmailChannel:
         folder = self.cfg.inbox / "requests"
         folder.mkdir(parents=True, exist_ok=True)
         written = 0
-        for mail in self.fetch():
-            if not mail.sender or not mail.body:
+        for mail in self.fetch(label=label):
+            if not mail.sender or not mail.body or self.is_noise(mail):
                 continue
             ref = "gmail-" + hashlib.sha256(mail.message_id.encode()).hexdigest()[:16]
             path = folder / f"{ref}.json"

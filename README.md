@@ -63,11 +63,21 @@ Live mode refuses to start without a Stripe key. `--approve auto` (unattended) a
 
 ## Connecting the channels
 
+```bash
+earner connect
+```
+
+Prompts for each credential, **proves it works before saving** (a real IMAP login and SMTP handshake for Gmail; a real Graph API call that reads your account back for Instagram), then writes `.env` with owner-only permissions. A credential that fails at 3am inside an autopilot loop is worse than one that never saved, so it fails at setup instead.
+
+### Gmail ingestion is label-scoped on purpose
+
+The firm only reads mail under the **`earner/requests`** label — not your whole inbox. A real inbox is mostly bank alerts, OTPs, receipts and newsletters; an agent pointed at all of it will happily scope and price an OTP notification. Create the label, add a Gmail filter that routes client mail into it, and the firm sees only real work. Anything automated that slips through is filtered again by sender and subject.
+
 | Channel | Environment | Notes |
 |---|---|---|
 | Claude | `ANTHROPIC_API_KEY` | Or `ant auth login`. Without it the agents cannot think. |
 | Stripe | `STRIPE_API_KEY` + `EARNER_MODE=live` | Real invoices, real settlement. |
-| Gmail | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Enable 2-Step Verification, then create an [App Password](https://myaccount.google.com/apppasswords). Inbound mail becomes briefs; approved replies are sent. |
+| Gmail | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Enable 2-Step Verification, then create an [App Password](https://myaccount.google.com/apppasswords). Mail under the `earner/requests` label becomes briefs; approved replies are sent. |
 | Instagram | `INSTAGRAM_USER_ID`, `INSTAGRAM_ACCESS_TOKEN` | Needs a **Business or Creator** account linked to a Facebook Page, a Meta app with `instagram_content_publish`, and a long-lived token. |
 
 Instagram fetches media from a public URL — it cannot read a local file. Render first, host the MP4 anywhere public, then:

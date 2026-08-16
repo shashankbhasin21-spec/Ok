@@ -61,6 +61,23 @@ def cmd_run(platform: Platform, args) -> int:
     return 0 if not any(r.errors for r in reports) else 1
 
 
+def cmd_connect(platform: Platform, args) -> int:
+    """Wire up Gmail and Instagram, proving each credential works."""
+    from pathlib import Path
+
+    from .connect import run_wizard
+
+    env_path = Path(args.env or ".env")
+    connected = run_wizard(env_path, only=args.channel)
+    if connected:
+        print(f"Connected {connected} channel(s). Load them and check:")
+        print("  set -a && source .env && set +a")
+        print("  earner status")
+    else:
+        print("Nothing connected. Re-run `earner connect` when you have the credentials.")
+    return 0
+
+
 def cmd_autopilot(platform: Platform, args) -> int:
     """Hands-off: run the firm until the target is met or the deadline passes."""
     blockers = [name for name, ok, _ in platform.readiness() if not ok]
@@ -199,6 +216,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--interval", type=float, default=900.0, help="seconds between loops")
     s.add_argument("--brief", action="store_true", help="CEO summary at the end")
     s.set_defaults(func=cmd_run)
+
+    s = sub.add_parser("connect", help="connect Gmail and Instagram (validates credentials)")
+    s.add_argument("--channel", choices=["gmail", "instagram"], help="connect just one")
+    s.add_argument("--env", help="path to write (default: .env)")
+    s.set_defaults(func=cmd_connect)
 
     s = sub.add_parser("autopilot", help="run unattended until the target is hit")
     s.add_argument("--interval", type=float, default=900.0, help="seconds between cycles")
