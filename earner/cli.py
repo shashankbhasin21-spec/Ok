@@ -113,6 +113,28 @@ def cmd_lead(platform: Platform, args) -> int:
     return 0
 
 
+def cmd_trade(platform: Platform, args) -> int:
+    """Run the trading engine."""
+    from .trading.session import load_session
+    from .trading.simulate import run as run_sim
+
+    session = load_session()
+    print(session.banner)
+    if args.mode == "simulate":
+        run_sim(capital=args.capital, aggressive=args.aggressive,
+                workdir=str(platform.cfg.workdir))
+        return 0
+
+    if session.is_live:
+        print("\nLive trading needs increment 2 (order reconciliation and idempotency).")
+        print("Refusing to place real orders without it — an unreconciled position is")
+        print("how an engine ends up long something it believes it already sold.")
+        return 1
+    print("\nPaper mode against a live broker needs Kotak credentials.")
+    print("Run `earner trade --mode simulate` to watch the engine work without them.")
+    return 0
+
+
 def cmd_connect(platform: Platform, args) -> int:
     """Wire up Gmail and Instagram, proving each credential works."""
     from pathlib import Path
@@ -281,6 +303,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--service", help="what to sell them (defaults to EARNER_OFFER)")
     s.add_argument("--url", help="a real public job posting, for `from-url`")
     s.set_defaults(func=cmd_lead)
+
+    s = sub.add_parser("trade", help="run the trading engine")
+    s.add_argument("--mode", choices=["simulate", "paper", "live"], default="simulate")
+    s.add_argument("--capital", type=float, default=200_000.0)
+    s.add_argument("--aggressive", action="store_true", help="3%/trade, 30% portfolio ceiling")
+    s.set_defaults(func=cmd_trade)
 
     s = sub.add_parser("connect", help="connect Gmail and Instagram (validates credentials)")
     s.add_argument("--channel", choices=["gmail", "instagram", "upwork"],
