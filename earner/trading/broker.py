@@ -78,9 +78,14 @@ class KotakBroker:
 
     live = True
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, session=None):
+        from .session import load_session
+
         self.cfg = cfg
         self.client = None
+        # The gate. Nothing else in this class may authorise real money.
+        self.session = session or load_session()
+        self._instruments: dict[str, str] = {}
 
     def connect(self, *, totp: str, mpin: str) -> None:
         try:
@@ -127,7 +132,41 @@ class KotakBroker:
             raise BrokerError(f"Quote for {symbol} had no last traded price")
         return Quote(symbol=symbol, last_price=last)
 
+    def load_instruments(self, segment: str = SEGMENT_EQUITY) -> int:
+        """Download the scrip master so symbols resolve to real tokens.
+
+        Trading a token you guessed is trading a different instrument than the
+        one you analysed, so nothing is placed until this has run.
+        """
+        data = self._require().scrip_master(exchange_segment=segment)
+        rows = data if isinstance(data, list) else (data.get("data") or [])
+        for row in rows:
+            symbol = row.get("pTrdSymbol") or row.get("trading_symbol")
+            token = row.get("pSymbol") or row.get("instrument_token")
+            if symbol and token:
+                self._instruments[str(symbol).upper()] = str(token)
+        return len(self._instruments)
+
+    def token_for(self, symbol: str) -> str:
+        key = symbol.upper()
+        if key not in self._instruments:
+            raise BrokerError(
+                f"{symbol} is not in the instrument master — run load_instruments() first, "
+                "and never guess a token"
+            )
+        return self._instruments[key]
+
     def place(self, *, symbol, token, side, quantity, order_type=ORDER_MARKET, price=0.0) -> Fill:
+        # Re-checked here rather than trusted from construction: a long-running
+        # engine can outlive the assumptions it started with.
+        self.session.require_live()
+
+        from .session import market_status
+
+        status = market_status()
+        if not status.accepting_new:
+            raise BrokerError(f"market not accepting new orders: {status.reason}")
+
         response = self._require().place_order(
             exchange_segment=SEGMENT_EQUITY,
             product=PRODUCT_INTRADAY,

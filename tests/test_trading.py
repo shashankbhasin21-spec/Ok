@@ -118,3 +118,80 @@ def test_paper_broker_is_never_live(cfg):
 def test_paper_broker_refuses_a_price_it_does_not_have(cfg):
     with pytest.raises(BrokerError, match="No paper price"):
         PaperBroker(cfg).quote("UNKNOWN", "0")
+
+
+# ── the deployment gate ─────────────────────────────────────────────────────
+
+from earner.trading.session import (  # noqa: E402
+    CONFIRMATION_PHRASE, DEVELOPMENT, GateClosed, LIVE, PAPER,
+    is_stale, load_session, market_status,
+)
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+IST_TZ = timezone(timedelta(hours=5, minutes=30))
+
+
+def test_live_needs_both_the_mode_and_the_confirmation():
+    assert load_session({"TRADING_MODE": "LIVE"}).is_live is False
+    assert load_session({"TRADING_MODE": "LIVE",
+                         "LIVE_TRADING_CONFIRMATION": "yes"}).is_live is False
+    assert load_session({"TRADING_MODE": "LIVE",
+                         "LIVE_TRADING_CONFIRMATION": CONFIRMATION_PHRASE}).is_live is True
+
+
+def test_default_mode_is_not_live():
+    assert load_session({}).mode == DEVELOPMENT
+    assert load_session({}).is_live is False
+    assert load_session({"TRADING_MODE": "PAPER"}).is_live is False
+
+
+def test_require_live_raises_with_the_reason():
+    with pytest.raises(GateClosed, match="TRADING_MODE=LIVE"):
+        load_session({"TRADING_MODE": "PAPER"}).require_live()
+    with pytest.raises(GateClosed, match="LIVE_TRADING_CONFIRMATION"):
+        load_session({"TRADING_MODE": "LIVE"}).require_live()
+
+
+def test_the_live_banner_is_unmissable():
+    live = load_session({"TRADING_MODE": "LIVE",
+                         "LIVE_TRADING_CONFIRMATION": CONFIRMATION_PHRASE})
+    assert "REAL MONEY" in live.banner
+    assert "PAPER" in load_session({"TRADING_MODE": PAPER}).banner
+
+
+def test_a_live_order_is_refused_when_the_gate_is_shut(cfg):
+    """The safety-critical test: no gate, no order, whatever else believes."""
+    from earner.trading.broker import KotakBroker
+
+    broker = KotakBroker(cfg, session=load_session({"TRADING_MODE": "PAPER"}))
+    with pytest.raises(GateClosed):
+        broker.place(symbol="X", token="1", side=BUY, quantity=1)
+
+
+def test_an_unknown_symbol_is_never_guessed(cfg):
+    from earner.trading.broker import KotakBroker
+
+    broker = KotakBroker(cfg, session=load_session({}))
+    with pytest.raises(BrokerError, match="instrument master"):
+        broker.token_for("SOMETHING")
+
+
+# ── market clock ────────────────────────────────────────────────────────────
+
+def _at(h, m, day=18):  # 18 Aug 2026 is a Tuesday
+    return datetime(2026, 8, day, h, m, tzinfo=IST_TZ)
+
+
+def test_market_clock_gates_the_session():
+    assert market_status(_at(9, 0)).open is False            # pre-open
+    assert market_status(_at(10, 30)).accepting_new is True  # regular session
+    assert market_status(_at(15, 5)).accepting_new is False  # near MIS cutoff
+    assert market_status(_at(15, 20)).should_square_off is True
+    assert market_status(_at(16, 0)).open is False           # closed
+    assert market_status(_at(11, 0, day=16)).open is False   # Sunday
+
+
+def test_stale_quotes_are_detectable():
+    import time as _t
+    assert is_stale(_t.time() - 30) is True
+    assert is_stale(_t.time()) is False
