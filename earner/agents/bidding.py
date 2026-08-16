@@ -20,6 +20,7 @@ from dataclasses import dataclass
 
 from ..agent import BaseAgent, TickReport
 from ..approval import Action
+from ..channels.upwork import UpworkChannel
 
 SCAN_SCHEMA = {
     "type": "object",
@@ -80,6 +81,23 @@ class BiddingAgent(BaseAgent):
     # Rough rates; only used to compare postings on a common scale.
     USD_PER = {"usd": 1.0, "eur": 1.08, "gbp": 1.27, "aud": 0.66, "cad": 0.73, "inr": 1 / 96.2}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.upwork = UpworkChannel(self.cfg)
+
+    def _upwork_postings(self, report: TickReport) -> list[dict]:
+        """Authorised discovery through Upwork's own API — no scraping."""
+        if not self.upwork.enabled:
+            return []
+        postings = []
+        for term in [t.strip() for t in self.cfg.upwork_searches.split(",") if t.strip()]:
+            try:
+                for job in self.upwork.search_jobs(term, limit=20):
+                    postings.append(job.as_posting())
+            except Exception as exc:  # noqa: BLE001 - one bad term must not lose the rest
+                report.errors.append(f"upwork '{term}': {exc}")
+        return postings
+
     def boards(self) -> list[str]:
         """Board URLs to scan, from ``inbox/boards.json``."""
         for _, data in self.read_inbox("boards"):
@@ -89,6 +107,17 @@ class BiddingAgent(BaseAgent):
 
     def tick(self) -> TickReport:
         report = TickReport(agent=self.name)
+
+        for posting in self._upwork_postings(report):
+            ref = "bid-" + hashlib.sha256(posting["url"].encode()).hexdigest()[:12]
+            if self.ledger.record_opportunity(self.name, "upwork", ref, posting) is None:
+                continue
+            report.found += 1
+            try:
+                self._consider(ref, posting, report)
+            except Exception as exc:  # noqa: BLE001
+                report.errors.append(f"{posting['title'][:40]}: {type(exc).__name__}: {exc}")
+
         for board in self.boards():
             try:
                 postings = self._scan(board)

@@ -121,7 +121,16 @@ earner run --approve cli
 
 The bidder scans each board, scores every posting, and drafts bids only for the ones worth an hour of your time. Drafts land in `outbox/bid-*.md` with the submit URL and amount.
 
-**It drafts; it does not submit.** Freelancer and Upwork have no public bid-submission API and their terms prohibit automated bidding — an account ban costs more than any bid wins. You paste the draft yourself.
+### Upwork — authorised discovery over the official API
+
+```bash
+export UPWORK_CLIENT_ID=... UPWORK_CLIENT_SECRET=...
+earner connect --channel upwork
+```
+
+Runs the OAuth2 authorization-code flow against Upwork's own endpoints (taken from their [python-upwork-oauth2 SDK](https://github.com/upwork/python-upwork-oauth2)), stores the token at mode 0600, refreshes it automatically, and then **proves the grant with a real job search** before calling it connected. Discovered postings feed straight into the scorer. Get a key at [upwork.com/developer/keys/apply](https://www.upwork.com/developer/keys/apply).
+
+**It drafts; it does not submit — on any board.** Upwork's public GraphQL API exposes **no mutation for submitting a proposal or spending Connects**. That is deliberate on their part: bid spam is the platform's biggest trust problem. Freelancer has no public bid API either. Anything advertising "auto-submit proposals" is going around the official API, and the cost of that is your account. `submit_proposal()` exists solely to raise an error explaining this.
 
 Scoring is plain arithmetic, not a model judgement, because the two facts that decide whether a bid is winnable are countable:
 

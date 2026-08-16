@@ -24,6 +24,7 @@ from pathlib import Path
 
 from .channels.gmail import IMAP_HOST, REQUEST_LABEL, SMTP_HOST, SMTP_PORT
 from .channels.instagram import GRAPH
+from .channels.upwork import UpworkChannel, UpworkAuthError
 
 
 @dataclass
@@ -121,6 +122,46 @@ def _graph(path: str, params: dict, token: str) -> dict:
         return json.loads(resp.read())
 
 
+def connect_upwork(cfg) -> CheckResult:
+    """Run the OAuth2 authorization-code flow, then prove the grant with a real query."""
+    channel = UpworkChannel(cfg)
+    if not channel.configured:
+        return CheckResult(
+            False,
+            "Set UPWORK_CLIENT_ID and UPWORK_CLIENT_SECRET first. Create the key at "
+            "https://www.upwork.com/developer/keys/apply — request 'Common Entities - "
+            "Read-Only Access' plus job-search scope, and set the redirect URI to match.",
+        )
+
+    print("\n  1. Open this URL and approve access:\n")
+    print(f"     {channel.authorize_url()}\n")
+    print("  2. Upwork redirects to your callback with ?code=… in the address bar.")
+    code = input("  3. Paste the code here: ").strip()
+    if not code:
+        return CheckResult(False, "No code entered")
+
+    try:
+        channel.exchange_code(code)
+    except UpworkAuthError as exc:
+        return CheckResult(False, str(exc))
+
+    # A stored token proves nothing until it answers a real query.
+    try:
+        jobs = channel.search_jobs("ai automation", limit=3)
+    except UpworkAuthError as exc:
+        return CheckResult(
+            False,
+            f"Token stored but the API rejected the query: {exc}\n"
+            "      Usually a missing scope on the key, or the search query name differs for "
+            "your key — check the schema explorer in Upwork's API Center.",
+        )
+
+    detail = f"Authorised. Job search returned {len(jobs)} posting(s)"
+    if jobs:
+        detail += f", e.g. \"{jobs[0].title[:60]}\" ({jobs[0].bid_count} applicants)"
+    return CheckResult(True, detail + ".")
+
+
 def write_env(values: dict[str, str], path: Path) -> None:
     """Merge into .env, keeping existing keys, readable only by this user."""
     existing: dict[str, str] = {}
@@ -135,7 +176,7 @@ def write_env(values: dict[str, str], path: Path) -> None:
     os.chmod(path, 0o600)
 
 
-def run_wizard(env_path: Path, *, only: str | None = None) -> int:
+def run_wizard(env_path: Path, *, only: str | None = None, cfg=None) -> int:
     """Interactive setup. Returns the number of channels connected."""
     print("Credentials are typed here, never echoed, and saved to")
     print(f"{env_path} with owner-only permissions.\n")
@@ -169,5 +210,14 @@ def run_wizard(env_path: Path, *, only: str | None = None) -> int:
             if result.ok:
                 write_env(result.values, env_path)
                 connected += 1
+
+    if only == "upwork" or (only is None and cfg is not None):
+        print("── Upwork " + "─" * 51)
+        print("Official GraphQL API: authorised job discovery, no scraping.")
+        print("It cannot submit proposals — Upwork exposes no such mutation.\n")
+        result = connect_upwork(cfg)
+        print(f"  {'OK' if result.ok else 'FAILED'} — {result.detail}\n")
+        if result.ok:
+            connected += 1
 
     return connected

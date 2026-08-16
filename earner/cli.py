@@ -120,7 +120,7 @@ def cmd_connect(platform: Platform, args) -> int:
     from .connect import run_wizard
 
     env_path = Path(args.env or ".env")
-    connected = run_wizard(env_path, only=args.channel)
+    connected = run_wizard(env_path, only=args.channel, cfg=platform.cfg)
     if connected:
         print(f"Connected {connected} channel(s). Load them and check:")
         print("  set -a && source .env && set +a")
@@ -283,7 +283,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_lead)
 
     s = sub.add_parser("connect", help="connect Gmail and Instagram (validates credentials)")
-    s.add_argument("--channel", choices=["gmail", "instagram"], help="connect just one")
+    s.add_argument("--channel", choices=["gmail", "instagram", "upwork"],
+                   help="connect just one")
     s.add_argument("--env", help="path to write (default: .env)")
     s.set_defaults(func=cmd_connect)
 

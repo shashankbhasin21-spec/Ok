@@ -47,6 +47,12 @@ class Config:
     gmail_app_password: str | None = None
     instagram_user_id: str | None = None
     instagram_access_token: str | None = None
+    upwork_client_id: str | None = None
+    upwork_client_secret: str | None = None
+    upwork_redirect_uri: str | None = None
+    # Search terms the bidder feeds to Upwork each run.
+    upwork_searches: str = "ai agent,ai automation,workflow automation"
+
 
     @property
     def is_live(self) -> bool:
@@ -92,6 +98,10 @@ def load(**overrides) -> Config:
         gmail_app_password=env.get("GMAIL_APP_PASSWORD"),
         instagram_user_id=env.get("INSTAGRAM_USER_ID"),
         instagram_access_token=env.get("INSTAGRAM_ACCESS_TOKEN"),
+        upwork_client_id=env.get("UPWORK_CLIENT_ID"),
+        upwork_client_secret=env.get("UPWORK_CLIENT_SECRET"),
+        upwork_redirect_uri=env.get("UPWORK_REDIRECT_URI"),
+        upwork_searches=env.get("UPWORK_SEARCHES", Config.upwork_searches),
     )
     if overrides:
         cfg = Config(**{**cfg.__dict__, **overrides})
