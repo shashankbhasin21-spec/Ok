@@ -39,9 +39,12 @@ class ServiceDeskAgent(EarningAgent):
         "it being long. Decline work you cannot do well from the brief alone."
     )
 
-    # Guardrails so a bad brief or an odd model answer can't produce an absurd price.
-    MIN_PRICE_CENTS = 5_000
-    MAX_PRICE_CENTS = 250_000
+    # Guardrails so a bad brief or an odd model answer can't produce an absurd
+    # price. The band tracks the 2026 market for scoped automation work:
+    # starter builds run $1,000-$3,500 and a single scoped workflow $5,000-$25,000,
+    # so a ceiling below $25k would have the agent quoting under market.
+    MIN_PRICE_CENTS = 100_000      # $1,000 — below this, the job costs more to sell than it earns
+    MAX_PRICE_CENTS = 2_500_000    # $25,000 — top of the single-scoped-workflow band
 
     def find_opportunities(self) -> list[Opportunity]:
         opportunities = []
@@ -70,10 +73,13 @@ class ServiceDeskAgent(EarningAgent):
             f"Brief:\n{opp.payload.get('brief')}\n\n"
             f"Stated budget (cents): {budget if budget else 'not given'}\n\n"
             "Decline (accept=false) if the brief is too vague to deliver against, requires access "
-            "to systems or data you were not given, or is work you cannot do well in writing. "
-            "Otherwise price it at what the work is worth to this client, in US cents, between "
-            f"{self.MIN_PRICE_CENTS} and {self.MAX_PRICE_CENTS}. Write the scope as a short "
-            "statement of exactly what will be delivered — it goes on the invoice."
+            "to systems or data you were not given, or is work you cannot do well remotely. "
+            "Otherwise price on what the bottleneck costs them, not on the hours it takes you, in "
+            f"US cents between {self.MIN_PRICE_CENTS} and {self.MAX_PRICE_CENTS}. For reference, "
+            "the 2026 market is $1,000-$3,500 for a starter build of one or two automations and "
+            "$5,000-$25,000 for a single fully scoped workflow. A starter build closes faster "
+            "because one person can sign it. Write the scope as a short statement of exactly what "
+            "will be delivered — it goes on the invoice."
         )
         raw = self.think(None, prompt, schema=QUOTE_SCHEMA, effort="medium")
         decision = json.loads(raw)
