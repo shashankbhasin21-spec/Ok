@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 import json
 import sys
 
@@ -151,6 +152,18 @@ def cmd_trade(platform: Platform, args) -> int:
         print(f"\n{exc}")
         return 1
     return 0
+
+
+def cmd_dashboard(platform: Platform, args) -> int:
+    """Write the dashboard from the engine's own records."""
+    from .trading.dashboard import write
+
+    while True:
+        out = write(platform.cfg.workdir, capital=args.capital)
+        print(f"  {out}  ({time.strftime('%H:%M:%S')})")
+        if not args.watch:
+            return 0
+        time.sleep(args.every)
 
 
 def cmd_connect(platform: Platform, args) -> int:
@@ -333,6 +346,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--max-minutes", type=float, default=None,
                    help="flatten and stop after this long")
     s.set_defaults(func=cmd_trade)
+
+    s = sub.add_parser("dashboard", help="render the live dashboard as HTML")
+    s.add_argument("--capital", type=float, default=100_000.0)
+    s.add_argument("--watch", action="store_true", help="keep rewriting it")
+    s.add_argument("--every", type=float, default=5.0, help="seconds between rewrites")
+    s.set_defaults(func=cmd_dashboard)
 
     s = sub.add_parser("connect", help="connect Gmail and Instagram (validates credentials)")
     s.add_argument("--channel", choices=["gmail", "instagram", "upwork"],
