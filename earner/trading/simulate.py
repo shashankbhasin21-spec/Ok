@@ -42,13 +42,19 @@ def generate_day(symbol_seed: int, minutes: int = 375, start: float = 1000.0,
     return candles
 
 
-def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".earner") -> dict:
+def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".earner",
+        preset: str = "") -> dict:
     from pathlib import Path
 
     book = Book(Path(workdir) / "sim_book.db")
     orders = OrderStore(Path(workdir) / "sim_orders.db")
     session = load_session({"TRADING_MODE": "PAPER"})
-    risk = RiskManager.aggressive(capital) if aggressive else RiskManager(capital)
+    if preset == "diversified":
+        risk = RiskManager.diversified(capital)
+    elif aggressive or preset == "aggressive":
+        risk = RiskManager.aggressive(capital)
+    else:
+        risk = RiskManager(capital)
     broker = PaperBroker(None, starting_capital=capital)
     # The order store is in the path here for the same reason it will be live:
     # so the run exercises write-ahead and reconciliation, not a simpler
@@ -64,7 +70,8 @@ def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".e
     }
 
     print(session.banner)
-    print(f"Capital ₹{capital:,.0f} · {'AGGRESSIVE' if aggressive else 'STANDARD'} risk · "
+    label = preset.upper() or ("AGGRESSIVE" if aggressive else "STANDARD")
+    print(f"Capital ₹{capital:,.0f} · {label} risk · "
           f"{len(universe)} symbols · synthetic prices\n")
 
     # Replay the day minute by minute from the 40th candle onward, against a
@@ -95,6 +102,13 @@ def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".e
     print(f"  Trades        {status['trades_today']}")
     print(f"  Return        {status['realized_pnl'] / capital:+.2%} on capital")
     print(f"  Halted        {status['halted']}" + (f" — {status['halt_reason']}" if status['halted'] else ""))
+    costs = getattr(broker, "costs_paid", 0.0)
+    print(f"  Costs         ₹{costs:,.0f} ({costs / capital:.2%} of capital)")
+    # The number that decides whether a small account can trade at all: costs
+    # are charged per order, so they do not shrink with the account. This is
+    # the gross return needed every day just to finish level.
+    print(f"  Break-even    {costs / capital:+.2%}/day gross, "
+          f"{costs * 250 / capital:.0%}/year, before any profit")
     print(f"  Reconciled    {reconciliation.summary()}")
     status["reconciled"] = reconciliation.clean
     book.close()

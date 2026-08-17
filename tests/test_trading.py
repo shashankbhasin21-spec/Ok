@@ -221,9 +221,13 @@ def test_correlated_symbols_share_one_exposure_bucket():
 
 
 def test_ten_bank_stocks_are_not_ten_independent_bets(book):
-    """The whole point of §13: a sector basket is one trade taken repeatedly."""
+    """The whole point of §13: a sector basket is one trade taken repeatedly.
+
+    Leverage is lifted here so the sector cap is what is being measured; the
+    interaction between the two is covered separately below.
+    """
     risk = RiskManager(capital=100_000, max_group_risk=0.10, stop_loss_pct=0.01,
-                       max_positions=10, max_trades_per_day=99)
+                       max_positions=10, max_trades_per_day=99, max_leverage=99)
     for i, sym in enumerate(["HDFCBANK", "ICICIBANK", "SBIN", "AXISBANK"]):
         book.record(Fill(f"o{i}", sym, BUY, 300, 1000.0))
 
@@ -248,12 +252,40 @@ def test_uncorrelated_positions_do_count_separately(book):
 
 def test_portfolio_risk_ceiling_blocks_stacking(book):
     """Past ~30% total risk the median return falls and ruin rises."""
-    risk = RiskManager(capital=100_000, max_portfolio_risk=0.20,
-                       stop_loss_pct=0.01, max_positions=99, max_trades_per_day=99)
+    risk = RiskManager(capital=100_000, max_portfolio_risk=0.20, stop_loss_pct=0.01,
+                       max_positions=99, max_trades_per_day=99, max_leverage=99)
     book.record(Fill("a", "TCS", BUY, 2000, 1000.0))   # 20% at risk already
 
     decision = risk.check(book, price=1000.0, symbol="RELIANCE", marks={})
     assert decision.allowed is False and "portfolio risk" in decision.reason
+
+
+# ── margin: what actually runs out first on a small account ─────────────────
+
+def test_margin_binds_long_before_the_risk_ceiling_does(book):
+    """A finding worth stating plainly: with intraday leverage capped at 4x and
+    a 1% stop, total portfolio risk cannot exceed about 4%. The 30% ceiling
+    derived from simulation is unreachable in real intraday trading — margin,
+    not risk appetite, is the real constraint on ₹1,00,000."""
+    risk = RiskManager(capital=100_000, stop_loss_pct=0.01, max_positions=99,
+                       max_trades_per_day=99, max_leverage=4.0)
+    book.record(Fill("a", "TCS", BUY, 400, 1000.0))     # ₹4,00,000 = 4x, fully used
+
+    decision = risk.check(book, price=1000.0, symbol="RELIANCE", marks={})
+    assert decision.allowed is False
+    assert "gross exposure" in decision.reason
+    assert risk.exposure(book, marks={}).total_risk_pct == 0.04   # not 30%
+
+
+def test_a_position_is_trimmed_to_fit_rather_than_refused(book):
+    """Half the margin left should buy half the position, not nothing."""
+    risk = RiskManager(capital=100_000, stop_loss_pct=0.01, max_positions=99,
+                       max_trades_per_day=99, max_leverage=4.0)
+    book.record(Fill("a", "TCS", BUY, 300, 1000.0))     # 3x used, 1x left
+
+    decision = risk.check(book, price=1000.0, symbol="RELIANCE", marks={})
+    assert decision.allowed is True
+    assert decision.quantity == 100, "₹1,00,000 of headroom at ₹1,000 a share"
 
 
 def test_a_losing_streak_halts_the_engine(book):

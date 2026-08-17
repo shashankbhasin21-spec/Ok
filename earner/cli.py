@@ -125,7 +125,7 @@ def cmd_trade(platform: Platform, args) -> int:
 
     if args.mode == "simulate":
         run_sim(capital=args.capital, aggressive=args.aggressive,
-                workdir=str(cfg.workdir))
+                workdir=str(cfg.workdir), preset=args.preset or "")
         return 0
 
     universe = [s.strip().upper() for s in (args.symbols or cfg.trading_universe).split(",")
@@ -327,6 +327,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="simulate: synthetic day; check: live preflight; live: real orders")
     s.add_argument("--capital", type=float, default=200_000.0)
     s.add_argument("--aggressive", action="store_true", help="3%/trade, 30% portfolio ceiling")
+    s.add_argument("--preset", choices=["standard", "aggressive", "diversified"],
+                   help="diversified: 8 simultaneous positions, tight sector caps")
     s.add_argument("--symbols", help="comma-separated, defaults to TRADING_UNIVERSE")
     s.add_argument("--max-minutes", type=float, default=None,
                    help="flatten and stop after this long")

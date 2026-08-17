@@ -312,6 +312,12 @@ class PaperBroker:
     # Rough all-in intraday cost: brokerage, STT, exchange fees, GST, stamp duty.
     COST_RATE = 0.0005      # 5 bps per side
     SLIPPAGE_RATE = 0.0003  # 3 bps against you on a market order
+    # Flat charge per executed order. Set this to your actual plan — it is the
+    # cost that decides whether a small account can trade at all. On ₹1,00,000
+    # with ten positions, a round trip is twenty orders: ₹400 of fixed cost
+    # before the first rupee of profit, which a percentage-only model hides
+    # completely.
+    FIXED_COST_PER_ORDER = 20.0
 
     def __init__(self, cfg, quote_source=None, starting_capital: float = 100_000.0):
         self.cfg = cfg
@@ -340,8 +346,9 @@ class PaperBroker:
         mid = price or self.quote(symbol, token).last_price
         # Slippage always works against you, whichever way you are going.
         fill_price = mid * (1 + self.SLIPPAGE_RATE) if side == BUY else mid * (1 - self.SLIPPAGE_RATE)
-        cost = fill_price * quantity * self.COST_RATE
+        cost = fill_price * quantity * self.COST_RATE + self.FIXED_COST_PER_ORDER
         self.capital -= cost
+        self.costs_paid = getattr(self, "costs_paid", 0.0) + cost
 
         fill = Fill(
             order_id=f"paper-{uuid.uuid4().hex[:10]}", symbol=symbol, side=side,
