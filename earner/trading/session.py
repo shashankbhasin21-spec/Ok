@@ -19,6 +19,7 @@ import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, time as dtime
+from pathlib import Path
 
 from .risk import IST
 
@@ -118,6 +119,46 @@ def market_status(now: datetime | None = None) -> MarketStatus:
 
 # ── data freshness ──────────────────────────────────────────────────────────
 
-def is_stale(quote_time: float, *, max_age_seconds: float = 5.0) -> bool:
-    """Trading on a stale quote is trading on a price that no longer exists."""
-    return (time.time() - quote_time) > max_age_seconds
+MAX_QUOTE_AGE_SECONDS = 15.0
+
+
+def is_stale(quote_time: float, *, max_age_seconds: float = MAX_QUOTE_AGE_SECONDS,
+             now: float | None = None) -> bool:
+    """Trading on a stale quote is trading on a price that no longer exists.
+
+    `now` is injectable so a replay can evaluate staleness against simulated
+    time rather than wall-clock time.
+    """
+    return ((now if now is not None else time.time()) - quote_time) > max_age_seconds
+
+
+# ── external kill switch ────────────────────────────────────────────────────
+
+KILL_FILE = "KILL"
+
+
+def kill_requested(workdir: str | Path = ".earner") -> str:
+    """Reason if an operator has asked for a halt from outside the process.
+
+    A file rather than a signal handler or an API: it works when the terminal
+    is gone, when the process is unattended, and from any other shell or
+    machine with access to the directory. Creating it is the one operation an
+    operator must be able to perform under pressure without reading anything.
+
+        touch .earner/KILL          # halt new entries and flatten
+
+    Checked every tick and never cached, because the whole point is that it can
+    appear after the engine started.
+    """
+    path = Path(workdir) / KILL_FILE
+    if not path.exists():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8").strip() or "operator kill file present"
+    except OSError:
+        return "operator kill file present"
+
+
+def clear_kill(workdir: str | Path = ".earner") -> None:
+    """Remove the kill file. Deliberately explicit — never automatic."""
+    (Path(workdir) / KILL_FILE).unlink(missing_ok=True)

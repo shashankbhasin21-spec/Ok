@@ -1,0 +1,35 @@
+name: tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # The trading stack imports with no third-party packages. This step
+      # fails if that ever stops being true, because a dependency added
+      # silently is a dependency nobody audited.
+      - name: No third-party imports in the trading stack
+        run: python -c "import earner.trading.live, earner.trading.engine, earner.trading.orders"
+
+      - run: pip install pytest pyflakes
+      # Scoped to the trading stack and its tests; the older earner/ package
+      # predates this work and is linted separately.
+      - run: python -m pyflakes earner/trading/ tests/test_{trading,strategy,engine,orders,live,backtest,research}.py
+      - run: python -m pytest -q
+
+      # A secret reaching git is not recoverable by deleting it later.
+      - name: Secret scan
+        run: |
+          if git ls-files | grep -iE '(^|/)\.env$|\.pem$|\.key$|credentials|secrets\.'; then
+            echo "::error::a credential-shaped file is tracked"; exit 1
+          fi
+          if git grep -nIE '(sk-ant-|sk_live_|AKIA[0-9A-Z]{16})' -- . ':!*.example' ':!docs/*'; then
+            echo "::error::a live-looking key is committed"; exit 1
+          fi
+          echo "clean"

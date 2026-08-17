@@ -17,7 +17,9 @@ from dataclasses import dataclass, field
 from .broker import BUY, SELL, BrokerError
 from .orders import FILLED, DuplicateOrder, OrderStore, Reconciler, require_clean
 from .risk import Book, RiskManager, trading_day
-from .session import TradingSession, load_session, market_status
+from .session import (
+    TradingSession, is_stale, kill_requested, load_session, market_status,
+)
 from .strategy import ALL_STRATEGIES, Candle, Signal, classify_regime
 
 # A trade must clear this after costs, or it is not an edge (spec §11).
@@ -28,6 +30,11 @@ COST_PER_SHARE_ESTIMATE = 0.03
 # as a fraction of that signal's own stop distance. Past this the reward/risk
 # the trade was approved on no longer describes the trade you would get.
 MAX_ENTRY_DRIFT = 0.5
+
+# How an ambiguous bar — one that touched both the stop and the target — is
+# resolved. WORST_CASE by default and in production: never hand the strategy
+# the favourable reading of something the data cannot settle.
+WORST_CASE, BEST_CASE, OHLC_PATH = "WORST_CASE", "BEST_CASE", "OHLC_PATH"
 
 
 @dataclass
@@ -45,6 +52,7 @@ class ManagedPosition:
     opened_at: float = field(default_factory=time.time)
 
     def exit_reason(self, price: float) -> str | None:
+        """Exit test against a single price. See `exit_on_bar` for real bars."""
         if self.side == BUY:
             if price <= self.stop:
                 return "stop"
@@ -55,6 +63,40 @@ class ManagedPosition:
                 return "stop"
             if price <= self.target:
                 return "target"
+        return None
+
+    def exit_on_bar(self, bar: Candle, mode: str = "WORST_CASE") -> tuple[str, float] | None:
+        """Exit test against a whole bar, which is what actually trades.
+
+        A bar's close says nothing about the path taken to reach it. If the low
+        went through the stop and the high went through the target, both were
+        touched and the close is silent about which came first. Resolving that
+        by whichever the close happens to be nearer is a coin flip dressed as a
+        rule, and it always flatters the backtest.
+
+        WORST_CASE assumes the stop came first whenever both were touched. It is
+        the default because an assumption that costs you money when wrong is the
+        only safe kind, and because ambiguity resolved in your favour is exactly
+        how a losing strategy passes a backtest.
+        """
+        if self.side == BUY:
+            hit_stop, hit_target = bar.low <= self.stop, bar.high >= self.target
+        else:
+            hit_stop, hit_target = bar.high >= self.stop, bar.low <= self.target
+
+        if hit_stop and hit_target:
+            if mode == "BEST_CASE":
+                return "target", self.target
+            if mode == "OHLC_PATH":
+                # Assume the bar travelled open → nearer extreme → other extreme.
+                first_low = abs(bar.open - bar.low) <= abs(bar.high - bar.open)
+                stop_first = first_low if self.side == BUY else not first_low
+                return ("stop", self.stop) if stop_first else ("target", self.target)
+            return "stop", self.stop          # WORST_CASE
+        if hit_stop:
+            return "stop", self.stop
+        if hit_target:
+            return "target", self.target
         return None
 
     def unrealized(self, price: float) -> float:
@@ -76,7 +118,7 @@ class EngineEvent:
 class Engine:
     def __init__(self, broker, book: Book, risk: RiskManager,
                  session: TradingSession | None = None, strategies=ALL_STRATEGIES,
-                 orders: OrderStore | None = None):
+                 orders: OrderStore | None = None, workdir: str = ".earner"):
         self.broker = broker
         self.book = book
         self.risk = risk
@@ -86,12 +128,18 @@ class Engine:
         # before it is sent, so a crash mid-flight is recoverable.
         self.orders = orders
         self.sequence = 0
+        self.workdir = workdir
         self.positions: dict[str, ManagedPosition] = {}
         self.events: list[EngineEvent] = []
         # Symbols closed on this pass. Re-entering the name you just exited, on
         # the bar you exited it, is how an engine pays brokerage in a loop.
         self.just_exited: set[str] = set()
         self._last_logged: dict[tuple[str, str], str] = {}
+        # symbol -> when its latest quote was observed. Empty means the caller
+        # is a backtest replaying stored bars, where staleness is meaningless.
+        self.quote_ages: dict[str, float] = {}
+        self.clock = time.time
+        self.execution_mode = WORST_CASE
 
     def log(self, stage: str, detail: str, *, dedupe: bool = False) -> None:
         """Record an event. `dedupe` suppresses a repeat of the last message for
@@ -123,8 +171,17 @@ class Engine:
 
         # Position management first, and unconditionally: exits must run even
         # when the market has stopped accepting new orders.
-        self.manage(marks, square_off=status.should_square_off)
+        bars = {s: c[-1] for s, c in market.items() if c}
+        self.manage(marks, square_off=status.should_square_off, bars=bars)
         if self.enforce_daily_stop(marks):
+            return
+
+        # An operator can stop this from outside the process, at any moment,
+        # without the strategy engine's cooperation.
+        kill = kill_requested(self.workdir)
+        if kill and not self.risk.halted:
+            self.log("kill_switch", f"external halt requested — {kill}")
+            self.flatten_all(marks, reason=f"kill switch: {kill}")
             return
 
         if not status.accepting_new:
@@ -136,6 +193,13 @@ class Engine:
 
         for symbol, candles in market.items():
             if symbol in self.positions or symbol in self.just_exited or not candles:
+                continue
+            # A stale quote is a price that no longer exists. Entries are
+            # refused on one; exits above were not, because getting out on an
+            # old price beats not getting out at all.
+            if self.quote_ages and is_stale(self.quote_ages.get(symbol, 0.0),
+                                            now=self.clock()):
+                self.log("stale_data", f"{symbol}: quote too old to open on", dedupe=True)
                 continue
             self.consider(symbol, candles, marks)
 
@@ -282,14 +346,28 @@ class Engine:
         self.log("filled", f"{signal.symbol} {signal.side} {fill.quantity} @ ₹{fill.price:,.2f} "
                            f"| stop ₹{signal.stop:,.2f} target ₹{signal.target:,.2f}")
 
-    def manage(self, marks: dict[str, float], *, square_off: bool = False) -> None:
-        """Exits. Runs every tick regardless of what signal generation did."""
+    def manage(self, marks: dict[str, float], *, square_off: bool = False,
+               bars: dict[str, Candle] | None = None) -> None:
+        """Exits. Runs every tick regardless of what signal generation did.
+
+        When the caller supplies whole bars the stop and target are tested
+        against the bar's high and low, not its close — a bar that traded
+        through the stop hit the stop, whatever it closed at.
+        """
+        bars = bars or {}
         for symbol, position in list(self.positions.items()):
             price = marks.get(symbol)
             if square_off:
                 # A missing tick must not carry a position past the MIS cutoff:
                 # the order goes at market, the price here only prices the log.
                 self.exit(position, price if price is not None else position.entry, "square_off")
+                continue
+            bar = bars.get(symbol)
+            if bar is not None:
+                outcome = position.exit_on_bar(bar, self.execution_mode)
+                if outcome:
+                    reason, fill_price = outcome
+                    self.exit(position, fill_price, reason)
                 continue
             if price is None:
                 continue

@@ -61,6 +61,87 @@ class Signal:
         )
 
 
+# ── bars versus time ────────────────────────────────────────────────────────
+#
+# The distinction that this section exists to enforce: a *bar count* and a
+# *wall-clock duration* are different quantities, and confusing them silently
+# changes what a strategy does.
+#
+# `opening_range(candles, 15)` used to slice `candles[:15]` — fifteen bars. On
+# one-minute data that is fifteen minutes and correct. On five-minute data it is
+# seventy-five minutes, while the log still said "the 15m high". Every result
+# measured on five-minute bars was therefore for a strategy nobody described.
+#
+# Strategies now declare durations in minutes and convert against the interval
+# of the data they are actually handed, so a 15-minute opening range is fifteen
+# minutes on every timeframe.
+
+class TimeframeError(ValueError):
+    """A duration cannot be expressed in whole bars of this interval."""
+
+
+def infer_bar_minutes(candles: list[Candle]) -> int:
+    """The bar interval of this series, in minutes, from the timestamps.
+
+    Read from the data rather than configured, because a configured value can
+    disagree with the file it describes and nothing would notice.
+    """
+    if len(candles) < 2:
+        raise TimeframeError("need at least two bars to infer an interval")
+    gaps = [candles[i + 1].at - candles[i].at for i in range(len(candles) - 1)]
+    gaps = [g for g in gaps if g > 0]
+    if not gaps:
+        raise TimeframeError("bars carry no usable timestamps")
+    gaps.sort()
+    # Median, so an overnight gap between sessions does not set the interval.
+    seconds = gaps[len(gaps) // 2]
+    minutes = round(seconds / 60)
+    if minutes < 1:
+        raise TimeframeError(f"sub-minute bars ({seconds:.0f}s) are not supported")
+    return minutes
+
+
+def bars_for(duration_minutes: int, bar_minutes: int) -> int:
+    """How many bars of `bar_minutes` make up `duration_minutes`.
+
+    Refuses rather than rounds. A 15-minute range on 7-minute bars is not two
+    bars and not three; it is a request that cannot be honoured, and silently
+    rounding it would reintroduce exactly the bug this replaces.
+    """
+    if duration_minutes <= 0 or bar_minutes <= 0:
+        raise TimeframeError("durations and intervals must be positive")
+    if duration_minutes % bar_minutes:
+        raise TimeframeError(
+            f"{duration_minutes}-minute window is not a whole number of "
+            f"{bar_minutes}-minute bars"
+        )
+    return duration_minutes // bar_minutes
+
+
+def warmed_up(candles: list[Candle], minutes: int | None = None) -> bool:
+    """Enough history for the indicators, measured in time rather than bars.
+
+    The bug this replaces: `len(candles) < 40` meant forty minutes live on
+    one-minute bars and two hundred minutes in a five-minute backtest, so the
+    strategy that was tested was not the strategy that would run.
+    """
+    if len(candles) < 2:
+        return False
+    try:
+        need = bars_for(minutes or WARMUP_MINUTES, infer_bar_minutes(candles))
+    except TimeframeError:
+        return False
+    # Indicator periods are bar counts by convention; EMA21 + ATR14 needs 22.
+    return len(candles) >= max(need, 22)
+
+
+# The history every strategy needs before it may speak, as a duration rather
+# than a bar count: EMA21 plus ATR14 on one-minute bars. Converted per
+# timeframe at evaluation time so backtest and live warm up for the same
+# wall-clock period rather than the same number of bars.
+WARMUP_MINUTES = 40
+
+
 # ── indicators ──────────────────────────────────────────────────────────────
 
 def ready(*values) -> bool:
@@ -117,11 +198,21 @@ def rsi(values: list[float], period: int = 14) -> float | None:
     return 100 - (100 / (1 + rs))
 
 
-def opening_range(candles: list[Candle], minutes: int = 15) -> tuple[float, float] | None:
-    """High and low of the first N minutes — the day's first real reference."""
-    if len(candles) < minutes:
+def opening_range(candles: list[Candle], duration_minutes: int = 15,
+                  bar_minutes: int | None = None) -> tuple[float, float] | None:
+    """High and low of the first `duration_minutes` of the session.
+
+    `bar_minutes` is inferred from the series when not given, so the window is
+    a real duration on any timeframe rather than a bar count that happens to
+    equal one on one-minute data.
+    """
+    if len(candles) < 2:
         return None
-    window = candles[:minutes]
+    bar_minutes = bar_minutes or infer_bar_minutes(candles)
+    bars = bars_for(duration_minutes, bar_minutes)
+    if len(candles) < bars:
+        return None
+    window = candles[:bars]
     return max(c.high for c in window), min(c.low for c in window)
 
 
@@ -146,22 +237,36 @@ class OpeningRangeBreakout(Strategy):
     regimes = ("STRONG_BULL", "BULL", "STRONG_BEAR", "BEAR")
 
     def __init__(self, range_minutes: int = 15, volume_multiple: float = 1.5):
+        # A wall-clock duration, converted to bars against whatever data arrives.
         self.range_minutes = range_minutes
         self.volume_multiple = volume_multiple
 
     def evaluate(self, symbol: str, candles: list[Candle]) -> Signal | None:
-        rng = opening_range(candles, self.range_minutes)
+        if len(candles) < 2:
+            return None
+        try:
+            bar_minutes = infer_bar_minutes(candles)
+            range_bars = bars_for(self.range_minutes, bar_minutes)
+            warmup_bars = max(bars_for(WARMUP_MINUTES, bar_minutes), range_bars + 2)
+        except TimeframeError:
+            return None
+
+        rng = opening_range(candles, self.range_minutes, bar_minutes)
         current_atr = atr(candles)
         current_vwap = vwap(candles)
-        if rng is None or not ready(current_atr, current_vwap) or len(candles) < 25:
+        if rng is None or not ready(current_atr, current_vwap) or len(candles) < warmup_bars:
             return None
         if not current_atr:
             return None  # a zero-range tape has no stop to place
 
         high, low = rng
         last = candles[-1]
-        recent_volume = sum(c.volume for c in candles[-3:]) / 3
-        baseline = sum(c.volume for c in candles[: self.range_minutes]) / self.range_minutes
+        # Compare like with like: the recent window and the baseline window are
+        # both durations, so the volume ratio means the same thing on any
+        # timeframe.
+        recent_bars = max(bars_for(15, bar_minutes), 1) if bar_minutes <= 15 else 1
+        recent_volume = sum(c.volume for c in candles[-recent_bars:]) / recent_bars
+        baseline = sum(c.volume for c in candles[:range_bars]) / range_bars
         if baseline and recent_volume < baseline * self.volume_multiple:
             return None  # break without participation
 
@@ -201,7 +306,7 @@ class VWAPMomentum(Strategy):
     regimes = ("STRONG_BULL", "BULL", "BEAR", "STRONG_BEAR")
 
     def evaluate(self, symbol: str, candles: list[Candle]) -> Signal | None:
-        if len(candles) < 40:
+        if not warmed_up(candles):
             return None
         closes = [c.close for c in candles]
         current_vwap, fast, slow = vwap(candles), ema(closes, 9), ema(closes, 21)
@@ -249,7 +354,7 @@ class MeanReversion(Strategy):
         self.stretch_atr = stretch_atr
 
     def evaluate(self, symbol: str, candles: list[Candle]) -> Signal | None:
-        if len(candles) < 40:
+        if not warmed_up(candles):
             return None
         closes = [c.close for c in candles]
         current_vwap, current_atr, strength = vwap(candles), atr(candles), rsi(closes)
@@ -286,7 +391,7 @@ class MeanReversion(Strategy):
 
 def classify_regime(candles: list[Candle]) -> str:
     """Market regime (spec §01). Strategies are only run in regimes that suit them."""
-    if len(candles) < 40:
+    if not warmed_up(candles):
         return "NEUTRAL"
     closes = [c.close for c in candles]
     fast, slow, current_atr = ema(closes, 9), ema(closes, 21), atr(candles)

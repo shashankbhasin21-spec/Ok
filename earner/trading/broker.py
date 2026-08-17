@@ -395,12 +395,23 @@ class PaperBroker:
         ]
 
     def positions(self) -> list[dict]:
-        net: dict[str, int] = {}
+        """Shaped like Kotak's netted position response, not like a convenience dict.
+
+        Parity is the point: reconciliation must exercise the identical parser
+        on paper that it will run against the broker, or the paper run proves
+        nothing about the code path that matters.
+        """
+        bought: dict[str, int] = {}
+        sold: dict[str, int] = {}
         for fill in self.fills:
-            net[fill.symbol] = net.get(fill.symbol, 0) + (
-                fill.quantity if fill.side == BUY else -fill.quantity
-            )
-        return [{"symbol": s, "quantity": q} for s, q in net.items() if q]
+            book = bought if fill.side == BUY else sold
+            book[fill.symbol] = book.get(fill.symbol, 0) + fill.quantity
+        return [
+            {"trdSym": f"{symbol}-EQ", "sym": symbol, "prod": PRODUCT_INTRADAY,
+             "flBuyQty": bought.get(symbol, 0), "flSellQty": sold.get(symbol, 0)}
+            for symbol in sorted(set(bought) | set(sold))
+            if bought.get(symbol, 0) != sold.get(symbol, 0)
+        ]
 
     def available_margin(self) -> float:
         return self.capital

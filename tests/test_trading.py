@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from earner.trading.broker import BUY, SELL, BrokerError, Fill, PaperBroker
-from earner.trading.risk import Book, RiskManager, trading_day
+from earner.trading.risk import Book, RiskManager
 
 
 @pytest.fixture
@@ -135,7 +135,7 @@ def test_paper_broker_refuses_a_price_it_does_not_have(cfg):
 # ── the deployment gate ─────────────────────────────────────────────────────
 
 from earner.trading.session import (  # noqa: E402
-    CONFIRMATION_PHRASE, DEVELOPMENT, GateClosed, LIVE, PAPER,
+    CONFIRMATION_PHRASE, DEVELOPMENT, GateClosed, PAPER,
     is_stale, load_session, market_status,
 )
 from datetime import datetime, timedelta, timezone  # noqa: E402

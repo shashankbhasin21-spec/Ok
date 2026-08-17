@@ -28,12 +28,16 @@ from .engine import Engine
 from .orders import OrderStore, Reconciler, require_clean
 from .risk import Book, RiskManager
 from .session import CONFIRMATION_PHRASE, LIVE, load_session, market_status
-from .strategy import Candle
+from .strategy import WARMUP_MINUTES, Candle, bars_for
 
-# Enough history for EMA21, ATR14, RSI14 and a 15-minute opening range.
-WARMUP_CANDLES = 40
 POLL_SECONDS = 5.0
 CANDLE_SECONDS = 60.0
+
+# Enough history for EMA21, ATR14, RSI14 and a 15-minute opening range. Held as
+# a duration and converted to bars, so live and backtest warm up for the same
+# wall-clock period rather than the same number of bars — the previous flat 40
+# meant 40 minutes here and 200 minutes in a five-minute backtest.
+WARMUP_CANDLES = max(bars_for(WARMUP_MINUTES, int(CANDLE_SECONDS // 60)), 22)
 
 
 @dataclass
@@ -139,7 +143,8 @@ def run_live(cfg, *, universe: list[str], capital: float, aggressive: bool = Fal
     book = Book(Path(workdir) / "book.db")
     orders = OrderStore(Path(workdir) / "orders.db")
     risk = RiskManager.aggressive(capital) if aggressive else RiskManager(capital)
-    engine = Engine(broker, book, risk, session=session, orders=orders)
+    engine = Engine(broker, book, risk, session=session, orders=orders,
+                    workdir=workdir)
 
     # Believe the broker over ourselves before doing anything at all.
     require_clean(engine.start())
@@ -165,6 +170,9 @@ def run_live(cfg, *, universe: list[str], capital: float, aggressive: bool = Fal
                     engine.log("quote_failed", f"{symbol}: {exc}", dedupe=True)
                     continue
                 builder.add(symbol, quote.last_price)
+                # Record when this price was actually observed, so the engine
+                # can refuse to open on a quote that has stopped updating.
+                engine.quote_ages[symbol] = quote.at
 
             market = {s: c for s, c in builder.market().items() if len(c) >= WARMUP_CANDLES}
             if market:

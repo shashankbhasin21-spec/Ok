@@ -34,7 +34,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .broker import BUY, BrokerError, Fill
+from .broker import BUY, SELL, BrokerError, Fill
 from .risk import trading_day
 
 # Local order states.
@@ -304,6 +304,50 @@ def normalise_kotak_order(row: dict) -> BrokerOrder:
     )
 
 
+def read_kotak_position(row: dict) -> tuple[str, int, bool]:
+    """One Kotak position row as (symbol, signed quantity, parsed).
+
+    Written against the verified v2 schema rather than from assumption. The
+    previous version read ``flBuyQty``, ``flSellQty``, ``buyQty``, ``sellQty``
+    and ``quantity`` — **none of which the response contains** — so every real
+    position parsed as zero and the divergence check that exists to catch
+    "long something you believe you sold" was inert.
+
+    The documented row carries ``sym``/``trdSym``, ``trnsTp`` (B or S),
+    ``fldQty`` (filled) and ``qty``. Netted deployments additionally return
+    ``flBuyQty``/``flSellQty``; both shapes are handled, and anything else
+    returns ``parsed=False`` so the caller raises a divergence instead of
+    silently recording a flat position.
+    """
+    symbol = str(row.get("trdSym") or row.get("sym") or row.get("symbol") or "").upper()
+    symbol = symbol.split("-")[0].strip()
+    if not symbol:
+        return "", 0, False
+
+    def number(*keys) -> float | None:
+        for key in keys:
+            if key in row and row[key] not in (None, ""):
+                try:
+                    return float(str(row[key]).strip())
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    # Netted shape: explicit buy and sell quantities.
+    buys, sells = number("flBuyQty", "buyQty"), number("flSellQty", "sellQty")
+    if buys is not None or sells is not None:
+        return symbol, int((buys or 0) - (sells or 0)), True
+
+    # Per-leg shape: a filled quantity plus a side.
+    filled = number("fldQty", "qty", "quantity")
+    if filled is None:
+        return symbol, 0, False
+    side = str(row.get("trnsTp") or "").strip().upper()
+    if side not in (BUY, SELL):
+        return symbol, 0, False
+    return symbol, int(filled if side == BUY else -filled), True
+
+
 # ── reconciliation ──────────────────────────────────────────────────────────
 
 @dataclass
@@ -417,21 +461,26 @@ class Reconciler:
         except BrokerError as exc:
             return [Divergence("broker_unreachable", f"could not read positions: {exc}")]
 
+        out_unparsed: list[str] = []
+
         theirs: dict[str, int] = {}
         for row in remote_positions:
-            symbol = str(row.get("trdSym") or row.get("sym") or row.get("symbol") or "").upper()
-            symbol = symbol.split("-")[0]
-            if not symbol:
+            symbol, quantity, ok = read_kotak_position(row)
+            if not ok:
+                # A row we cannot parse is a divergence, not a zero. Treating an
+                # unreadable position as flat is how an engine concludes it owns
+                # nothing while the broker holds stock.
+                out_unparsed.append(str(row.get("trdSym") or row.get("sym") or row))
                 continue
-            try:
-                buy = int(float(row.get("flBuyQty") or row.get("buyQty") or 0))
-                sell = int(float(row.get("flSellQty") or row.get("sellQty") or 0))
-                quantity = buy - sell if (buy or sell) else int(float(row.get("quantity") or 0))
-            except (TypeError, ValueError):
-                continue
-            theirs[symbol] = theirs.get(symbol, 0) + quantity
+            if symbol:
+                theirs[symbol] = theirs.get(symbol, 0) + quantity
 
-        out: list[Divergence] = []
+        out: list[Divergence] = [
+            Divergence("unreadable_position",
+                       f"could not read the broker's position row for {name} — "
+                       "refusing to assume it is flat")
+            for name in out_unparsed
+        ]
         symbols = set(theirs) | {o.symbol for o in self.store.orders(session) if o.filled_quantity}
         for symbol in sorted(symbols):
             ours = self.store.net_position(symbol, session)

@@ -445,3 +445,123 @@ def test_events_are_persisted_to_the_book(book):
 
     notes = list(book.conn.execute("SELECT kind, data FROM notes"))
     assert notes and all(n["kind"] == "engine" for n in notes)
+
+
+# ── stale data and the external kill switch ─────────────────────────────────
+
+def test_a_stale_quote_blocks_a_new_entry(book):
+    """`is_stale` existed for weeks and was never called from anywhere. This is
+    the test that keeps it wired."""
+    engine, broker, _ = build(book, [Scripted(signal())])
+    engine.clock = lambda: 1_000_000.0
+    engine.quote_ages["RELIANCE"] = 1_000_000.0 - 60      # a minute old
+
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+
+    assert broker.orders == []
+    assert "stale_data" in stages(engine)
+
+
+def test_a_fresh_quote_is_traded_normally(book):
+    engine, broker, _ = build(book, [Scripted(signal())])
+    engine.clock = lambda: 1_000_000.0
+    engine.quote_ages["RELIANCE"] = 1_000_000.0 - 1
+
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+    assert len(broker.orders) == 1
+
+
+def test_a_stale_quote_never_blocks_an_exit(book):
+    """Getting out on an old price beats not getting out at all."""
+    engine, broker, _ = build(book, [Scripted(signal())])
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+    assert "RELIANCE" in engine.positions
+
+    engine.clock = lambda: 1_000_000.0
+    engine.quote_ages["RELIANCE"] = 0.0                    # maximally stale
+    broker.price = 98.0
+    engine.tick({"RELIANCE": flat_candles(price=98.0)}, now=OPEN)
+
+    assert engine.positions == {}, "the stop must still fire"
+
+
+def test_an_operator_can_halt_the_engine_from_outside_the_process(book, tmp_path):
+    """A file, not a signal handler: it works when the terminal is gone."""
+    engine, broker, risk = build(book, [Scripted(signal())])
+    engine.workdir = str(tmp_path)
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+    assert "RELIANCE" in engine.positions
+
+    (tmp_path / "KILL").write_text("margin call")
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+
+    assert engine.positions == {}, "the kill switch flattens"
+    assert risk.halted is True
+    assert "margin call" in risk.halt_reason
+    assert "kill_switch" in stages(engine)
+
+
+def test_the_kill_switch_does_not_depend_on_the_strategy_engine(book, tmp_path):
+    """Every strategy is broken here and the halt still happens."""
+    engine, broker, risk = build(book, [Broken()])
+    engine.workdir = str(tmp_path)
+    (tmp_path / "KILL").write_text("")
+
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+    assert risk.halted is True
+
+
+# ── intrabar execution ──────────────────────────────────────────────────────
+
+def _bar(open_, high, low, close):
+    from earner.trading.strategy import Candle
+    return Candle(at=0.0, open=open_, high=high, low=low, close=close, volume=1_000.0)
+
+
+def test_a_bar_that_traded_through_the_stop_hit_the_stop(book):
+    """Whatever it closed at. The close says nothing about the path."""
+    position = ManagedPosition("X", BUY, 10, entry=100.0, stop=99.0, target=103.0,
+                               strategy="t", thesis="")
+    # Closed above the entry, but the low went through the stop.
+    assert position.exit_on_bar(_bar(100.0, 101.0, 98.5, 100.8)) == ("stop", 99.0)
+    assert position.exit_reason(100.8) is None, "the close alone would have missed it"
+
+
+def test_an_ambiguous_bar_is_resolved_against_the_strategy_by_default(book):
+    """Both touched, and the data cannot say which came first. WORST_CASE
+    assumes the stop — ambiguity resolved in your favour is how a losing
+    strategy passes a backtest."""
+    position = ManagedPosition("X", BUY, 10, entry=100.0, stop=99.0, target=103.0,
+                               strategy="t", thesis="")
+    both = _bar(100.0, 103.5, 98.5, 101.0)
+
+    assert position.exit_on_bar(both, "WORST_CASE") == ("stop", 99.0)
+    assert position.exit_on_bar(both, "BEST_CASE") == ("target", 103.0)
+
+
+def test_the_ohlc_path_mode_uses_the_nearer_extreme_first():
+    position = ManagedPosition("X", BUY, 10, entry=100.0, stop=99.0, target=103.0,
+                               strategy="t", thesis="")
+    # Opened near the low, so the low is assumed to have printed first.
+    assert position.exit_on_bar(_bar(99.2, 103.5, 98.5, 102.0), "OHLC_PATH") == ("stop", 99.0)
+    # Opened near the high, so the target is assumed first.
+    assert position.exit_on_bar(_bar(103.2, 103.5, 98.5, 100.0), "OHLC_PATH") == ("target", 103.0)
+
+
+def test_a_short_is_stopped_by_the_high_not_the_low():
+    position = ManagedPosition("X", SELL, 10, entry=100.0, stop=101.0, target=97.0,
+                               strategy="t", thesis="")
+    assert position.exit_on_bar(_bar(100.0, 101.5, 99.5, 99.8)) == ("stop", 101.0)
+    assert position.exit_on_bar(_bar(100.0, 100.2, 96.5, 99.0)) == ("target", 97.0)
+    assert position.exit_on_bar(_bar(100.0, 100.5, 99.5, 100.0)) is None
+
+
+def test_a_quiet_bar_exits_nothing():
+    position = ManagedPosition("X", BUY, 10, entry=100.0, stop=99.0, target=103.0,
+                               strategy="t", thesis="")
+    assert position.exit_on_bar(_bar(100.0, 100.4, 99.6, 100.2)) is None
+
+
+def test_the_engine_defaults_to_worst_case(book):
+    engine, _, _ = build(book, [Scripted(signal())])
+    assert engine.execution_mode == "WORST_CASE"

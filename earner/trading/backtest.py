@@ -29,12 +29,17 @@ from .engine import Engine
 from .marketdata import load_universe
 from .risk import IST, Book, RiskManager
 from .session import load_session
-from .strategy import Candle
 
-# The strategies need EMA21/ATR14/RSI14 plus an opening range before they may
-# speak. On five-minute bars that is most of the morning — an honest cost of
-# using the only free intraday history there is.
-WARMUP_BARS = 40
+# Warm-up is a wall-clock duration, converted per timeframe. It was previously
+# a flat 40 bars, which meant 40 minutes live on one-minute data and 200 minutes
+# here on five-minute data — so the strategy that was backtested was not the
+# strategy that would have run.
+from .strategy import WARMUP_MINUTES, bars_for, infer_bar_minutes  # noqa: E402
+
+
+def warmup_bars(candles) -> int:
+    """Bars of history needed before trading, for this series' interval."""
+    return max(bars_for(WARMUP_MINUTES, infer_bar_minutes(candles)), 22)
 
 
 @dataclass
@@ -155,9 +160,10 @@ def run(symbols: list[str] | None = None, *, capital: float = 100_000.0,
             book.close()
             continue
         longest = max(len(c) for c in today.values())
+        warmup = warmup_bars(next(iter(today.values())))
 
         # Walk forward: at each step the engine sees only what had printed.
-        for cursor in range(WARMUP_BARS, longest + 1):
+        for cursor in range(warmup, longest + 1):
             window = {s: c[:cursor] for s, c in today.items() if len(c) >= cursor}
             if not window:
                 continue
@@ -225,7 +231,8 @@ def replay(data: dict, days: list[str], strategies, *, capital: float = 100_000.
                         strategies=strategies)
 
         longest = max(len(c) for c in today.values())
-        for cursor in range(WARMUP_BARS, longest + 1):
+        warmup = warmup_bars(next(iter(today.values())))
+        for cursor in range(warmup, longest + 1):
             window = {s: c[:cursor] for s, c in today.items() if len(c) >= cursor}
             if not window:
                 continue

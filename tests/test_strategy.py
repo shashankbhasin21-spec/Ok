@@ -7,6 +7,8 @@ these tests check that a plausible-looking setup is correctly declined.
 
 from __future__ import annotations
 
+import pytest
+
 from earner.trading.broker import BUY, SELL
 from earner.trading.strategy import (
     Candle, MeanReversion, OpeningRangeBreakout, Signal, VWAPMomentum,
@@ -105,18 +107,35 @@ def test_rsi_pins_at_the_extremes():
     assert 45 < rsi(zigzag(100.0, 1.0, 1.0, 20)) < 55        # balanced
 
 
-def test_opening_range_is_the_first_n_minutes_only():
-    closes = [100.0] * 15 + [130.0] * 10          # the spike is outside the range
-    high, low = opening_range(series(closes), minutes=15)
-    assert high < 101 and low > 99
-    assert opening_range(series([100.0] * 5), minutes=15) is None
+def test_opening_range_is_a_duration_not_a_bar_count():
+    """The bug this pins: `candles[:15]` is 15 bars, which is 15 minutes on
+    1-minute data and 75 minutes on 5-minute data."""
+    closes = [100.0] * 15 + [130.0] * 25          # the spike is outside the range
+    one_minute = series(closes)                    # at = i * 60
+    high, low = opening_range(one_minute, 15)
+    assert high < 101 and low > 99, "15 minutes = 15 bars here"
+
+    five_minute = [Candle(c.at * 5, c.open, c.high, c.low, c.close, c.volume)
+                   for c in one_minute]
+    high5, low5 = opening_range(five_minute, 15)
+    assert high5 < 101 and low5 > 99, "15 minutes = 3 bars here, same window"
+
+
+def test_a_duration_that_is_not_whole_bars_is_refused_not_rounded():
+    from earner.trading.strategy import TimeframeError, bars_for
+
+    assert bars_for(15, 5) == 3 and bars_for(30, 5) == 6 and bars_for(60, 5) == 12
+    with pytest.raises(TimeframeError, match="whole number"):
+        bars_for(15, 7)
 
 
 # ── opening range breakout ──────────────────────────────────────────────────
 
 def _breakout(volume_multiple: float) -> list[Candle]:
-    closes = [100.0] * 15 + [100.0 + i * 0.5 for i in range(1, 16)]
-    volumes = [10_000.0] * 15 + [10_000.0 * volume_multiple] * 15
+    """15 minutes of range, then a break. Long enough to clear the 40-minute
+    warm-up, which is now a duration rather than a bar count."""
+    closes = [100.0] * 15 + [100.0] * 15 + [100.0 + i * 0.5 for i in range(1, 16)]
+    volumes = [10_000.0] * 30 + [10_000.0 * volume_multiple] * 15
     return series(closes, volumes=volumes)
 
 
@@ -134,14 +153,14 @@ def test_a_break_without_participation_is_refused():
 
 
 def test_a_downside_break_sells():
-    closes = [100.0] * 15 + [100.0 - i * 0.5 for i in range(1, 16)]
-    volumes = [10_000.0] * 15 + [30_000.0] * 15
+    closes = [100.0] * 30 + [100.0 - i * 0.5 for i in range(1, 16)]
+    volumes = [10_000.0] * 30 + [30_000.0] * 15
     signal = OpeningRangeBreakout().evaluate("TCS", series(closes, volumes=volumes))
     assert signal is not None and signal.side == SELL
     assert signal.stop > signal.entry > signal.target
 
 
-def test_no_breakout_signal_before_there_is_a_range():
+def test_no_breakout_signal_before_the_warmup_duration_has_passed():
     assert OpeningRangeBreakout().evaluate("X", series([100.0] * 20)) is None
 
 
@@ -161,7 +180,7 @@ def test_vwap_momentum_refuses_an_overextended_trend():
 
 
 def test_vwap_momentum_needs_enough_history():
-    assert VWAPMomentum().evaluate("X", series(zigzag(100.0, 1.0, 0.6, 30))) is None
+    assert VWAPMomentum().evaluate("X", series(zigzag(100.0, 1.0, 0.6, 20))) is None
 
 
 # ── mean reversion ──────────────────────────────────────────────────────────

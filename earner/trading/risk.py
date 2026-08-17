@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from .broker import BUY, SELL, Fill
+from .broker import BUY, Fill
 
 IST = timezone(timedelta(hours=5, minutes=30))
 

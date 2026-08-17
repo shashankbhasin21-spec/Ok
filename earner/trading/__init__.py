@@ -6,3 +6,19 @@ TRADING_MODE=LIVE and LIVE_TRADING_CONFIRMATION=I_UNDERSTAND_REAL_MONEY.
 
 from .broker import BUY, SELL, BrokerError, Fill, KotakBroker, PaperBroker, Quote  # noqa: F401
 from .risk import Book, Position, RiskDecision, RiskManager, trading_day  # noqa: F401
+
+# Re-exported deliberately: this is the package's public surface.
+__all__ = [
+    "BUY",
+    "Book",
+    "BrokerError",
+    "Fill",
+    "KotakBroker",
+    "PaperBroker",
+    "Position",
+    "Quote",
+    "RiskDecision",
+    "RiskManager",
+    "SELL",
+    "trading_day",
+]

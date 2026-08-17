@@ -338,7 +338,7 @@ class Verdict:
             lines += [
                 "  ⚠ THIS SEARCH CANNOT REACH A CONCLUSION.",
                 f"  The noise in a {len(self.split.validation)}-day Sharpe (±{error:.2f}) is larger",
-                f"  than any edge worth having. To identify a Sharpe-1.0 strategy among",
+                "  than any edge worth having. To identify a Sharpe-1.0 strategy among",
                 f"  {len(self.trials)} candidates you need about {required:,} validation days "
                 f"(~{required / TRADING_DAYS_PER_YEAR:.0f} years).",
                 "  Every result below is reported for completeness, not as evidence.",
