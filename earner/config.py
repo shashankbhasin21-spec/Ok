@@ -53,6 +53,17 @@ class Config:
     # Search terms the bidder feeds to Upwork each run.
     upwork_searches: str = "ai agent,ai automation,workflow automation"
 
+    # Kotak Neo. The consumer key identifies the app; the TOTP and MPIN are
+    # deliberately absent — the TOTP is time-based and cannot be stored, and
+    # storing an MPIN would put the account one leaked file away from anyone.
+    # Both are prompted at connect time.
+    kotak_consumer_key: str | None = None
+    kotak_mobile: str | None = None
+    kotak_ucc: str | None = None
+    # What the trading engine is allowed to touch. Liquid large caps by
+    # default: an intraday stop is only worth what the spread lets you get out at.
+    trading_universe: str = "RELIANCE,TCS,HDFCBANK,ICICIBANK,INFY,SBIN,ITC,LT"
+
 
     @property
     def is_live(self) -> bool:
@@ -102,6 +113,10 @@ def load(**overrides) -> Config:
         upwork_client_secret=env.get("UPWORK_CLIENT_SECRET"),
         upwork_redirect_uri=env.get("UPWORK_REDIRECT_URI"),
         upwork_searches=env.get("UPWORK_SEARCHES", Config.upwork_searches),
+        kotak_consumer_key=env.get("KOTAK_CONSUMER_KEY"),
+        kotak_mobile=env.get("KOTAK_MOBILE"),
+        kotak_ucc=env.get("KOTAK_UCC"),
+        trading_universe=env.get("TRADING_UNIVERSE", Config.trading_universe),
     )
     if overrides:
         cfg = Config(**{**cfg.__dict__, **overrides})

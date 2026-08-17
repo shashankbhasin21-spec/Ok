@@ -85,11 +85,11 @@ def book(tmp_path):
     b.close()
 
 
-def build(book, strategies, *, capital=100_000.0, price=100.0, **risk_kwargs):
+def build(book, strategies, *, capital=100_000.0, price=100.0, orders=None, **risk_kwargs):
     broker = StubBroker(price)
     risk = RiskManager(capital=capital, **risk_kwargs)
     engine = Engine(broker, book, risk, session=load_session({"TRADING_MODE": "PAPER"}),
-                    strategies=strategies)
+                    strategies=strategies, orders=orders)
     return engine, broker, risk
 
 
@@ -353,6 +353,89 @@ def test_status_keeps_realized_and_unrealized_apart(book):
     assert status["unrealized_pnl"] > 0
     assert status["open_positions"] == 1
     assert status["live"] is False
+
+
+# ── the order store in the path ─────────────────────────────────────────────
+
+def test_every_order_is_written_down_before_it_is_sent(book, tmp_path):
+    from earner.trading.orders import FILLED, OrderStore
+
+    store = OrderStore(tmp_path / "orders.db")
+    engine, broker, _ = build(book, [Scripted(signal())], orders=store)
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+
+    orders = store.orders()
+    assert len(orders) == 1
+    assert orders[0].state == FILLED
+    assert orders[0].broker_order_id == "stub-1", "the broker's own id is what we store"
+    assert orders[0].filled_quantity == broker.orders[0]["quantity"]
+    assert orders[0].average_price == 100.0
+    assert orders[0].intent.startswith("scripted:entry:")
+    store.close()
+
+
+def test_a_broker_failure_leaves_the_order_in_an_honest_unknown_state(book, tmp_path):
+    """We asked, the call failed, we do not know if it landed. Say exactly that."""
+    from earner.trading.orders import UNKNOWN, OrderStore
+
+    store = OrderStore(tmp_path / "orders.db")
+    engine, broker, _ = build(book, [Scripted(signal())], orders=store)
+    broker.fail_next = True
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+
+    assert store.orders()[0].state == UNKNOWN
+    assert engine.positions == {}, "a failed order is not a position"
+    assert "order_failed" in stages(engine)
+    store.close()
+
+
+def test_the_engine_is_sized_on_the_fill_not_on_the_request(book, tmp_path):
+    """A partial fill managed as a full one leaves shares behind at the close."""
+    from earner.trading.orders import OrderStore
+
+    class PartialBroker(StubBroker):
+        def place(self, *, symbol, token, side, quantity, order_type="MKT", price=0.0):
+            return super().place(symbol=symbol, token=token, side=side,
+                                 quantity=quantity // 2, order_type=order_type, price=price)
+
+    store = OrderStore(tmp_path / "orders.db")
+    risk = RiskManager(capital=100_000.0)
+    broker = PartialBroker(100.0)
+    engine = Engine(broker, book, risk, session=load_session({"TRADING_MODE": "PAPER"}),
+                    strategies=[Scripted(signal())], orders=store)
+    engine.tick({"RELIANCE": flat_candles()}, now=OPEN)
+
+    assert engine.positions["RELIANCE"].quantity == broker.orders[0]["quantity"]
+    store.close()
+
+
+def test_reconciliation_halts_the_engine_on_a_divergence(book, tmp_path):
+    from earner.trading.orders import OrderStore, ReconciliationRequired
+    from tests.test_orders import FakeBroker, remote
+
+    store = OrderStore(tmp_path / "orders.db")
+    broker = FakeBroker(orders=[remote("SOMEONE-ELSES", state="ACCEPTED", filled=0)])
+    engine = Engine(broker, book, RiskManager(capital=100_000.0),
+                    session=load_session({"TRADING_MODE": "PAPER"}), orders=store)
+
+    with pytest.raises(ReconciliationRequired):
+        engine.start()
+    assert engine.risk.halted is True
+    assert "divergence" in stages(engine)
+    store.close()
+
+
+def test_a_clean_reconciliation_lets_the_engine_start(book, tmp_path):
+    from earner.trading.orders import OrderStore
+    from tests.test_orders import FakeBroker
+
+    store = OrderStore(tmp_path / "orders.db")
+    engine = Engine(FakeBroker(orders=[], positions=[]), book, RiskManager(capital=100_000.0),
+                    session=load_session({"TRADING_MODE": "PAPER"}), orders=store)
+
+    report = engine.start()
+    assert report.clean and engine.risk.halted is False
+    store.close()
 
 
 def test_events_are_persisted_to_the_book(book):

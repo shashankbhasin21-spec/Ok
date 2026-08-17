@@ -63,8 +63,27 @@ class Broker(Protocol):
     def quote(self, symbol: str, token: str) -> Quote: ...
     def place(self, *, symbol: str, token: str, side: str, quantity: int,
               order_type: str = ORDER_MARKET, price: float = 0.0) -> Fill: ...
+    def order_book(self) -> list: ...
     def positions(self) -> list[dict]: ...
     def available_margin(self) -> float: ...
+
+
+def _sdk_error(response) -> str:
+    """The Kotak SDK catches its own exceptions and returns them as data.
+
+    ``place_order`` never raises: it answers ``{'Error': ...}`` on failure and
+    ``{"Error Message": "Complete the 2fa process..."}`` when the session was
+    never validated. Both look like a successful call to anything that only
+    checks for an exception, so every response is inspected here instead.
+    """
+    if not isinstance(response, dict):
+        return f"unexpected response type {type(response).__name__}: {response!r}"
+    for key in ("Error", "Error Message", "error", "errMsg", "message"):
+        if response.get(key):
+            return str(response[key])
+    if str(response.get("stat", "")).lower() in ("not_ok", "notok", "error"):
+        return str(response)
+    return ""
 
 
 class KotakBroker:
@@ -156,7 +175,15 @@ class KotakBroker:
             )
         return self._instruments[key]
 
-    def place(self, *, symbol, token, side, quantity, order_type=ORDER_MARKET, price=0.0) -> Fill:
+    def submit(self, *, symbol, token, side, quantity, order_type=ORDER_MARKET,
+               price=0.0, tag="earner") -> str:
+        """Send the order. Returns the broker's order number — not a fill.
+
+        This is deliberately the only method that talks to ``place_order``, and
+        deliberately does not pretend to know the outcome: Kotak answers with
+        ``{"stat": "Ok", "nOrdNo": "..."}`` and nothing about price or quantity
+        done. Ask ``confirm`` what actually happened.
+        """
         # Re-checked here rather than trusted from construction: a long-running
         # engine can outlive the assumptions it started with.
         self.session.require_live()
@@ -181,15 +208,79 @@ class KotakBroker:
             market_protection="0",
             pf="N",
             trigger_price="0",
-            tag="earner",
+            tag=tag,
         )
+        problem = _sdk_error(response)
+        if problem:
+            raise BrokerError(f"{symbol} {side} {quantity} rejected: {problem}")
         order_id = str(response.get("nOrdNo") or response.get("orderId") or "")
         if not order_id:
-            raise BrokerError(f"Order rejected: {response}")
-        return Fill(
-            order_id=order_id, symbol=symbol, side=side, quantity=quantity,
-            price=price or self.quote(symbol, token).last_price, paper=False,
+            raise BrokerError(f"{symbol} {side} {quantity} returned no order number: {response}")
+        return order_id
+
+    def confirm(self, order_id: str, *, timeout: float = 10.0,
+                interval: float = 0.5):
+        """Poll the order book until this order is done, and report what it did.
+
+        Returns the broker's own row. If the order is still working when the
+        timeout expires it raises — leaving the order in flight for the
+        reconciler rather than inventing an answer.
+        """
+        from .orders import TERMINAL
+
+        deadline = time.time() + timeout
+        last = None
+        while time.time() < deadline:
+            for row in self.order_book():
+                if row.broker_order_id == str(order_id):
+                    last = row
+                    if row.state in TERMINAL:
+                        return row
+                    break
+            time.sleep(interval)
+
+        if last is None:
+            raise BrokerError(
+                f"order {order_id} was accepted but never appeared in the order book "
+                "— reconcile before placing anything else"
+            )
+        raise BrokerError(
+            f"order {order_id} still {last.state} after {timeout:.0f}s "
+            f"({last.filled_quantity}/{last.quantity} done) — left in flight for reconciliation"
         )
+
+    def place(self, *, symbol, token, side, quantity, order_type=ORDER_MARKET, price=0.0) -> Fill:
+        """Submit and confirm. The returned price is the exchange's, never a quote."""
+        order_id = self.submit(symbol=symbol, token=token, side=side, quantity=quantity,
+                               order_type=order_type, price=price)
+        row = self.confirm(order_id)
+        from .orders import FILLED
+
+        if row.state != FILLED or row.filled_quantity <= 0:
+            why = f": {row.reject_reason}" if row.reject_reason else ""
+            raise BrokerError(
+                f"order {order_id} ended {row.state} "
+                f"({row.filled_quantity}/{row.quantity} done){why}"
+            )
+        return Fill(order_id=order_id, symbol=symbol, side=side,
+                    quantity=row.filled_quantity, price=row.average_price, paper=False)
+
+    def cancel(self, order_id: str) -> None:
+        response = self._require().cancel_order(order_id=str(order_id), isVerify=True)
+        problem = _sdk_error(response)
+        if problem:
+            raise BrokerError(f"could not cancel {order_id}: {problem}")
+
+    def order_book(self) -> list:
+        """The broker's own order book, translated into our vocabulary."""
+        from .orders import normalise_kotak_order
+
+        response = self._require().order_report()
+        problem = _sdk_error(response)
+        if problem:
+            raise BrokerError(f"could not read the order book: {problem}")
+        rows = response if isinstance(response, list) else (response.get("data") or [])
+        return [normalise_kotak_order(row) for row in rows]
 
     def positions(self) -> list[dict]:
         data = self._require().positions()
@@ -258,6 +349,31 @@ class PaperBroker:
         )
         self.fills.append(fill)
         return fill
+
+    def submit(self, *, symbol, token, side, quantity, order_type=ORDER_MARKET,
+               price=0.0, tag="earner") -> str:
+        return self.place(symbol=symbol, token=token, side=side, quantity=quantity,
+                          order_type=order_type, price=price).order_id
+
+    def cancel(self, order_id: str) -> None:
+        raise BrokerError(f"paper order {order_id} filled immediately — nothing to cancel")
+
+    def order_book(self) -> list:
+        """Paper orders fill on submission, so every one of them is complete.
+
+        Shaped identically to the live order book so the reconciler runs against
+        paper exactly as it will run against Kotak.
+        """
+        from .orders import FILLED, BrokerOrder
+
+        return [
+            BrokerOrder(
+                broker_order_id=f.order_id, symbol=f.symbol, side=f.side,
+                quantity=f.quantity, filled_quantity=f.quantity,
+                average_price=f.price, state=FILLED,
+            )
+            for f in self.fills
+        ]
 
     def positions(self) -> list[dict]:
         net: dict[str, int] = {}

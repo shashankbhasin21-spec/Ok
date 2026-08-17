@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 
 from .broker import PaperBroker
 from .engine import Engine
+from .orders import OrderStore, Reconciler
 from .risk import Book, RiskManager
 from .risk import IST
 from .session import load_session
@@ -45,10 +46,14 @@ def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".e
     from pathlib import Path
 
     book = Book(Path(workdir) / "sim_book.db")
+    orders = OrderStore(Path(workdir) / "sim_orders.db")
     session = load_session({"TRADING_MODE": "PAPER"})
     risk = RiskManager.aggressive(capital) if aggressive else RiskManager(capital)
     broker = PaperBroker(None, starting_capital=capital)
-    engine = Engine(broker, book, risk, session=session)
+    # The order store is in the path here for the same reason it will be live:
+    # so the run exercises write-ahead and reconciliation, not a simpler
+    # code path that happens to work because nothing ever fails.
+    engine = Engine(broker, book, risk, session=session, orders=orders)
 
     universe = {
         "RELIANCE":  generate_day(1, trend=0.018),
@@ -81,10 +86,17 @@ def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".e
     for event in engine.events:
         print("  " + event.line())
 
+    # Close the day the way it must be closed live: ask the broker what it
+    # thinks happened and check it against what we think happened.
+    reconciliation = Reconciler(orders, None).run(broker)
+
     status = engine.status(final)
     print(f"\n  Realized      ₹{status['realized_pnl']:+,.0f}")
     print(f"  Trades        {status['trades_today']}")
     print(f"  Return        {status['realized_pnl'] / capital:+.2%} on capital")
     print(f"  Halted        {status['halted']}" + (f" — {status['halt_reason']}" if status['halted'] else ""))
+    print(f"  Reconciled    {reconciliation.summary()}")
+    status["reconciled"] = reconciliation.clean
     book.close()
+    orders.close()
     return status

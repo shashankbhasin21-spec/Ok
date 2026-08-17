@@ -115,23 +115,41 @@ def cmd_lead(platform: Platform, args) -> int:
 
 def cmd_trade(platform: Platform, args) -> int:
     """Run the trading engine."""
+    from .trading.live import preflight, run_live
     from .trading.session import load_session
     from .trading.simulate import run as run_sim
 
+    cfg = platform.cfg
     session = load_session()
     print(session.banner)
+
     if args.mode == "simulate":
         run_sim(capital=args.capital, aggressive=args.aggressive,
-                workdir=str(platform.cfg.workdir))
+                workdir=str(cfg.workdir))
         return 0
 
-    if session.is_live:
-        print("\nLive trading needs increment 2 (order reconciliation and idempotency).")
-        print("Refusing to place real orders without it — an unreconciled position is")
-        print("how an engine ends up long something it believes it already sold.")
+    universe = [s.strip().upper() for s in (args.symbols or cfg.trading_universe).split(",")
+                if s.strip()]
+
+    if args.mode == "check":
+        problems = preflight(cfg, universe)
+        if problems:
+            print("\nNot ready for live:")
+            for problem in problems:
+                print(f"  ✗ {problem}")
+            return 1
+        print(f"\n  ✓ ready — gate open, credentials present, {len(universe)} symbols")
+        print("  Run `earner trade --mode live` to start. You will be asked for a")
+        print("  TOTP and MPIN; neither is stored.")
+        return 0
+
+    try:
+        run_live(cfg, universe=universe, capital=args.capital,
+                 aggressive=args.aggressive, workdir=str(cfg.workdir),
+                 max_minutes=args.max_minutes)
+    except RuntimeError as exc:
+        print(f"\n{exc}")
         return 1
-    print("\nPaper mode against a live broker needs Kotak credentials.")
-    print("Run `earner trade --mode simulate` to watch the engine work without them.")
     return 0
 
 
@@ -305,9 +323,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_lead)
 
     s = sub.add_parser("trade", help="run the trading engine")
-    s.add_argument("--mode", choices=["simulate", "paper", "live"], default="simulate")
+    s.add_argument("--mode", choices=["simulate", "check", "live"], default="simulate",
+                   help="simulate: synthetic day; check: live preflight; live: real orders")
     s.add_argument("--capital", type=float, default=200_000.0)
     s.add_argument("--aggressive", action="store_true", help="3%/trade, 30% portfolio ceiling")
+    s.add_argument("--symbols", help="comma-separated, defaults to TRADING_UNIVERSE")
+    s.add_argument("--max-minutes", type=float, default=None,
+                   help="flatten and stop after this long")
     s.set_defaults(func=cmd_trade)
 
     s = sub.add_parser("connect", help="connect Gmail and Instagram (validates credentials)")

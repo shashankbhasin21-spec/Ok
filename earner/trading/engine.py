@@ -14,7 +14,8 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from .broker import BUY, SELL, BrokerError, Fill
+from .broker import BUY, SELL, BrokerError
+from .orders import FILLED, DuplicateOrder, OrderStore, Reconciler, require_clean
 from .risk import Book, RiskManager, trading_day
 from .session import TradingSession, load_session, market_status
 from .strategy import ALL_STRATEGIES, Candle, Signal, classify_regime
@@ -74,12 +75,17 @@ class EngineEvent:
 
 class Engine:
     def __init__(self, broker, book: Book, risk: RiskManager,
-                 session: TradingSession | None = None, strategies=ALL_STRATEGIES):
+                 session: TradingSession | None = None, strategies=ALL_STRATEGIES,
+                 orders: OrderStore | None = None):
         self.broker = broker
         self.book = book
         self.risk = risk
         self.session = session or load_session()
         self.strategies = list(strategies)
+        # Optional in paper, required before live: every order is written down
+        # before it is sent, so a crash mid-flight is recoverable.
+        self.orders = orders
+        self.sequence = 0
         self.positions: dict[str, ManagedPosition] = {}
         self.events: list[EngineEvent] = []
         # Symbols closed on this pass. Re-entering the name you just exited, on
@@ -113,6 +119,7 @@ class Engine:
         status = market_status(now)
         marks = {s: c[-1].close for s, c in market.items() if c}
         self.just_exited.clear()
+        self.sequence += 1
 
         # Position management first, and unconditionally: exits must run even
         # when the market has stopped accepting new orders.
@@ -221,12 +228,42 @@ class Engine:
         resolve = getattr(self.broker, "token_for", None)
         return resolve(symbol) if resolve else ""
 
+    def send(self, symbol: str, side: str, quantity: int, intent: str):
+        """Place one order, writing the intent down before sending it.
+
+        The sequence matters and is the whole point: intent to disk, then the
+        broker, then the outcome. A process that dies between the second and
+        third steps restarts holding a record of an order it does not know the
+        fate of — which the reconciler can resolve. Without the record it would
+        simply send it again.
+        """
+        if self.orders is None:
+            return self.broker.place(symbol=symbol, token=self._token(symbol),
+                                     side=side, quantity=quantity)
+
+        try:
+            order = self.orders.open_intent(
+                symbol=symbol, side=side, quantity=quantity, intent=intent)
+        except DuplicateOrder as exc:
+            raise BrokerError(str(exc)) from None
+
+        try:
+            fill = self.broker.place(symbol=symbol, token=self._token(symbol),
+                                     side=side, quantity=quantity)
+        except BrokerError as exc:
+            # We do not know whether it landed. Say so, rather than guessing.
+            self.orders.mark_unknown(order.client_order_id, str(exc))
+            raise
+
+        self.orders.mark_accepted(order.client_order_id, fill.order_id)
+        self.orders.apply(order.client_order_id, state=FILLED,
+                          filled_quantity=fill.quantity, average_price=fill.price)
+        return fill
+
     def enter(self, signal: Signal, quantity: int) -> None:
         try:
-            fill = self.broker.place(
-                symbol=signal.symbol, token=self._token(signal.symbol),
-                side=signal.side, quantity=quantity,
-            )
+            fill = self.send(signal.symbol, signal.side, quantity,
+                             f"{signal.strategy}:entry:{self.sequence}")
         except BrokerError as exc:
             self.log("order_failed", f"{signal.symbol}: {exc}")
             return
@@ -235,12 +272,14 @@ class Engine:
             self.log("duplicate", f"{signal.symbol}: order {fill.order_id} already booked")
             return
 
+        # Sized from what was actually filled, not from what was asked for: a
+        # partial fill that is managed as a full one leaves shares behind.
         self.positions[signal.symbol] = ManagedPosition(
-            symbol=signal.symbol, side=signal.side, quantity=quantity, entry=fill.price,
+            symbol=signal.symbol, side=signal.side, quantity=fill.quantity, entry=fill.price,
             stop=signal.stop, target=signal.target, strategy=signal.strategy,
             thesis=signal.thesis,
         )
-        self.log("filled", f"{signal.symbol} {signal.side} {quantity} @ ₹{fill.price:,.2f} "
+        self.log("filled", f"{signal.symbol} {signal.side} {fill.quantity} @ ₹{fill.price:,.2f} "
                            f"| stop ₹{signal.stop:,.2f} target ₹{signal.target:,.2f}")
 
     def manage(self, marks: dict[str, float], *, square_off: bool = False) -> None:
@@ -261,10 +300,8 @@ class Engine:
     def exit(self, position: ManagedPosition, price: float, reason: str) -> None:
         closing = SELL if position.side == BUY else BUY
         try:
-            fill = self.broker.place(
-                symbol=position.symbol, token=self._token(position.symbol),
-                side=closing, quantity=position.quantity,
-            )
+            fill = self.send(position.symbol, closing, position.quantity,
+                             f"{position.strategy}:{reason}:{self.sequence}")
         except BrokerError as exc:
             self.log("exit_failed", f"{position.symbol}: {exc} — POSITION STILL OPEN")
             return
@@ -277,6 +314,35 @@ class Engine:
                          f"₹{pnl:+,.0f} ({position.strategy})")
 
     # --------------------------------------------------------------- controls
+
+    def reconcile(self, *, halt_on_divergence: bool = True):
+        """Ask the broker what it thinks we own, and believe it over ourselves.
+
+        Run at start-up, and again before the day is called finished. A
+        divergence halts the engine rather than raising a warning nobody reads:
+        if local state and the broker disagree, every subsequent decision is
+        being made on a position size that may not exist.
+        """
+        if self.orders is None:
+            raise RuntimeError("reconciliation needs an OrderStore — construct Engine(orders=...)")
+
+        report = Reconciler(self.orders, self.book).run(self.broker)
+        if report.clean:
+            self.log("reconciled", report.summary())
+            return report
+
+        for divergence in report.divergences:
+            self.log("divergence", f"{divergence.kind}: {divergence.detail}")
+        if halt_on_divergence:
+            self.risk.halt(f"reconciliation failed — {report.summary()}")
+        return report
+
+    def start(self):
+        """Come up safely: reconcile first, and refuse to trade if it is not clean."""
+        report = self.reconcile()
+        require_clean(report)
+        self.log("start", f"{self.session.mode} · {len(self.positions)} position(s) carried")
+        return report
 
     def flatten_all(self, marks: dict[str, float], reason: str = "emergency") -> None:
         """Kill switch (spec §19). Does not depend on strategies or a model."""
