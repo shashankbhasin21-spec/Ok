@@ -42,6 +42,84 @@ def generate_day(symbol_seed: int, minutes: int = 375, start: float = 1000.0,
     return candles
 
 
+def run_many(days: int = 30, capital: float = 100_000.0, preset: str = "diversified",
+             workdir: str = ".earner", seed: int = 0) -> dict:
+    """Compound many independent days, carrying the balance forward.
+
+    One day tells you almost nothing — the spread of outcomes is far wider than
+    any single day's result. This runs the same engine over and over on fresh
+    price series and reports the distribution, including the two numbers that
+    actually decide the account: total cost paid, and whether the balance
+    survived to the end.
+    """
+    from pathlib import Path
+    import random as _random
+
+    balance, trades, costs, gross = capital, 0, 0.0, 0.0
+    daily, ruined_on = [], None
+    rng = _random.Random(seed)
+
+    for day in range(1, days + 1):
+        if balance <= 0:
+            ruined_on = ruined_on or day
+            break
+
+        book = Book(Path(workdir) / f"many_{day}.db")
+        orders = OrderStore(Path(workdir) / f"many_orders_{day}.db")
+        risk = (RiskManager.diversified(balance) if preset == "diversified"
+                else RiskManager.aggressive(balance) if preset == "aggressive"
+                else RiskManager(balance))
+        broker = PaperBroker(None, starting_capital=balance)
+        engine = Engine(broker, book, risk,
+                        session=load_session({"TRADING_MODE": "PAPER"}), orders=orders)
+
+        universe = {
+            name: generate_day(rng.randrange(1, 10**6), trend=rng.gauss(0, 0.012))
+            for name in ("RELIANCE", "TCS", "HDFCBANK", "ICICIBANK", "SUNPHARMA")
+        }
+        open_at = datetime.now(IST).replace(hour=9, minute=15, second=0, microsecond=0)
+        if open_at.weekday() >= 5:
+            open_at += timedelta(days=7 - open_at.weekday())
+        for cursor in range(40, 375):
+            window = {s: c[:cursor] for s, c in universe.items()}
+            for symbol, candles in window.items():
+                broker.set_price(symbol, candles[-1].close)
+            engine.tick(window, now=open_at + timedelta(minutes=cursor))
+
+        final = {s: c[-1].close for s, c in universe.items()}
+        for symbol, price in final.items():
+            broker.set_price(symbol, price)
+        engine.flatten_all(final, reason="end of session")
+
+        status = engine.status(final)
+        day_cost = getattr(broker, "costs_paid", 0.0)
+        pnl = status["realized_pnl"]
+        balance += pnl
+        trades += status["trades_today"]
+        costs += day_cost
+        gross += pnl + day_cost
+        daily.append(pnl)
+        book.close()
+        orders.close()
+        for path in (Path(workdir) / f"many_{day}.db", Path(workdir) / f"many_orders_{day}.db"):
+            path.unlink(missing_ok=True)
+
+    wins = sum(1 for p in daily if p > 0)
+    return {
+        "days": len(daily),
+        "trades": trades,
+        "start": capital,
+        "end": round(balance, 2),
+        "net": round(balance - capital, 2),
+        "gross_before_costs": round(gross, 2),
+        "costs": round(costs, 2),
+        "win_days": wins,
+        "best_day": round(max(daily), 2) if daily else 0.0,
+        "worst_day": round(min(daily), 2) if daily else 0.0,
+        "ruined_on_day": ruined_on,
+    }
+
+
 def run(capital: float = 200_000.0, aggressive: bool = False, workdir: str = ".earner",
         preset: str = "") -> dict:
     from pathlib import Path

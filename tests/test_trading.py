@@ -278,14 +278,29 @@ def test_margin_binds_long_before_the_risk_ceiling_does(book):
 
 
 def test_a_position_is_trimmed_to_fit_rather_than_refused(book):
-    """Half the margin left should buy half the position, not nothing."""
-    risk = RiskManager(capital=100_000, stop_loss_pct=0.01, max_positions=99,
+    """Margin left should buy a smaller position, not nothing."""
+    risk = RiskManager(capital=100_000, stop_loss_pct=0.01, max_positions=4,
                        max_trades_per_day=99, max_leverage=4.0)
     book.record(Fill("a", "TCS", BUY, 300, 1000.0))     # 3x used, 1x left
 
     decision = risk.check(book, price=1000.0, symbol="RELIANCE", marks={})
     assert decision.allowed is True
-    assert decision.quantity == 100, "₹1,00,000 of headroom at ₹1,000 a share"
+    assert decision.quantity == 100, "one position's share of a 4x ceiling"
+
+
+def test_one_position_cannot_eat_the_margin_the_others_need(book):
+    """A tight stop asks for an enormous position: 300 shares of a ₹1,000 stock
+    is only ₹1,500 at risk and still ₹3,00,000 of stock. Unchecked, the first
+    trade consumes the whole margin and vetoes the next seven — so a preset
+    promising eight positions would deliver one."""
+    risk = RiskManager(capital=100_000, risk_per_trade=0.015, stop_loss_pct=0.0005,
+                       max_positions=8, max_trades_per_day=99, max_leverage=4.0)
+
+    decision = risk.check(book, price=1_000.0, symbol="TCS", marks={})
+    assert decision.allowed is True
+    # 4x over 8 positions = ₹50,000 of stock each, not ₹30,00,000.
+    assert decision.quantity == 50
+    assert decision.quantity * 1_000 <= 4 / 8 * 100_000
 
 
 def test_a_losing_streak_halts_the_engine(book):

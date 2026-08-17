@@ -50,6 +50,11 @@ class Fill:
     price: float
     at: float = field(default_factory=time.time)
     paper: bool = True
+    # Brokerage, STT, exchange fees, GST and stamp duty for this fill. Carried
+    # on the fill rather than tracked beside it because a P&L that excludes
+    # costs is not a P&L, and a daily loss limit measured against one stops
+    # later than it promised.
+    cost: float = 0.0
 
     @property
     def value(self) -> float:
@@ -262,8 +267,14 @@ class KotakBroker:
                 f"order {order_id} ended {row.state} "
                 f"({row.filled_quantity}/{row.quantity} done){why}"
             )
+        # Kotak does not return charges on the order; the contract note settles
+        # them overnight. Estimating is far better than recording zero, which
+        # would make the daily loss limit stop later than it promised.
+        estimated = row.filled_quantity * row.average_price * PaperBroker.COST_RATE \
+            + PaperBroker.FIXED_COST_PER_ORDER
         return Fill(order_id=order_id, symbol=symbol, side=side,
-                    quantity=row.filled_quantity, price=row.average_price, paper=False)
+                    quantity=row.filled_quantity, price=row.average_price, paper=False,
+                    cost=round(estimated, 2))
 
     def cancel(self, order_id: str) -> None:
         response = self._require().cancel_order(order_id=str(order_id), isVerify=True)
@@ -353,6 +364,7 @@ class PaperBroker:
         fill = Fill(
             order_id=f"paper-{uuid.uuid4().hex[:10]}", symbol=symbol, side=side,
             quantity=quantity, price=round(fill_price, 2), paper=True,
+            cost=round(cost, 2),
         )
         self.fills.append(fill)
         return fill

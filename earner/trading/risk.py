@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS fills (
     price      REAL NOT NULL,
     paper      INTEGER NOT NULL,
     at         REAL NOT NULL,
-    session    TEXT NOT NULL
+    session    TEXT NOT NULL,
+    cost       REAL NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS notes (
     id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,6 +69,11 @@ class Book:
         self.conn = sqlite3.connect(str(path))
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        # Books written before costs were tracked are still readable; their
+        # fills simply report zero cost rather than failing to load.
+        columns = {r["name"] for r in self.conn.execute("PRAGMA table_info(fills)")}
+        if "cost" not in columns:
+            self.conn.execute("ALTER TABLE fills ADD COLUMN cost REAL NOT NULL DEFAULT 0")
         self.conn.commit()
 
     def close(self) -> None:
@@ -77,10 +83,10 @@ class Book:
         """Store a fill. False if this order id was already recorded."""
         try:
             self.conn.execute(
-                "INSERT INTO fills (order_id, symbol, side, quantity, price, paper, at, session)"
-                " VALUES (?,?,?,?,?,?,?,?)",
+                "INSERT INTO fills (order_id, symbol, side, quantity, price, paper, at,"
+                " session, cost) VALUES (?,?,?,?,?,?,?,?,?)",
                 (fill.order_id, fill.symbol, fill.side, fill.quantity, fill.price,
-                 int(fill.paper), fill.at, trading_day(fill.at)),
+                 int(fill.paper), fill.at, trading_day(fill.at), fill.cost),
             )
             self.conn.commit()
             return True
@@ -123,12 +129,28 @@ class Book:
             out[row["symbol"]] = pos
         return out
 
-    def realized_pnl(self, session: str | None = None) -> float:
-        """Money actually made or lost on *closed* quantity.
+    def costs(self, session: str | None = None) -> float:
+        """Brokerage and charges paid. Per order, so they do not shrink with the account."""
+        return round(sum(row["cost"] for row in self.fills(session)), 2)
 
-        Walks fills in order, matching closes against open lots. An open
-        position contributes nothing here no matter how far in front it is.
+    def gross_pnl(self, session: str | None = None) -> float:
+        """Price movement only, before a rupee of brokerage. Never the number to
+        judge a strategy by — it is what makes paper engines look profitable."""
+        return self._matched_pnl(session)
+
+    def realized_pnl(self, session: str | None = None) -> float:
+        """Money actually made or lost on closed quantity, **after costs**.
+
+        Costs are subtracted here rather than reported alongside, because this
+        is the number the daily loss limit is measured against. Excluding them
+        makes the limit stop later than it promised — on a small account, much
+        later, since brokerage is charged per order and does not scale down.
         """
+        return round(self._matched_pnl(session) - self.costs(session), 2)
+
+    def _matched_pnl(self, session: str | None = None) -> float:
+        """FIFO over fills. An open position contributes nothing here no matter
+        how far in front it is."""
         lots: dict[str, list[tuple[int, float]]] = {}
         realized = 0.0
         for row in self.fills(session):
@@ -419,8 +441,21 @@ class RiskManager:
                 f"₹{headroom:,.0f} of margin left buys no shares at ₹{price:,.2f} — "
                 f"{used:.1f}x of {self.max_leverage:.1f}x already used",
             )
-        # Trim to fit rather than refuse: a smaller position is still a position.
-        quantity = min(quantity, affordable)
+
+        # Leave room for the other positions. A tight ATR stop asks for an
+        # enormous position — risk sizing says 300 shares of a ₹1,000 stock is
+        # only ₹1,500 at risk, which is true and still ₹3,00,000 of stock. The
+        # first such trade would consume the whole margin and veto the next
+        # seven, so a preset that promises eight positions would deliver one.
+        per_position = int(self.max_leverage / max(self.max_positions, 1)
+                           * self.capital / max(price, 0.01))
+        quantity = min(quantity, affordable, max(per_position, 0))
+        if quantity < 1:
+            return RiskDecision(
+                False,
+                f"one position's share of margin (₹{self.max_leverage / self.max_positions * self.capital:,.0f}) "
+                f"buys no shares at ₹{price:,.2f}",
+            )
 
         # Portfolio limits, with correlated positions counted as one exposure.
         exposure = self.exposure(book, marks or {}, session)
