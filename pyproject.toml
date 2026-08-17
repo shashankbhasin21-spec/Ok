@@ -10,6 +10,11 @@ dependencies = [
 [project.optional-dependencies]
 stripe = ["stripe>=12"]
 dev = ["pytest>=8"]
+# Live trading only. The engine, the risk limits, the simulator and every test
+# run on the standard library alone — this is needed solely to talk to Kotak.
+kotak = [
+    "neo_api_client @ git+https://github.com/Kotak-Neo/Kotak-neo-api-v2.git@v2.0.2",
+]
 
 [project.scripts]
 earner = "earner.cli:main"
