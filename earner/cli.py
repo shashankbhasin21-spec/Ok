@@ -154,6 +154,21 @@ def cmd_trade(platform: Platform, args) -> int:
     return 0
 
 
+def cmd_backtest(platform: Platform, args) -> int:
+    """Replay real NSE days through the same engine live trading uses."""
+    from .trading.backtest import run as run_backtest
+
+    symbols = [s.strip().upper() for s in args.symbols.split(",")] if args.symbols else None
+    result = run_backtest(symbols, capital=args.capital, preset=args.preset,
+                          interval=args.interval, days=args.days,
+                          workdir=str(platform.cfg.workdir))
+    print("\n" + result.report())
+    if result.gross < 0:
+        print("\n  The gross line is negative: these strategies lose on price movement")
+        print("  alone, before a rupee of brokerage. No cost saving fixes that.")
+    return 0
+
+
 def cmd_dashboard(platform: Platform, args) -> int:
     """Write the dashboard from the engine's own records."""
     from .trading.dashboard import write
@@ -346,6 +361,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--max-minutes", type=float, default=None,
                    help="flatten and stop after this long")
     s.set_defaults(func=cmd_trade)
+
+    s = sub.add_parser("backtest", help="test the strategies on real NSE history")
+    s.add_argument("--capital", type=float, default=100_000.0)
+    s.add_argument("--preset", choices=["standard", "aggressive", "diversified"],
+                   default="diversified")
+    s.add_argument("--interval", default="5m", help="1m (last ~7d) or 5m (last ~60d)")
+    s.add_argument("--days", type=int, default=60)
+    s.add_argument("--symbols", help="comma-separated NSE symbols")
+    s.set_defaults(func=cmd_backtest)
 
     s = sub.add_parser("dashboard", help="render the live dashboard as HTML")
     s.add_argument("--capital", type=float, default=100_000.0)
