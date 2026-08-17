@@ -194,3 +194,58 @@ def _ist(stamp: float):
     from datetime import datetime
 
     return datetime.fromtimestamp(stamp, IST)
+
+
+def replay(data: dict, days: list[str], strategies, *, capital: float = 100_000.0,
+           preset: str = "diversified", workdir: str = ".earner") -> tuple[list[float], int]:
+    """Replay a named set of days with a given strategy set.
+
+    Returns daily net P&L and the trade count. Separate from ``run`` because
+    the research lab needs to replay the *same* data under many different
+    strategies without re-fetching, and needs to choose which days.
+    """
+    scratch = Path(workdir) / "research"
+    scratch.mkdir(parents=True, exist_ok=True)
+    daily, trades = [], 0
+
+    for day in days:
+        today = {s: series[day] for s, series in data.items() if day in series}
+        if not today:
+            continue
+
+        book_path = scratch / "day.db"
+        book_path.unlink(missing_ok=True)
+        book = Book(book_path)
+        risk = (RiskManager.diversified(capital) if preset == "diversified"
+                else RiskManager.aggressive(capital) if preset == "aggressive"
+                else RiskManager(capital))
+        broker = PaperBroker(None, starting_capital=capital)
+        engine = Engine(broker, book, risk,
+                        session=load_session({"TRADING_MODE": "PAPER"}),
+                        strategies=strategies)
+
+        longest = max(len(c) for c in today.values())
+        for cursor in range(WARMUP_BARS, longest + 1):
+            window = {s: c[:cursor] for s, c in today.items() if len(c) >= cursor}
+            if not window:
+                continue
+            for symbol, candles in window.items():
+                broker.set_price(symbol, candles[-1].close)
+            engine.tick(window, now=_ist(max(c[-1].at for c in window.values())))
+
+        closing = {s: c[-1].close for s, c in today.items()}
+        for symbol, price in closing.items():
+            broker.set_price(symbol, price)
+        engine.flatten_all(closing, reason="end of day")
+
+        fills = book.fills()
+        if fills:
+            session = fills[0]["session"]
+            daily.append(round(book.gross_pnl(session) - book.costs(session), 2))
+            trades += len(fills)
+        else:
+            daily.append(0.0)
+        book.close()
+        book_path.unlink(missing_ok=True)
+
+    return daily, trades

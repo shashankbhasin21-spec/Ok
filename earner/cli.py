@@ -169,6 +169,17 @@ def cmd_backtest(platform: Platform, args) -> int:
     return 0
 
 
+def cmd_research(platform: Platform, args) -> int:
+    """Search the hypothesis space against real history, and reject nearly all of it."""
+    from .trading.research import search
+
+    symbols = [s.strip().upper() for s in args.symbols.split(",")] if args.symbols else None
+    verdict = search(symbols, capital=args.capital, interval=args.interval,
+                     days=args.days, workdir=str(platform.cfg.workdir))
+    print("\n" + verdict.report())
+    return 0 if verdict.survived else 1
+
+
 def cmd_dashboard(platform: Platform, args) -> int:
     """Write the dashboard from the engine's own records."""
     from .trading.dashboard import write
@@ -370,6 +381,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--days", type=int, default=60)
     s.add_argument("--symbols", help="comma-separated NSE symbols")
     s.set_defaults(func=cmd_backtest)
+
+    s = sub.add_parser("research", help="generate strategy hypotheses and reject them honestly")
+    s.add_argument("--capital", type=float, default=100_000.0)
+    s.add_argument("--interval", default="5m")
+    s.add_argument("--days", type=int, default=60)
+    s.add_argument("--symbols", help="comma-separated NSE symbols")
+    s.set_defaults(func=cmd_research)
 
     s = sub.add_parser("dashboard", help="render the live dashboard as HTML")
     s.add_argument("--capital", type=float, default=100_000.0)
