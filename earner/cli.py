@@ -180,6 +180,17 @@ def cmd_research(platform: Platform, args) -> int:
     return 0 if verdict.survived else 1
 
 
+def cmd_rapid(platform: Platform, args) -> int:
+    """Run the rapid-engine study end to end and print every measured number.
+
+    Reads market data and writes nothing but its report. There is no path from
+    this command to an order.
+    """
+    from quant_os.rapid.study import main
+
+    return main(interval=args.interval, days=args.days, capital=args.capital)
+
+
 def cmd_depth(platform: Platform, args) -> int:
     """Record Level-2 depth. Subscribes and records; places no orders."""
     from getpass import getpass
@@ -431,6 +442,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--days", type=int, default=60)
     s.add_argument("--symbols", help="comma-separated NSE symbols")
     s.set_defaults(func=cmd_research)
+
+    s = sub.add_parser("rapid", help="microstructure/ML rapid-trading study (read-only)")
+    s.add_argument("--capital", type=float, default=100_000.0)
+    s.add_argument("--interval", default="5m", help="1m (last ~7d) or 5m (last ~60d)")
+    s.add_argument("--days", type=int, default=60)
+    s.set_defaults(func=cmd_rapid)
 
     s = sub.add_parser("depth", help="record Level-2 depth (read-only, no orders)")
     s.add_argument("--symbols", help="comma-separated, defaults to TRADING_UNIVERSE")
