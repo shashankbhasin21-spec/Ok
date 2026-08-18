@@ -16,7 +16,7 @@ from quant_os.ledger.event_store import (
 )
 from quant_os.validation.metrics import (
     deflated_sharpe, expected_max_sharpe, inverse_normal_cdf, kurtosis,
-    minimum_track_record, normal_cdf, probabilistic_sharpe, sharpe, skewness,
+    minimum_track_record, normal_cdf, probabilistic_sharpe, skewness,
 )
 
 
