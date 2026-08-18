@@ -1,0 +1,486 @@
+[
+  {
+    "symbol": "^GSPC",
+    "label": "S&P 500 (US)",
+    "bars": 14277,
+    "first": "1970-01-02",
+    "last": "2026-08-17",
+    "years": 56.62137805156286,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 4,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "4 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "^DJI",
+    "label": "Dow Jones (US)",
+    "bars": 8717,
+    "first": "1992-01-02",
+    "last": "2026-08-17",
+    "years": 34.62274697695642,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 0,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "1 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "^IXIC",
+    "label": "Nasdaq (US)",
+    "bars": 13999,
+    "first": "1971-02-05",
+    "last": "2026-08-17",
+    "years": 55.52897558749715,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 3457,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "1 null closes (dropped, never filled)",
+      "3,457 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^RUT",
+    "label": "Russell 2000 (US)",
+    "bars": 9807,
+    "first": "1987-09-10",
+    "last": "2026-08-17",
+    "years": 38.93497604380561,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 7,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "4 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "^N225",
+    "label": "Nikkei (Japan)",
+    "bars": 14469,
+    "first": "1970-01-05",
+    "last": "2026-08-18",
+    "years": 56.616016427104725,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 1,
+    "zero_volume_bars": 8560,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "547 null closes (dropped, never filled)",
+      "8,560 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^FTSE",
+    "label": "FTSE 100 (UK)",
+    "bars": 10950,
+    "first": "1984-01-03",
+    "last": "2026-08-17",
+    "years": 42.62000912616929,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 3975,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "184 null closes (dropped, never filled)",
+      "3,975 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^GDAXI",
+    "label": "DAX (Germany)",
+    "bars": 9936,
+    "first": "1987-12-30",
+    "last": "2026-08-17",
+    "years": 38.63096052931782,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 3150,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "172 null closes (dropped, never filled)",
+      "3,150 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^FCHI",
+    "label": "CAC 40 (France)",
+    "bars": 9407,
+    "first": "1990-03-01",
+    "last": "2026-08-17",
+    "years": 36.46258270590919,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 3896,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "148 null closes (dropped, never filled)",
+      "3,896 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^HSI",
+    "label": "Hang Seng (HK)",
+    "bars": 10031,
+    "first": "1986-12-31",
+    "last": "2026-08-18",
+    "years": 39.630390143737166,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 3856,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "256 null closes (dropped, never filled)",
+      "3,856 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "000001.SS",
+    "label": "Shanghai (China)",
+    "bars": 7229,
+    "first": "1997-07-02",
+    "last": "2026-08-18",
+    "years": 29.127994524298426,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 43,
+    "zero_volume_bars": 1537,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "176 null closes (dropped, never filled)",
+      "1,537 zero-volume bars \u2014 volume filters inert",
+      "43 gaps over a week"
+    ]
+  },
+  {
+    "symbol": "^BVSP",
+    "label": "Bovespa (Brazil)",
+    "bars": 8428,
+    "first": "1993-04-27",
+    "last": "2026-08-17",
+    "years": 33.30595482546201,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 3546,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "179 null closes (dropped, never filled)",
+      "3,546 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^AXJO",
+    "label": "ASX 200 (Australia)",
+    "bars": 8629,
+    "first": "1992-11-22",
+    "last": "2026-08-18",
+    "years": 33.73317362537075,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 6345,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "105 null closes (dropped, never filled)",
+      "6,345 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^KS11",
+    "label": "KOSPI (Korea)",
+    "bars": 7455,
+    "first": "1996-12-11",
+    "last": "2026-08-18",
+    "years": 29.683778234086244,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 2,
+    "zero_volume_bars": 151,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "149 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "^NSEI",
+    "label": "NIFTY 50 (India)",
+    "bars": 4675,
+    "first": "2007-09-17",
+    "last": "2026-08-18",
+    "years": 18.91854893908282,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 1369,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "35 null closes (dropped, never filled)",
+      "1,369 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^NSEBANK",
+    "label": "BANK NIFTY (India)",
+    "bars": 4675,
+    "first": "2007-09-17",
+    "last": "2026-08-18",
+    "years": 18.91854893908282,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 2493,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "20 null closes (dropped, never filled)",
+      "2,493 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^BSESN",
+    "label": "SENSEX (India)",
+    "bars": 7307,
+    "first": "1997-07-01",
+    "last": "2026-08-18",
+    "years": 29.130732375085557,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 1631,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "132 null closes (dropped, never filled)",
+      "1,631 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "RELIANCE.NS",
+    "label": "Reliance (India)",
+    "bars": 7698,
+    "first": "1996-01-01",
+    "last": "2026-08-18",
+    "years": 30.628336755646817,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 130,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "10 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "TCS.NS",
+    "label": "TCS (India)",
+    "bars": 5973,
+    "first": "2002-08-12",
+    "last": "2026-08-18",
+    "years": 24.016427104722794,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 325,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "10 null closes (dropped, never filled)",
+      "325 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "HDFCBANK.NS",
+    "label": "HDFC Bank (India)",
+    "bars": 7698,
+    "first": "1996-01-01",
+    "last": "2026-08-18",
+    "years": 30.628336755646817,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 130,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "7 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "INFY.NS",
+    "label": "Infosys (India)",
+    "bars": 7698,
+    "first": "1996-01-01",
+    "last": "2026-08-18",
+    "years": 30.628336755646817,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 134,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "9 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "GC=F",
+    "label": "Gold futures",
+    "bars": 6599,
+    "first": "2000-08-30",
+    "last": "2026-08-18",
+    "years": 25.965776865160848,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 503,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "84 null closes (dropped, never filled)",
+      "503 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "CL=F",
+    "label": "Crude futures",
+    "bars": 6604,
+    "first": "2000-08-23",
+    "last": "2026-08-18",
+    "years": 25.984941820670773,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 93,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "80 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "SI=F",
+    "label": "Silver futures",
+    "bars": 6599,
+    "first": "2000-08-30",
+    "last": "2026-08-18",
+    "years": 25.965776865160848,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 826,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "82 null closes (dropped, never filled)",
+      "826 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "BTC-USD",
+    "label": "Bitcoin",
+    "bars": 4354,
+    "first": "2014-09-17",
+    "last": "2026-08-18",
+    "years": 11.917864476386036,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 1,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "1 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "ETH-USD",
+    "label": "Ethereum",
+    "bars": 3205,
+    "first": "2017-11-09",
+    "last": "2026-08-18",
+    "years": 8.772073921971252,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 1,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "1 null closes (dropped, never filled)"
+    ]
+  },
+  {
+    "symbol": "USDINR=X",
+    "label": "USD/INR",
+    "bars": 5928,
+    "first": "2003-12-01",
+    "last": "2026-08-18",
+    "years": 22.713753390625396,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 5928,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "38 null closes (dropped, never filled)",
+      "5,928 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "EURUSD=X",
+    "label": "EUR/USD",
+    "bars": 5928,
+    "first": "2003-12-01",
+    "last": "2026-08-18",
+    "years": 22.713751901285267,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 5928,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "36 null closes (dropped, never filled)",
+      "5,928 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^VIX",
+    "label": "VIX (volatility)",
+    "bars": 9555,
+    "first": "1990-01-02",
+    "last": "2026-08-17",
+    "years": 36.62137805156286,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 9555,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "331 null closes (dropped, never filled)",
+      "9,555 zero-volume bars \u2014 volume filters inert"
+    ]
+  },
+  {
+    "symbol": "^TNX",
+    "label": "US 10y yield",
+    "bars": 14277,
+    "first": "1970-01-02",
+    "last": "2026-08-17",
+    "years": 56.62137805156286,
+    "median_gap_days": 1.0,
+    "gaps_over_week": 0,
+    "zero_volume_bars": 14235,
+    "duplicate_stamps": 0,
+    "error": "",
+    "issues": [
+      "102 null closes (dropped, never filled)",
+      "14,235 zero-volume bars \u2014 volume filters inert"
+    ]
+  }
+]
