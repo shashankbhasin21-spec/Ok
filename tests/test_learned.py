@@ -7,7 +7,6 @@ knowledge, it is a rationalisation.
 
 from __future__ import annotations
 
-import pytest
 
 from quant_os.agents.learned import (
     LESSONS, LESSONS_BY_NAME, Proposal, curriculum, observations_needed, review,

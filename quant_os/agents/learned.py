@@ -106,6 +106,46 @@ LESSONS: tuple[Lesson, ...] = (
              "effect being measured.",
     ),
     Lesson(
+        name="the_intraday_session_has_negative_drift",
+        finding="In Indian markets the market's entire return accrues overnight; "
+                "the intraday session is negative.",
+        evidence="116,619 daily bars. NIFTY overnight +23.7%/yr vs intraday "
+                 "-12.4%/yr. SENSEX +35.8% vs -23.0%. RELIANCE +53.7% vs -19.3%. "
+                 "The intraday session is negative in 8 of 13 instruments tested.",
+        rule="Treat intraday as a window with negative expected drift. A bot "
+             "that is flat overnight misses all of the return and trades only "
+             "the losing half of the day - which is the mechanical reason "
+             "intraday strategies here lose before any cost is charged.",
+    ),
+    Lesson(
+        name="the_overnight_effect_cannot_be_harvested_separately",
+        finding="Buying the close and selling the open loses to simply holding.",
+        evidence="Overnight-only beat buy-and-hold in 0 of 8 instruments after a "
+                 "10bp round trip. RELIANCE 28.5% vs 32.9% holding; INFY 2.9% vs "
+                 "30.8%. The round trip is paid 252 times a year to avoid a drag "
+                 "smaller than the round trip.",
+        rule="Do not trade the open and close to capture overnight drift. The "
+             "correct response to the finding is to hold.",
+    ),
+    Lesson(
+        name="a_breakout_is_not_information",
+        finding="Breakouts hold about as often as any bar near the same level.",
+        evidence="12,558 twenty-day-high breaks across 13 instruments: 67.8% "
+                 "still above five days later, against a 65.1% base rate for any "
+                 "bar near that high. A 2.7pp difference.",
+        rule="Compare every conditional statistic to the unconditional one. "
+             "67.8% sounds like an edge and is not.",
+    ),
+    Lesson(
+        name="the_stop_hunt_story_is_backwards",
+        finding="A swept low that is reclaimed does WORSE than one that is not.",
+        evidence="10,942 events. Broke the 20-day low and closed back above it: "
+                 "+0.19% over 5 days. Broke and stayed below: +0.45%. The "
+                 "popular reading has the sign wrong.",
+        rule="Do not treat a reclaimed sweep as a bullish signal. This was "
+             "tested because it is widely taught, and it failed.",
+    ),
+    Lesson(
         name="an_acceptance_is_not_a_fill",
         finding="Broker order acknowledgement carries no price or quantity.",
         evidence="Kotak place_order returns exactly 3 fields - stat, nOrdNo, "
