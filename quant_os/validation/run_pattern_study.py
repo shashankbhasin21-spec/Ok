@@ -26,6 +26,15 @@ OTHER   = ["GC=F","CL=F","SI=F","BTC-USD","ETH-USD","EURUSD=X","USDINR=X"]
 UNIVERSE = INDIA + INDICES + OTHER
 
 
+def load_safe(symbol: str) -> list[Candle]:
+    """load() but returns [] instead of raising. Delisted and renamed tickers
+    404, and one dead symbol must not abort a study over sixty instruments."""
+    try:
+        return load(symbol)
+    except Exception:
+        return []
+
+
 def load(symbol: str) -> list[Candle]:
     CACHE.mkdir(parents=True, exist_ok=True)
     path = CACHE / f"{symbol.replace('/', '_')}.json"
