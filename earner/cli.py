@@ -180,6 +180,49 @@ def cmd_research(platform: Platform, args) -> int:
     return 0 if verdict.survived else 1
 
 
+def cmd_depth(platform: Platform, args) -> int:
+    """Record Level-2 depth. Subscribes and records; places no orders."""
+    from getpass import getpass
+
+    from .trading.broker import KotakBroker
+    from .trading.session import load_session
+    from quant_os.data.depth_feed import DepthFeed
+
+    cfg = platform.cfg
+    symbols = [s.strip().upper() for s in (args.symbols or cfg.trading_universe).split(",")
+               if s.strip()]
+    missing = [n for n, v in (("KOTAK_CONSUMER_KEY", cfg.kotak_consumer_key),
+                              ("KOTAK_MOBILE", cfg.kotak_mobile),
+                              ("KOTAK_UCC", cfg.kotak_ucc)) if not v]
+    if missing:
+        print("Cannot subscribe — not set: " + ", ".join(missing))
+        return 1
+
+    print("Depth recorder. Read-only: it subscribes and writes, and has no")
+    print("reference to an order path.\n")
+    broker = KotakBroker(cfg, session=load_session())
+    broker.connect(totp=getpass("TOTP: ").strip(), mpin=getpass("MPIN: ").strip())
+    print(f"Instrument master: {broker.load_instruments():,} symbols")
+
+    feed = DepthFeed(broker, workdir=str(cfg.workdir))
+    feed.subscribe(symbols)
+    print(f"Subscribed to depth for {len(symbols)} symbols. Ctrl-C to stop.\n")
+    try:
+        while True:
+            time.sleep(args.every)
+            print(f"  {feed.health.line()}")
+            for symbol in symbols:
+                book = feed.book(symbol)
+                if book:
+                    print(f"    {symbol:<12} spread {book.relative_spread*10000:>5.1f}bp  "
+                          f"imb {book.imbalance:>+6.2f}  depth-imb {book.depth_imbalance:>+6.2f}")
+    except KeyboardInterrupt:
+        feed.unsubscribe()
+        print(f"\nStopped. {feed.health.books:,} book snapshots recorded to "
+              f"{cfg.workdir}/depth.db")
+    return 0
+
+
 def cmd_dashboard(platform: Platform, args) -> int:
     """Write the dashboard from the engine's own records."""
     from .trading.dashboard import write
@@ -388,6 +431,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--days", type=int, default=60)
     s.add_argument("--symbols", help="comma-separated NSE symbols")
     s.set_defaults(func=cmd_research)
+
+    s = sub.add_parser("depth", help="record Level-2 depth (read-only, no orders)")
+    s.add_argument("--symbols", help="comma-separated, defaults to TRADING_UNIVERSE")
+    s.add_argument("--every", type=float, default=10.0, help="seconds between status lines")
+    s.set_defaults(func=cmd_depth)
 
     s = sub.add_parser("dashboard", help="render the live dashboard as HTML")
     s.add_argument("--capital", type=float, default=100_000.0)
