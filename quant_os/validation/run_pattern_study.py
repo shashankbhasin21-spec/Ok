@@ -4,11 +4,10 @@ from __future__ import annotations
 import json
 import statistics
 import urllib.request
-from datetime import datetime
 from pathlib import Path
 
 from earner.trading.strategy import Candle
-from quant_os.validation.metrics import deflated_sharpe, expected_max_sharpe
+
 from quant_os.validation.pattern_study import BEARISH, BULLISH, PATTERNS, study
 
 CACHE = Path(".earner/cache/daily")

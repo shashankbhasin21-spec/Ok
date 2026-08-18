@@ -24,7 +24,7 @@ Method, chosen so the answer cannot be flattered:
 from __future__ import annotations
 
 import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from earner.trading.strategy import Candle
 
