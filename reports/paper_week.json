@@ -1,0 +1,65 @@
+{
+  "days": [
+    {
+      "day": "2026-08-11",
+      "trades": 10,
+      "gross": -528.15,
+      "costs": 444.14,
+      "net": -972.29,
+      "halted": true,
+      "reason": "end of day",
+      "clean": true,
+      "recon": "10 order(s) checked, 0 updated, 0 new fill(s) \u2014 clean"
+    },
+    {
+      "day": "2026-08-12",
+      "trades": 18,
+      "gross": -1549.97,
+      "costs": 788.39,
+      "net": -2338.36,
+      "halted": true,
+      "reason": "end of day",
+      "clean": true,
+      "recon": "18 order(s) checked, 0 updated, 0 new fill(s) \u2014 clean"
+    },
+    {
+      "day": "2026-08-13",
+      "trades": 12,
+      "gross": -709.64,
+      "costs": 537.14,
+      "net": -1246.78,
+      "halted": true,
+      "reason": "end of day",
+      "clean": true,
+      "recon": "12 order(s) checked, 0 updated, 0 new fill(s) \u2014 clean"
+    },
+    {
+      "day": "2026-08-14",
+      "trades": 26,
+      "gross": -363.04,
+      "costs": 1162.62,
+      "net": -1525.6599999999999,
+      "halted": true,
+      "reason": "end of day",
+      "clean": true,
+      "recon": "26 order(s) checked, 0 updated, 0 new fill(s) \u2014 clean"
+    },
+    {
+      "day": "2026-08-17",
+      "trades": 16,
+      "gross": 334.71,
+      "costs": 713.72,
+      "net": -379.01000000000005,
+      "halted": true,
+      "reason": "end of day",
+      "clean": true,
+      "recon": "16 order(s) checked, 0 updated, 0 new fill(s) \u2014 clean"
+    }
+  ],
+  "capital": 100000.0,
+  "total_gross": -2816.0899999999997,
+  "total_costs": 3646.01,
+  "total_net": -6462.1,
+  "trades": 82,
+  "winning_days": 0
+}

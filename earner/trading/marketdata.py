@@ -39,15 +39,41 @@ class DataError(RuntimeError):
     """The data could not be fetched, or arrived unusable."""
 
 
+# What each interval can actually reach, measured rather than assumed. The
+# asymmetry here is the most important fact in this repository: intraday
+# history is capped at weeks, daily history runs to decades, and a strategy
+# that holds overnight can therefore be validated while an intraday one cannot.
+#
+#     1m   ~7 days        (~2,300 bars)
+#     5m   ~60 days       (~4,400 bars)
+#     1h   ~2.9 years     (~5,100 bars)
+#     1d   20+ years      (~4,900 bars)
+#
+# Nine hundred observations are needed to separate a Sharpe-1 edge from luck
+# across a modest search. Only the last two rows can supply that.
+MAX_RANGE = {"1m": "7d", "2m": "60d", "5m": "60d", "15m": "60d",
+             "30m": "60d", "1h": "730d", "1d": "20y", "1wk": "20y"}
+
+
 def fetch(symbol: str, *, interval: str = "5m", days: int = 60,
           cache_dir: str | Path = ".earner/cache") -> list[Candle]:
-    """Real bars for one NSE symbol, newest last. Cached for a day."""
+    """Real bars for one NSE symbol, newest last. Cached for a day.
+
+    For daily bars `days` is interpreted generously — pass 5000 to ask for
+    twenty years — because the useful unit there is years, not sessions.
+    """
     cache = Path(cache_dir) / f"{symbol.upper()}_{interval}_{days}d.json"
     cache.parent.mkdir(parents=True, exist_ok=True)
     if cache.exists() and (time.time() - cache.stat().st_mtime) < 86_400:
         return _to_candles(json.loads(cache.read_text()))
 
-    url = CHART_URL.format(symbol=symbol.upper()) + f"?interval={interval}&range={days}d"
+    if interval in ("1d", "1wk"):
+        # Yahoo caps a "Nd" range; years are the correct unit for daily bars,
+        # and "max" silently downgrades to monthly, which is not daily data.
+        span = f"{max(1, min(20, round(days / 250)))}y"
+    else:
+        span = f"{days}d"
+    url = CHART_URL.format(symbol=symbol.upper()) + f"?interval={interval}&range={span}"
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -91,16 +117,34 @@ def _to_candles(result: dict) -> list[Candle]:
     return candles
 
 
-def by_day(candles: list[Candle]) -> dict[str, list[Candle]]:
-    """Split a series into trading days, keeping only regular-session bars."""
+def by_day(candles: list[Candle], *, intraday: bool = True) -> dict[str, list[Candle]]:
+    """Split a series into trading days.
+
+    `intraday` keeps only regular-session bars, which is right for minute and
+    hour data. Daily bars carry a single stamp per session that need not fall
+    inside 09:15-15:30, so filtering them the same way discards the entire
+    series — a silent empty result rather than an error.
+    """
     days: dict[str, list[Candle]] = {}
     for candle in candles:
         when = datetime.fromtimestamp(candle.at, IST)
-        seconds = when.hour * 3600 + when.minute * 60
-        if not (SESSION_OPEN <= seconds < SESSION_CLOSE):
-            continue
+        if intraday:
+            seconds = when.hour * 3600 + when.minute * 60
+            if not (SESSION_OPEN <= seconds < SESSION_CLOSE):
+                continue
         days.setdefault(when.strftime("%Y-%m-%d"), []).append(candle)
     return days
+
+
+def daily_series(symbol: str, *, years: int = 20,
+                 cache_dir: str | Path = ".earner/cache") -> list[Candle]:
+    """Years of daily bars for one symbol, newest last.
+
+    The counterpart to the intraday loader, and the one that makes validation
+    arithmetically possible: twenty years is roughly 4,900 observations against
+    the ~900 a credible search needs.
+    """
+    return fetch(symbol, interval="1d", days=years * 250, cache_dir=cache_dir)
 
 
 def load_universe(symbols: list[str], *, interval: str = "5m", days: int = 60,
