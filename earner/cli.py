@@ -204,6 +204,34 @@ def _pipeline_parts(platform: Platform, args):
     return pipeline, campaign, cfg
 
 
+def cmd_watch(platform: Platform, args) -> int:
+    """Watch the boards and surface anything fresh worth answering.
+
+    Read-only: it finds and ranks postings and never submits anything. Upwork's
+    API does not permit programmatic proposals, and writing the bid is the part
+    where being a person is worth something anyway.
+    """
+    from .watch import Profile, poll, render, upwork_source, watch
+
+    cfg = platform.cfg
+    profile = Profile(floor_usd=args.floor, ceiling_bids=args.max_bids)
+    sources = [upwork_source(cfg)]
+
+    if not any(s() for s in sources) and args.once:
+        print("No live sources. Upwork needs authorising:  earner connect --only upwork")
+        print("The ranking still works — feed it postings and it will sort them.")
+        return 1
+
+    if args.once:
+        print(render(poll(sources, profile)))
+        return 0
+    print(f"Watching every {args.every:.0f}s. Freshness decays with a 60-minute "
+          f"half-life, so the first hour is where nearly all the value is.\n"
+          f"Ctrl-C to stop.")
+    watch(sources, profile=profile, every=args.every, workdir=str(cfg.workdir))
+    return 0
+
+
 def cmd_pipeline(platform: Platform, args) -> int:
     """Find leads, mail them, track replies, invoice, collect. One loop.
 
@@ -605,6 +633,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--days", type=int, default=60)
     s.add_argument("--symbols", help="comma-separated NSE symbols")
     s.set_defaults(func=cmd_research)
+
+    s = sub.add_parser("watch", help="watch job boards and rank fresh postings")
+    s.add_argument("--every", type=float, default=300.0, help="seconds between sweeps")
+    s.add_argument("--once", action="store_true", help="one sweep and exit")
+    s.add_argument("--floor", type=float, default=100.0, help="minimum budget in USD")
+    s.add_argument("--max-bids", dest="max_bids", type=int, default=20)
+    s.set_defaults(func=cmd_watch)
 
     s = sub.add_parser("pipeline", help="find leads, mail them, invoice, collect")
     s.add_argument("step", nargs="?", default="status",
