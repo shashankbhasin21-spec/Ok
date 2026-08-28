@@ -6,6 +6,7 @@ import argparse
 import time
 import json
 import sys
+from pathlib import Path
 
 from . import config, goals
 from .platform import Platform
@@ -178,6 +179,168 @@ def cmd_research(platform: Platform, args) -> int:
                      days=args.days, workdir=str(platform.cfg.workdir))
     print("\n" + verdict.report())
     return 0 if verdict.survived else 1
+
+
+
+FREIGHT_CAMPAIGN = dict(
+    name="freight-recon",
+    service="a fixed-price audit of your last 200 loads, matching every rate "
+            "confirmation against its carrier invoice",
+    price_low=1500, price_high=2500,
+    hook="rate con vs carrier invoice",
+)
+
+
+def _pipeline_parts(platform: Platform, args):
+    """Pipeline, campaign and credentials, assembled once for every subcommand."""
+    from .outreach import Campaign, Pipeline
+
+    cfg = platform.cfg
+    pipeline = Pipeline(Path(cfg.workdir) / "outreach.db")
+    campaign = Campaign(
+        from_name=getattr(args, "from_name", "") or cfg.gmail_user or "",
+        signature=getattr(args, "signature", "") or "",
+        **FREIGHT_CAMPAIGN)
+    return pipeline, campaign, cfg
+
+
+def cmd_pipeline(platform: Platform, args) -> int:
+    """Find leads, mail them, track replies, invoice, collect. One loop.
+
+    Default is a dry run: it builds every message and opens no socket. Real
+    sending needs --live AND the environment confirmation, because mail to a
+    stranger from your own address cannot be recalled.
+    """
+    import csv as csvlib
+
+    from .outreach import (DRAFTED, OutreachError, Prospect, check_replies,
+                           collect, quote, run_sends, sending_enabled)
+
+    pipeline, campaign, cfg = _pipeline_parts(platform, args)
+    step = args.step
+
+    try:
+        if step == "import":
+            path = Path(args.file)
+            if not path.exists():
+                print(f"no such file: {path}")
+                return 1
+            added = skipped = 0
+            with path.open(newline="", encoding="utf-8") as handle:
+                for row in csvlib.DictReader(handle):
+                    try:
+                        prospect = Prospect(
+                            company=row.get("company", ""), email=row.get("email", ""),
+                            evidence=row.get("evidence", ""),
+                            contact_name=row.get("contact_name", ""),
+                            website=row.get("website", ""), role=row.get("role", ""),
+                            notes=row.get("notes", ""))
+                        added += 1 if pipeline.add(prospect, campaign.name) else 0
+                    except OutreachError as exc:
+                        print(f"  ! skipped: {exc}")
+                        skipped += 1
+            print(f"imported {added}, skipped {skipped}")
+
+        elif step == "draft":
+            print(f"drafted {pipeline.draft_all(campaign)} messages")
+
+        elif step == "preview":
+            rows = pipeline.at_stage(DRAFTED, campaign.name)
+            if not rows:
+                print("nothing drafted — run: earner pipeline draft")
+            for row in rows[: args.limit]:
+                print(f"\n{'=' * 72}\nTo: {row['email']}  ({row['company']})")
+                print(f"Subject: {row['subject']}\n{'-' * 72}\n{row['body']}")
+
+        elif step == "send":
+            if args.live and not sending_enabled():
+                print("Refusing to send. This puts real mail in strangers' inboxes "
+                      "from your own address and cannot be undone.\n"
+                      "  export OUTREACH_SEND_CONFIRMATION=I_UNDERSTAND_THIS_EMAILS_REAL_PEOPLE")
+                return 1
+            if args.live and not (cfg.gmail_user and cfg.gmail_app_password):
+                print("GMAIL_USER and GMAIL_APP_PASSWORD are not set — run: earner connect")
+                return 1
+            mode = "LIVE" if args.live else "dry run (no socket opened)"
+            print(f"Sending — {mode}. Cap {args.cap}/day, "
+                  f"{pipeline.remaining_today(args.cap)} left today.")
+            count = run_sends(pipeline, campaign, user=cfg.gmail_user or "you@example.com",
+                              app_password=cfg.gmail_app_password or "",
+                              cap=args.cap, live=args.live,
+                              sleeper=(lambda _: None) if not args.live else time.sleep)
+            print(f"{count} sent")
+
+        elif step == "replies":
+            if not args.live:
+                print("dry run — pass --live to read the inbox")
+                return 0
+            found = check_replies(pipeline, user=cfg.gmail_user or "",
+                                  app_password=cfg.gmail_app_password or "", live=True)
+            print(f"{found} replies")
+
+        elif step == "quote":
+            from .ledger import Ledger
+            from .payments import build_provider
+
+            ledger = Ledger(Path(cfg.workdir) / "ledger.db")
+            out = quote(pipeline, args.ref, ledger=ledger,
+                        provider=build_provider(cfg), campaign=campaign,
+                        amount_cents=int(args.amount * 100), currency=cfg.currency)
+            print(f"job {out['job_id']}  invoice {out['provider_ref']}\n  {out['url']}")
+            ledger.close()
+
+        elif step == "collect":
+            from .ledger import Ledger
+            from .payments import build_provider
+
+            ledger = Ledger(Path(cfg.workdir) / "ledger.db")
+            print(f"{collect(pipeline, ledger=ledger, provider=build_provider(cfg))} settled")
+            print(f"revenue so far: {ledger.revenue_cents() / 100:,.2f} {cfg.currency.upper()}")
+            ledger.close()
+
+        elif step == "run":
+            # The whole loop. Safe to run on a schedule: every step is
+            # idempotent and the database is the memory.
+            print("1. drafting");   print(f"   {pipeline.draft_all(campaign)} new")
+            print("2. sending")
+            run_sends(pipeline, campaign, user=cfg.gmail_user or "you@example.com",
+                      app_password=cfg.gmail_app_password or "", cap=args.cap,
+                      live=args.live, sleeper=(lambda _: None) if not args.live else time.sleep,
+                      log=lambda m: print(f"  {m}"))
+            print("3. closing exhausted"); print(f"   {pipeline.close_exhausted(campaign.name)} closed")
+            if args.live:
+                print("4. replies")
+                check_replies(pipeline, user=cfg.gmail_user or "",
+                              app_password=cfg.gmail_app_password or "", live=True)
+            print("\n" + _pipeline_status(pipeline, campaign))
+
+        else:
+            print(_pipeline_status(pipeline, campaign))
+
+    except OutreachError as exc:
+        print(f"refused: {exc}")
+        return 1
+    finally:
+        pipeline.close()
+    return 0
+
+
+def _pipeline_status(pipeline, campaign) -> str:
+    from .outreach import (BOUNCED, CLOSED, DRAFTED, OPTED_OUT, QUOTED,
+                           REPLIED, RESEARCHED, SENT, WON)
+
+    counts = pipeline.summary(campaign.name)
+    order = (RESEARCHED, DRAFTED, SENT, REPLIED, QUOTED, WON, CLOSED, OPTED_OUT, BOUNCED)
+    lines = [f"Pipeline — {campaign.name}", ""]
+    for stage in order:
+        lines.append(f"  {stage:<12}{counts.get(stage, 0):>5}")
+    lines.append("")
+    lines.append(f"  sent in last 24h: {pipeline.sent_today()}")
+    replied = counts.get(REPLIED, 0) + counts.get(QUOTED, 0) + counts.get(WON, 0)
+    sent = sum(counts.get(s, 0) for s in (SENT, REPLIED, QUOTED, WON, CLOSED))
+    if sent:
+        lines.append(f"  reply rate:       {replied / sent:.1%}  ({replied}/{sent})")
+    return "\n".join(lines)
 
 
 def cmd_rapid(platform: Platform, args) -> int:
@@ -442,6 +605,20 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--days", type=int, default=60)
     s.add_argument("--symbols", help="comma-separated NSE symbols")
     s.set_defaults(func=cmd_research)
+
+    s = sub.add_parser("pipeline", help="find leads, mail them, invoice, collect")
+    s.add_argument("step", nargs="?", default="status",
+                   choices=["import", "draft", "preview", "send", "replies",
+                            "quote", "collect", "run", "status"])
+    s.add_argument("--file", help="CSV for import: company,email,evidence,contact_name,website")
+    s.add_argument("--live", action="store_true", help="actually send (needs the env confirmation)")
+    s.add_argument("--cap", type=int, default=20, help="max emails per 24h")
+    s.add_argument("--limit", type=int, default=3, help="how many drafts to preview")
+    s.add_argument("--ref", help="prospect ref, for quote")
+    s.add_argument("--amount", type=float, default=1500.0, help="quote amount")
+    s.add_argument("--from-name", dest="from_name", default="")
+    s.add_argument("--signature", default="")
+    s.set_defaults(func=cmd_pipeline)
 
     s = sub.add_parser("rapid", help="microstructure/ML rapid-trading study (read-only)")
     s.add_argument("--capital", type=float, default=100_000.0)
