@@ -211,16 +211,16 @@ def cmd_watch(platform: Platform, args) -> int:
     API does not permit programmatic proposals, and writing the bid is the part
     where being a person is worth something anyway.
     """
-    from .watch import Profile, poll, render, upwork_source, watch
+    from .watch import (Profile, freelancer_sources, poll, render,
+                        upwork_source, watch)
 
     cfg = platform.cfg
     profile = Profile(floor_usd=args.floor, ceiling_bids=args.max_bids)
-    sources = [upwork_source(cfg)]
-
-    if not any(s() for s in sources) and args.once:
-        print("No live sources. Upwork needs authorising:  earner connect --only upwork")
-        print("The ranking still works — feed it postings and it will sort them.")
-        return 1
+    # Freelancer's public feed needs no credentials and carries a real
+    # publication time, which is the only field the ranking truly depends on.
+    # Upwork is added when it has been authorised, and contributes nothing
+    # until then rather than failing the sweep.
+    sources = [*freelancer_sources(), upwork_source(cfg)]
 
     if args.once:
         print(render(poll(sources, profile)))

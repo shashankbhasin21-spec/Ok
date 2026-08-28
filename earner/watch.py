@@ -26,6 +26,7 @@ minutes ago, and the ranking says so out loud.
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import math
 import re
@@ -99,17 +100,34 @@ class Profile:
     has a history.
     """
 
-    skills: list = field(default_factory=lambda: [
-        "python", "automation", "api", "integration", "scraping", "data",
-        "etl", "pipeline", "llm", "openai", "anthropic", "claude", "gpt",
-        "agent", "workflow", "n8n", "zapier", "make.com", "webhook",
-        "sqlite", "postgres", "pandas", "backtest", "trading", "fastapi",
-        "reconciliation", "invoice", "pdf", "ocr", "extraction", "dashboard",
+    # Weighted, because "api" and "data" appear in nearly every development
+    # posting while "reconciliation" and "scraping" appear only in the ones
+    # actually worth answering. Flat matching scored a Next.js social app as
+    # highly as an invoice-parsing job, which is how twenty proposals get spent
+    # losing to specialists.
+    strong: list = field(default_factory=lambda: [
+        "python", "automation", "scraping", "scraper", "etl", "llm", "openai",
+        "anthropic", "claude", "gpt", "langchain", "agent", "n8n", "zapier",
+        "make.com", "reconciliation", "reconcile", "invoice", "ocr",
+        "extraction", "backtest", "pandas", "fastapi", "web scraping",
+        "data extraction", "data mining", "bot", "selenium", "playwright",
+        "beautifulsoup", "airflow", "celery", "rag", "embeddings",
     ])
+    weak: list = field(default_factory=lambda: [
+        "api", "integration", "data", "pipeline", "workflow", "webhook",
+        "sqlite", "postgres", "database", "dashboard", "csv", "excel",
+        "script", "json", "rest",
+    ])
+
+    @property
+    def skills(self) -> list:
+        return self.strong + self.weak
     avoid: list = field(default_factory=lambda: [
         "wordpress", "shopify theme", "logo", "photoshop", "video editing",
         "seo article", "content writing", "data entry", "virtual assistant",
         "unity", "unreal", "android app", "ios app", "flutter",
+        "next.js", "nextjs", "react native", "3d render", "autocad",
+        "figma", "ui/ux", "graphic design",
     ])
     floor_usd: float = 100.0
     ceiling_bids: int = 20          # tighter than the old 45: bids proxy for age
@@ -135,18 +153,46 @@ def _words(text: str) -> set:
     return set(re.findall(r"[a-z0-9.+#]+", text.lower()))
 
 
-def fit(opening: Opening, profile: Profile) -> tuple:
-    """How well this matches what you build. Returns (0-1, matched, avoided)."""
-    haystack = _words(f"{opening.title} {opening.description} {' '.join(opening.skills)}")
-    blob = f"{opening.title} {opening.description}".lower()
+def mentions(term: str, text: str) -> bool:
+    """Whether `text` contains `term` as a word, not as a substring.
 
-    matched = [s for s in profile.skills if s in haystack or s in blob]
-    avoided = [a for a in profile.avoid if a in blob]
-    if not matched:
-        return 0.0, matched, avoided
-    # Saturating: five relevant skills is a strong match and ten is not twice
-    # as strong, so the score cannot be gamed by a posting that lists forty.
-    return min(1.0, len(matched) / 5.0), matched, avoided
+    Substring matching put full-stack JavaScript jobs at the top of the
+    shortlist, because "script" is inside "JavaScript" and "bot" is inside
+    "robot". Both scored as core-skill matches for a Python automation
+    specialist, which is exactly the kind of posting they would lose.
+    """
+    return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text) is not None
+
+
+def fit(opening: Opening, profile: Profile) -> tuple:
+    """How well this matches what you build. Returns (0-1, matched, avoided).
+
+    A strong skill is worth three weak ones, and **at least one strong match is
+    required**. Without that rule a posting mentioning "api" and "data" — which
+    is most of them — scored as a good fit, and the shortlist filled with
+    full-stack work that a Python automation specialist would lose to a
+    front-end specialist.
+    """
+    blob = f"{opening.title} {opening.description} {' '.join(opening.skills)}".lower()
+
+    title = opening.title.lower()
+    strong = [s for s in profile.strong if mentions(s, blob)]
+    weak = [w for w in profile.weak if mentions(w, blob)]
+
+    # An avoided term in the *title* is what the job is. The same term buried
+    # in a skill tag list is often incidental — a backend job that also lists
+    # "graphic design" among eight tags is still a backend job, and vetoing it
+    # threw away real matches. So a tag-level mention only counts against the
+    # posting when nothing core matched.
+    in_title = [a for a in profile.avoid if mentions(a, title)]
+    elsewhere = [a for a in profile.avoid if mentions(a, blob)]
+    avoided = in_title or (elsewhere if not strong else [])
+
+    if not strong:
+        return 0.0, weak, avoided
+    # Saturating, so a posting listing forty skills cannot outrank a focused
+    # one purely on length.
+    return min(1.0, (len(strong) * 3 + len(weak)) / 9.0), strong + weak, avoided
 
 
 def score(opening: Opening, profile: Profile | None = None,
@@ -169,7 +215,8 @@ def score(opening: Opening, profile: Profile | None = None,
     if avoided:
         blockers.append(f"outside what you build: {', '.join(avoided[:3])}")
     if quality <= 0:
-        blockers.append("no overlap with your skills")
+        blockers.append(
+            "no core-skill match" if matched else "no overlap with your skills")
 
     rate = USD_PER.get(opening.currency.lower(), 1.0)
     high_usd = opening.budget_high * rate
@@ -287,6 +334,18 @@ def poll(sources: list, profile: Profile | None = None, memory: Seen | None = No
         except Exception as exc:      # noqa: BLE001 - one dead board must not end the sweep
             print(f"  ! {getattr(source, '__name__', source)}: {exc}")
 
+    # Deduplicate *within* the sweep as well as across sweeps. Overlapping
+    # keyword feeds return the same posting several times, and `Seen` only
+    # filters what a previous sweep recorded — so without this the alert listed
+    # the same job two and three times and pushed real matches off the end.
+    unique, seen_refs = [], set()
+    for opening in found:
+        if opening.ref in seen_refs:
+            continue
+        seen_refs.add(opening.ref)
+        unique.append(opening)
+    found = unique
+
     if memory is not None:
         found = [o for o in found if memory.is_new(o)]
 
@@ -313,6 +372,122 @@ def render(ranks: list) -> str:
             f"   {o.url}\n"
             f"   {'; '.join(rank.reasons[:3])}")
     return "\n".join(lines)
+
+
+# ── sources ─────────────────────────────────────────────────────────────────
+
+FREELANCER_RSS = "https://www.freelancer.com/rss.xml"
+
+# The unfiltered feed is every category at once — video editing, logo design,
+# 3D rendering — and returns twenty items per fetch. In a live sweep all twenty
+# were correctly rejected, because Python automation work is a small share of
+# everything posted. Keyword feeds fix the source rather than loosening the
+# filter, which would have been the wrong repair.
+FREELANCER_KEYWORDS = ("python", "automation", "web scraping",
+                       "data extraction", "api integration", "openai")
+
+# The budget line Freelancer embeds at the end of every description, e.g.
+#   (Budget: $10 - $30 AUD, Jobs: Figma, HTML, Web Design)
+#   (Budget: 400 - 750 INR, Jobs: Video Editing)
+_BUDGET = re.compile(
+    r"Budget:\s*[^\d]{0,3}([\d,]+(?:\.\d+)?)\s*-\s*[^\d]{0,3}([\d,]+(?:\.\d+)?)\s*([A-Z]{3})")
+_HOURLY = re.compile(r"Budget:\s*[^\d]{0,3}([\d,]+(?:\.\d+)?)\s*([A-Z]{3})?\s*/\s*(?:hr|hour)")
+_CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
+
+
+def _cdata(fragment: str, tag: str) -> str:
+    match = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", fragment, re.S)
+    if not match:
+        return ""
+    inner = match.group(1)
+    cdata = _CDATA.search(inner)
+    text = (cdata.group(1) if cdata else inner).strip()
+    # Feeds escape entities even inside CDATA, so "&amp;" arrives literally and
+    # would otherwise reach the skill matcher and the alert as typed noise.
+    return html.unescape(text)
+
+
+def parse_freelancer_rss(xml: str, *, hourly_hours: float = 20.0) -> list:
+    """Openings from Freelancer's public new-projects feed.
+
+    This feed is the reason the watcher works with no credentials at all: it
+    carries a real publication timestamp, which is the one field the ranking
+    actually depends on and the one that scraped board pages do not give you.
+
+    Bid count is absent from the feed and defaults to zero. That is honest for
+    this source rather than optimistic — the feed is literally "new projects",
+    and a posting two minutes old has not accumulated bids yet. It does mean
+    the competition term carries no information here, so freshness and fit do
+    all the work.
+    """
+    out = []
+    for chunk in re.findall(r"<item>(.*?)</item>", xml, re.S):
+        title = _cdata(chunk, "title")
+        link = _cdata(chunk, "link")
+        if not title or not link:
+            continue
+        description = _cdata(chunk, "description")
+        skills = [c for c in re.findall(r"<category[^>]*>(.*?)</category>", chunk, re.S)]
+        skills = [(_CDATA.search(s).group(1) if _CDATA.search(s) else s).strip().lower()
+                  for s in skills]
+
+        low = high = 0.0
+        currency = "usd"
+        money = _BUDGET.search(description)
+        if money:
+            low = float(money.group(1).replace(",", ""))
+            high = float(money.group(2).replace(",", ""))
+            currency = money.group(3).lower()
+        else:
+            hourly = _HOURLY.search(description)
+            if hourly:
+                # An hourly posting has no ceiling; twenty hours is a
+                # deliberately modest stand-in so an open-ended rate cannot
+                # outrank a fixed scope purely by being unbounded.
+                rate = float(hourly.group(1).replace(",", ""))
+                low = high = rate * hourly_hours
+                currency = (hourly.group(2) or "usd").lower()
+
+        out.append(Opening(
+            title=title, url=link, source="freelancer",
+            description=description, budget_low=low, budget_high=high,
+            currency=currency, bids=0,
+            posted_at=_parse_rfc822(_cdata(chunk, "pubDate")),
+            skills=skills))
+    return out
+
+
+def _parse_rfc822(value: str) -> float:
+    if not value:
+        return 0.0
+    from email.utils import parsedate_to_datetime
+    try:
+        return parsedate_to_datetime(value).timestamp()
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def freelancer_source(url: str = FREELANCER_RSS, *, timeout: float = 20.0,
+                      keyword: str = ""):
+    """Live postings from Freelancer's public feed. No credentials needed."""
+    import urllib.parse
+    import urllib.request
+
+    target = f"{url}?{urllib.parse.urlencode({'keyword': keyword})}" if keyword else url
+
+    def fetch() -> list:
+        request = urllib.request.Request(
+            target, headers={"User-Agent": "Mozilla/5.0 (compatible; earner/1.0)"})
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return parse_freelancer_rss(response.read().decode("utf-8", "replace"))
+
+    fetch.__name__ = f"freelancer[{keyword or 'all'}]"
+    return fetch
+
+
+def freelancer_sources(keywords=FREELANCER_KEYWORDS, *, timeout: float = 20.0) -> list:
+    """One source per keyword. Overlap is fine — `Seen` deduplicates by URL."""
+    return [freelancer_source(timeout=timeout, keyword=k) for k in keywords]
 
 
 def upwork_source(cfg):

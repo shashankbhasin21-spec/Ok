@@ -71,6 +71,53 @@ earner watch --once               # one sweep
 earner pipeline run --live        # cold outreach, once there is a review
 ```
 
+**`earner watch` needs no credentials.** It reads Freelancer's public RSS
+feed, which carries a real publication timestamp — the one field the ranking
+actually depends on, and the one a scraped board page does not give you.
+Upwork joins the sweep once authorised and contributes nothing until then
+rather than failing.
+
+A live sweep, taken while writing this:
+
+```
+1. [0.93] Dealer Locator Data Scraping
+   4 min old · $250 · 0 bids · freelancer
+   matches: scraping, extraction, web scraping, data extraction, data mining
+2. [0.57] AI Automation Engineer / n8n & AI Agent Developer
+   34 min old · $750 · 0 bids
+3. [0.49] Part-Time Python Trainer Needed
+   43 min old · no budget · 0 bids
+```
+
+### Four bugs the live runs found
+
+Each was found by running against real postings, not by reasoning about the
+code, and each would have quietly wasted proposals:
+
+**Substring matching.** `"script" in text` matched inside *JavaScript*, and
+`"bot"` inside *robot*. Full-stack JS jobs took the top three slots, which is
+work a Python automation specialist would lose to a front-end specialist.
+Fixed with word-boundary matching.
+
+**Flat skill weighting.** "api" and "data" appear in nearly every development
+posting, so a Next.js social app scored as well as an invoice parser. Skills
+are now weighted, and at least one *core* skill must match.
+
+**The source, not the filter.** A clean sweep of the general feed returned
+nothing — correctly: all twenty postings were video editing, design and
+Next.js. The repair was keyword-specific feeds, not a looser filter. Loosening
+the filter is how a shortlist becomes a list.
+
+**Duplicates within a sweep.** Overlapping keyword feeds return the same job
+several times, and `Seen` only deduplicated across sweeps. The alert listed
+one job three times and pushed real matches off the end.
+
+### One rule that survived being tested
+
+An avoided term in the *title* blocks the posting. The same term buried among
+eight skill tags does not, when a core skill matched — a scraping job that also
+tags "graphic design" is still a scraping job.
+
 `watch.score()` multiplies four terms, so a posting has to clear all of them:
 
 ```
