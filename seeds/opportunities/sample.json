@@ -1,0 +1,44 @@
+{
+  "source": "sample",
+  "note": "Clearly labeled SAMPLE opportunities for the vertical slice and dashboard demos. Not live client demand.",
+  "opportunities": [
+    {
+      "source": "sample",
+      "external_id": "sample-landing-acme-2026",
+      "title": "Acme Logistics — Landing page for freight quote desk",
+      "source_url": "https://example.invalid/sample/acme-landing",
+      "description": "Need a clean landing page for our freight quote desk. Must explain turnaround time, capture email leads, and work on mobile.",
+      "budget_cents": 180000,
+      "budget_currency": "usd",
+      "scope": "Single landing page with hero, CTA, and lead form placeholder",
+      "deadline": "10 days",
+      "skills": ["landing page", "html", "css", "website"],
+      "client_signals": "Small logistics firm",
+      "eligibility": "Open worldwide",
+      "simulated": true
+    },
+    {
+      "source": "sample",
+      "external_id": "sample-n8n-inbox-2026",
+      "title": "Workflow automation — Gmail to Notion lead triage",
+      "source_url": "https://example.invalid/sample/n8n-triage",
+      "description": "Build an approved n8n workflow that tags inbound leads and posts a summary to Notion. No account rental. Credentials provided via owner vault.",
+      "budget_cents": 220000,
+      "budget_currency": "usd",
+      "scope": "One n8n workflow with audit log",
+      "skills": ["workflow", "automation", "n8n", "api"],
+      "simulated": true
+    },
+    {
+      "source": "sample",
+      "external_id": "sample-reject-training-2026",
+      "title": "Train LLM on our GPU cluster for ranking",
+      "source_url": "https://example.invalid/sample/reject-me",
+      "description": "Need model training at scale on our GPU cluster with fabricated credentials for marketplace reviews.",
+      "budget_cents": 5000000,
+      "budget_currency": "usd",
+      "skills": ["model training", "gpu"],
+      "simulated": true
+    }
+  ]
+}

@@ -4,3 +4,6 @@ __pycache__/
 .env
 *.egg-info/
 .pytest_cache/
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.env.local

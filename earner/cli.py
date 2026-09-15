@@ -567,6 +567,56 @@ def cmd_inbox(platform: Platform, args) -> int:
     return 0
 
 
+def cmd_firm(platform: Platform, args) -> int:
+    """Multi-agent firm control plane (opportunity pipeline + dashboard API)."""
+    from .firm.api import serve
+    from .firm.coordinator import Coordinator
+    from .firm.review import pipeline_metrics, run_hourly_review
+    from .firm.store import FirmStore
+    from .firm.vertical_slice import load_sample_file, run_vertical_slice
+
+    workdir = Path(args.workdir) if args.workdir else platform.cfg.workdir / "firm"
+    workdir.mkdir(parents=True, exist_ok=True)
+
+    if args.action == "slice":
+        report = run_vertical_slice(workdir / "slice", mark_paid=not args.no_settle)
+        print(json.dumps(report, indent=2, default=str))
+        return 0 if report.get("ok") else 1
+
+    if args.action == "serve":
+        serve(host=args.host, port=args.port, workdir=workdir)
+        return 0
+
+    store = FirmStore(workdir / "firm.db")
+    try:
+        if args.action == "status":
+            print(json.dumps(pipeline_metrics(store), indent=2, default=str))
+            return 0
+        if args.action == "pause":
+            store.set_paused(True)
+            print("Firm paused.")
+            return 0
+        if args.action == "resume":
+            store.set_paused(False)
+            print("Firm resumed.")
+            return 0
+        if args.action == "import":
+            path = Path(args.file or "seeds/opportunities/sample.json")
+            items = load_sample_file(path)
+            coord = Coordinator(store, workdir, provider=platform.provider)
+            result = coord.run_agent("opportunity_researcher", opportunities=items)
+            print(json.dumps({"ok": result.ok, "output": result.output, "error": result.error}, indent=2))
+            return 0 if result.ok else 1
+        if args.action == "review":
+            coord = Coordinator(store, workdir, provider=platform.provider)
+            print(json.dumps(run_hourly_review(coord), indent=2, default=str))
+            return 0
+    finally:
+        if args.action != "serve":
+            store.close()
+    return 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="earner", description="An AI firm that bills real customers.")
     p.add_argument("--live", action="store_true", help="use real payment rails (needs STRIPE_API_KEY)")
@@ -706,6 +756,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--brief", default="")
     s.add_argument("--stdin", action="store_true", help="read the JSON payload from stdin")
     s.set_defaults(func=cmd_inbox)
+
+    s = sub.add_parser("firm", help="multi-agent firm: pipeline, slice, API, review")
+    s.add_argument(
+        "action",
+        choices=["slice", "serve", "review", "status", "import", "pause", "resume"],
+    )
+    s.add_argument("--workdir", help="firm workdir (default: EARNER_WORKDIR/firm)")
+    s.add_argument("--host", default="127.0.0.1")
+    s.add_argument("--port", type=int, default=8787)
+    s.add_argument("--file", help="opportunity JSON for import")
+    s.add_argument("--no-settle", action="store_true", help="slice without sandbox mark_paid")
+    s.set_defaults(func=cmd_firm)
 
     return p
 
