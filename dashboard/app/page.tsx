@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 type Dashboard = {
   paused: boolean;
-  targets: { aspirational_rate_usd_per_hour: number; milestone_usd: number; label: string };
+  targets: { aspirational_rate_usd_per_hour: number; cash_milestone_usd: number; label: string };
   metrics: {
     by_status: Record<string, number>;
     conversion: { application_to_reply: number | null; reply_to_win: number | null };
@@ -14,6 +14,11 @@ type Dashboard = {
       costs_cents: number;
       net_contribution_cents: number;
       settled_cash_cents: number;
+      simulated_receipts_cents: number;
+      monthly_target_cents: number;
+      monthly_settled_cash_cents: number;
+      monthly_target_progress: number;
+      month_utc: string;
       milestone_cents: number;
       milestone_progress: number;
       observed_rate_cents_per_hour: number;
@@ -39,6 +44,10 @@ type Dashboard = {
   payouts: Record<string, unknown>;
   standing_auth: Array<Record<string, unknown>>;
   integrations: Record<string, string>;
+  readiness?: Array<{ name: string; ok: boolean; detail: string }>;
+  blocked?: Array<{ name: string; detail: string }>;
+  live_mode?: boolean;
+  provider?: string | null;
   simulated_data_policy: string;
 };
 
@@ -74,6 +83,7 @@ export default function HomePage() {
     routing_or_ifsc: "",
     upi_id: "",
     currency: "usd",
+    provider: "payoneer",
   });
 
   const refresh = useCallback(async () => {
@@ -126,20 +136,54 @@ export default function HomePage() {
           </p>
         </div>
         <div className="actions">
+          <input
+            style={{ minWidth: "12rem" }}
+            type="password"
+            placeholder="Owner secret"
+            value={ownerSecret}
+            onChange={(e) => setOwnerSecret(e.target.value)}
+            autoComplete="off"
+          />
           <button
             className="primary"
             disabled={!!busy}
             onClick={() =>
-              run("slice", async () => {
-                await api("/vertical-slice", { method: "POST", body: JSON.stringify({ mark_paid: true }) });
+              run("sweep", async () => {
+                await api("/live/sweep", {
+                  method: "POST",
+                  body: "{}",
+                  headers: { "X-Owner-Secret": ownerSecret },
+                });
               })
             }
           >
-            {busy === "slice" ? "Running…" : "Run vertical slice"}
+            {busy === "sweep" ? "Sweeping…" : "Sweep live boards"}
           </button>
           <button
             disabled={!!busy}
-            onClick={() => run("review", async () => { await api("/review", { method: "POST", body: "{}" }); })}
+            onClick={() =>
+              run("collect", async () => {
+                await api("/live/collect", {
+                  method: "POST",
+                  body: "{}",
+                  headers: { "X-Owner-Secret": ownerSecret },
+                });
+              })
+            }
+          >
+            Collect Stripe
+          </button>
+          <button
+            disabled={!!busy}
+            onClick={() =>
+              run("review", async () => {
+                await api("/review", {
+                  method: "POST",
+                  body: "{}",
+                  headers: { "X-Owner-Secret": ownerSecret },
+                });
+              })
+            }
           >
             Hourly review
           </button>
@@ -157,14 +201,20 @@ export default function HomePage() {
 
       {data?.paused && <div className="banner paused">Firm is paused. External actions and agent ticks are suspended.</div>}
       {error && <div className="banner paused error">{error}</div>}
+      {data && (data.blocked?.length ?? 0) > 0 && (
+        <div className="banner paused">
+          Live invoicing blocked until you add Stripe credentials:{" "}
+          {(data.blocked || []).map((b) => b.name).join(", ")}. Settled cash stays $0 until Stripe confirms payment.
+        </div>
+      )}
       {data && <div className="banner">{data.simulated_data_policy}</div>}
 
       {data && (
         <div className="grid">
           <section className="panel span-4">
-            <h2>Settled cash (USD)</h2>
+            <h2>Recorded cash (USD)</h2>
             <div className="metric">
-              <span className="label">Provider-confirmed</span>
+              <span className="label">Non-sandbox receipts</span>
               <span className="value">{usd(fin?.settled_cash_cents)}</span>
               <span className="hint">{data.metrics.note}</span>
             </div>
@@ -172,7 +222,10 @@ export default function HomePage() {
               <span style={{ width: `${progress}%` }} />
             </div>
             <p className="muted" style={{ marginTop: "0.5rem" }}>
-              Milestone {usd(fin?.milestone_cents)} · {progress.toFixed(1)}%
+              Monthly goal {usd(fin?.monthly_target_cents)} · {fin?.month_utc} UTC<br />
+              Collected this month: {usd(fin?.monthly_settled_cash_cents)}<br />
+              Simulated receipts (excluded): {usd(fin?.simulated_receipts_cents)}<br />
+              Cumulative milestone {usd(fin?.milestone_cents)} · {progress.toFixed(1)}%
             </p>
           </section>
 
@@ -306,6 +359,7 @@ export default function HomePage() {
                         run("apr", async () => {
                           await api("/approvals/decide", {
                             method: "POST",
+                            headers: { "X-Owner-Secret": ownerSecret },
                             body: JSON.stringify({ approval_id: a.id, approved: true }),
                           });
                         })
@@ -319,6 +373,7 @@ export default function HomePage() {
                         run("apr", async () => {
                           await api("/approvals/decide", {
                             method: "POST",
+                            headers: { "X-Owner-Secret": ownerSecret },
                             body: JSON.stringify({ approval_id: a.id, approved: false }),
                           });
                         })
@@ -390,8 +445,9 @@ export default function HomePage() {
           <section className="panel span-6">
             <h2>Payout configuration</h2>
             <p className="muted">
-              Private owner screen. Agents cannot modify the beneficiary. Full bank/UPI details
-              never appear in this bundle after save — only masked fields.
+              Private owner screen. Agents cannot modify the beneficiary.
+              If Kotak cannot link to US Stripe, use Payoneer/Wise or marketplace
+              escrow — see docs/INDIA-PAYOUTS.md. UPI does not accept USD.
             </p>
             {data.payouts.configured ? (
               <div className="stack" style={{ margin: "0.75rem 0" }}>
@@ -411,6 +467,13 @@ export default function HomePage() {
               <label>
                 Session token
                 <input value={payoutSession} onChange={(e) => setPayoutSession(e.target.value)} readOnly placeholder="Authenticate first" />
+              </label>
+              <label>
+                Payout provider (payoneer / wise / stripe_india / kotak_swift / upi_inr)
+                <input
+                  value={payoutForm.provider || "payoneer"}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, provider: e.target.value })}
+                />
               </label>
               <label>
                 Account holder
@@ -473,7 +536,7 @@ export default function HomePage() {
               {Object.entries(data.integrations).map(([k, v]) => (
                 <div className="row" key={k}>
                   <span className="muted">{k}</span>
-                  <span className={String(v).includes("mock") || String(v).includes("missing") || String(v).includes("manual") ? "tag warn" : "tag ok"}>
+                  <span className="tag warn">
                     {v}
                   </span>
                 </div>
@@ -481,7 +544,7 @@ export default function HomePage() {
             </div>
             <p className="muted" style={{ marginTop: "0.75rem" }}>
               {data.targets.label}. Aspirational rate ${data.targets.aspirational_rate_usd_per_hour}/h ·
-              first milestone ${data.targets.milestone_usd.toLocaleString()}.
+              first milestone ${data.targets.cash_milestone_usd.toLocaleString()}.
             </p>
           </section>
         </div>

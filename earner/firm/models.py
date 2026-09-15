@@ -10,9 +10,10 @@ class OppStatus(str, Enum):
     QUALIFIED = "qualified"
     PROPOSAL_DRAFTED = "proposal_drafted"
     AWAITING_APPROVAL = "awaiting_approval"
+    APPROVED = "approved"  # owner approved; not yet externally submitted
     SUBMITTED = "submitted"
     REPLIED = "replied"
-    WON = "won"
+    WON = "won"  # signed contract / accepted SOW — requires evidence
     LOST = "lost"
     DELIVERY = "delivery"
     REVIEW = "review"
@@ -21,27 +22,38 @@ class OppStatus(str, Enum):
     PAID = "paid"
     DISPUTED = "disputed"
     REJECTED = "rejected"
+    DISQUALIFIED = "disqualified"
+    UNSUBSCRIBED = "unsubscribed"
+    STALLED = "stalled"
 
 
 # Legal forward transitions only. advance() refuses anything else.
 TRANSITIONS: dict[OppStatus, frozenset[OppStatus]] = {
-    OppStatus.DISCOVERED: frozenset({OppStatus.QUALIFIED, OppStatus.REJECTED}),
-    OppStatus.QUALIFIED: frozenset({OppStatus.PROPOSAL_DRAFTED, OppStatus.REJECTED}),
+    OppStatus.DISCOVERED: frozenset({OppStatus.QUALIFIED, OppStatus.REJECTED, OppStatus.DISQUALIFIED}),
+    OppStatus.QUALIFIED: frozenset({OppStatus.PROPOSAL_DRAFTED, OppStatus.REJECTED, OppStatus.DISQUALIFIED}),
     OppStatus.PROPOSAL_DRAFTED: frozenset({OppStatus.AWAITING_APPROVAL, OppStatus.REJECTED}),
     OppStatus.AWAITING_APPROVAL: frozenset(
-        {OppStatus.SUBMITTED, OppStatus.REJECTED, OppStatus.PROPOSAL_DRAFTED}
+        {OppStatus.APPROVED, OppStatus.REJECTED, OppStatus.PROPOSAL_DRAFTED}
     ),
-    OppStatus.SUBMITTED: frozenset({OppStatus.REPLIED, OppStatus.LOST, OppStatus.WON}),
-    OppStatus.REPLIED: frozenset({OppStatus.WON, OppStatus.LOST}),
+    OppStatus.APPROVED: frozenset(
+        {OppStatus.SUBMITTED, OppStatus.REJECTED, OppStatus.STALLED}
+    ),
+    OppStatus.SUBMITTED: frozenset(
+        {OppStatus.REPLIED, OppStatus.LOST, OppStatus.STALLED, OppStatus.UNSUBSCRIBED}
+    ),
+    OppStatus.REPLIED: frozenset({OppStatus.WON, OppStatus.LOST, OppStatus.STALLED}),
     OppStatus.WON: frozenset({OppStatus.DELIVERY}),
     OppStatus.DELIVERY: frozenset({OppStatus.REVIEW}),
-    OppStatus.REVIEW: frozenset({OppStatus.ACCEPTED, OppStatus.DELIVERY}),  # revise loop
+    OppStatus.REVIEW: frozenset({OppStatus.ACCEPTED, OppStatus.DELIVERY}),
     OppStatus.ACCEPTED: frozenset({OppStatus.INVOICED}),
     OppStatus.INVOICED: frozenset({OppStatus.PAID, OppStatus.DISPUTED}),
     OppStatus.PAID: frozenset(),
     OppStatus.DISPUTED: frozenset({OppStatus.PAID, OppStatus.LOST}),
     OppStatus.LOST: frozenset(),
     OppStatus.REJECTED: frozenset(),
+    OppStatus.DISQUALIFIED: frozenset(),
+    OppStatus.UNSUBSCRIBED: frozenset(),
+    OppStatus.STALLED: frozenset({OppStatus.SUBMITTED, OppStatus.REPLIED, OppStatus.LOST}),
 }
 
 

@@ -199,6 +199,38 @@ CREATE TABLE IF NOT EXISTS review_cycles (
     experiment_id   TEXT,
     created_at      REAL NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS evidence (
+    id              TEXT PRIMARY KEY,
+    opportunity_id  TEXT NOT NULL,
+    kind            TEXT NOT NULL,
+    reference       TEXT NOT NULL,
+    note            TEXT NOT NULL DEFAULT '',
+    recorded_by     TEXT NOT NULL,
+    for_status      TEXT NOT NULL,
+    created_at      REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bank_payouts (
+    id              TEXT PRIMARY KEY,
+    provider        TEXT NOT NULL,
+    provider_transfer_id TEXT NOT NULL,
+    amount_cents    INTEGER NOT NULL,
+    currency        TEXT NOT NULL DEFAULT 'usd',
+    status          TEXT NOT NULL,
+    confirmed_at    REAL,
+    created_at      REAL NOT NULL,
+    UNIQUE (provider, provider_transfer_id)
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    id              TEXT PRIMARY KEY,
+    amount_cents    INTEGER NOT NULL,
+    currency        TEXT NOT NULL DEFAULT 'usd',
+    category        TEXT NOT NULL,
+    note            TEXT NOT NULL DEFAULT '',
+    created_at      REAL NOT NULL
+);
 """
 
 
@@ -1024,7 +1056,17 @@ class FirmStore:
         amount_cents: int,
         currency: str = "usd",
     ) -> bool:
-        """Idempotent payment confirmation. Returns False if already applied."""
+        """Idempotent payment confirmation. Returns False if already applied.
+
+        Sandbox/simulated invoices may be recorded for audit, but
+        ``gross_revenue_cents()`` never includes them as real cash. Live Stripe
+        webhooks must refuse simulated rows before calling this.
+        """
+        row = self.conn.execute(
+            "SELECT * FROM firm_invoices WHERE id=?", (invoice_id,)
+        ).fetchone()
+        if row is None:
+            raise KeyError(invoice_id)
         pid = f"fpay_{uuid.uuid4().hex[:12]}"
         try:
             self.conn.execute(
@@ -1049,9 +1091,26 @@ class FirmStore:
         )
         return True
 
-    def gross_revenue_cents(self) -> int:
+    def gross_revenue_cents(
+        self,
+        *,
+        simulated: bool = False,
+        since: float | None = None,
+        until: float | None = None,
+    ) -> int:
+        """USD receipts only; sandbox receipts never contribute to real cash."""
+        predicate = (
+            "(COALESCE(i.simulated,0)=1 OR i.provider='sandbox')"
+            if simulated
+            else "(COALESCE(i.simulated,0)=0 AND i.provider!='sandbox')"
+        )
         row = self.conn.execute(
-            "SELECT COALESCE(SUM(amount_cents),0) s FROM firm_payments"
+            "SELECT COALESCE(SUM(p.amount_cents),0) s FROM firm_payments p"
+            " JOIN firm_invoices i ON i.id=p.invoice_id WHERE " + predicate +
+            " AND lower(p.currency)='usd' AND lower(i.currency)='usd'"
+            " AND (? IS NULL OR p.confirmed_at>=?)"
+            " AND (? IS NULL OR p.confirmed_at<?)",
+            (since, since, until, until),
         ).fetchone()
         return int(row["s"])
 
@@ -1059,8 +1118,159 @@ class FirmStore:
         row = self.conn.execute(
             "SELECT COALESCE(SUM(amount_cents),0) s FROM firm_invoices"
             " WHERE lifecycle NOT IN ('void','settled')"
+            " AND COALESCE(simulated,0)=0 AND provider!='sandbox'"
+            " AND lower(currency)='usd'"
         ).fetchone()
         return int(row["s"])
 
     def list_invoices(self) -> list[dict]:
         return [dict(r) for r in self.conn.execute("SELECT * FROM firm_invoices ORDER BY created_at DESC")]
+
+    # ------------------------------------------------------------- evidence
+
+    def add_evidence(
+        self,
+        *,
+        opportunity_id: str,
+        kind: str,
+        reference: str,
+        for_status: str,
+        recorded_by: str = "owner",
+        note: str = "",
+    ) -> dict:
+        from .commercial import EVIDENCE_KINDS
+        if kind not in EVIDENCE_KINDS:
+            raise ValueError(f"unknown evidence kind {kind!r}; allowed={sorted(EVIDENCE_KINDS)}")
+        if not reference or len(reference.strip()) < 4:
+            raise ValueError("evidence reference required")
+        eid = f"ev_{uuid.uuid4().hex[:12]}"
+        self.conn.execute(
+            "INSERT INTO evidence (id, opportunity_id, kind, reference, note, recorded_by, for_status, created_at)"
+            " VALUES (?,?,?,?,?,?,?,?)",
+            (eid, opportunity_id, kind, reference.strip(), note, recorded_by, for_status, time.time()),
+        )
+        self.conn.commit()
+        self.audit(recorded_by, "evidence_added", "evidence", eid, kind=kind, for_status=for_status)
+        return dict(self.conn.execute("SELECT * FROM evidence WHERE id=?", (eid,)).fetchone())
+
+    def evidence_for(self, opportunity_id: str, for_status: str | None = None) -> list[dict]:
+        if for_status:
+            rows = self.conn.execute(
+                "SELECT * FROM evidence WHERE opportunity_id=? AND for_status=? ORDER BY created_at",
+                (opportunity_id, for_status),
+            )
+        else:
+            rows = self.conn.execute(
+                "SELECT * FROM evidence WHERE opportunity_id=? ORDER BY created_at",
+                (opportunity_id,),
+            )
+        return [dict(r) for r in rows]
+
+    def has_evidence(self, opportunity_id: str, for_status: str) -> bool:
+        return bool(self.evidence_for(opportunity_id, for_status))
+
+    # ---------------------------------------------------- commercial sums
+
+    def _proposal_bid_cents(self, opp) -> int:
+        if opp.proposal and isinstance(opp.proposal, dict) and opp.proposal.get("bid_cents"):
+            return int(opp.proposal["bid_cents"])
+        return int(opp.budget_cents or 0)
+
+    def commercial_snapshot(self) -> dict:
+        """Evidence-backed commercial metrics A–F (cents, USD)."""
+        opps = [o for o in self.list_opportunities() if not o.simulated]
+        qualified_statuses = {
+            "qualified", "proposal_drafted", "awaiting_approval", "approved",
+            "submitted", "replied", "won", "delivery", "review", "accepted",
+            "invoiced", "paid",
+        }
+        proposal_delivered_statuses = {
+            "submitted", "replied", "won", "delivery", "review", "accepted", "invoiced", "paid",
+        }
+        signed_statuses = {"won", "delivery", "review", "accepted", "invoiced", "paid"}
+
+        qualified_cents = sum(
+            self._proposal_bid_cents(o) for o in opps if o.status in qualified_statuses
+        )
+        proposals_cents = sum(
+            self._proposal_bid_cents(o) for o in opps if o.status in proposal_delivered_statuses
+        )
+        # Only count signed if evidence exists for won (or later stages that passed through won)
+        signed_cents = 0
+        signed_count = 0
+        for o in opps:
+            if o.status in signed_statuses and self.has_evidence(o.id, "won"):
+                signed_cents += self._proposal_bid_cents(o)
+                signed_count += 1
+
+        cash = self.gross_revenue_cents()
+        expenses = self.expense_cents()
+        refunds = 0  # reserved; no refund table entries yet
+        net_cash = cash - refunds - expenses
+        bank = self.bank_payout_cents()
+
+        return {
+            "qualified_pipeline_cents": qualified_cents,
+            "proposals_delivered_cents": proposals_cents,
+            "signed_bookings_cents": signed_cents,
+            "signed_bookings_count": signed_count,
+            "cash_collected_cents": cash,
+            "expenses_cents": expenses,
+            "refunds_cents": refunds,
+            "net_cash_cents": net_cash,
+            "bank_payouts_cents": bank,
+            "note": (
+                "Signed bookings require contract/SOW/platform-hire evidence. "
+                "Cash collected requires provider confirmation. "
+                "Bank payouts are separate from customer payments."
+            ),
+        }
+
+    def record_expense(self, amount_cents: int, category: str, note: str = "") -> dict:
+        eid = f"exp_{uuid.uuid4().hex[:12]}"
+        self.conn.execute(
+            "INSERT INTO expenses (id, amount_cents, currency, category, note, created_at) VALUES (?,?,?,?,?,?)",
+            (eid, amount_cents, "usd", category, note, time.time()),
+        )
+        self.conn.commit()
+        return dict(self.conn.execute("SELECT * FROM expenses WHERE id=?", (eid,)).fetchone())
+
+    def expense_cents(self) -> int:
+        row = self.conn.execute("SELECT COALESCE(SUM(amount_cents),0) s FROM expenses").fetchone()
+        return int(row["s"])
+
+    def record_bank_payout(
+        self,
+        *,
+        provider: str,
+        provider_transfer_id: str,
+        amount_cents: int,
+        status: str = "confirmed",
+        currency: str = "usd",
+    ) -> dict:
+        if status != "confirmed":
+            raise ValueError("only provider-confirmed payouts may be recorded")
+        pid = f"bp_{uuid.uuid4().hex[:12]}"
+        try:
+            self.conn.execute(
+                "INSERT INTO bank_payouts (id, provider, provider_transfer_id, amount_cents,"
+                " currency, status, confirmed_at, created_at) VALUES (?,?,?,?,?,?,?,?)",
+                (
+                    pid, provider, provider_transfer_id, amount_cents, currency,
+                    status, time.time(), time.time(),
+                ),
+            )
+            self.conn.commit()
+        except sqlite3.IntegrityError:
+            row = self.conn.execute(
+                "SELECT * FROM bank_payouts WHERE provider=? AND provider_transfer_id=?",
+                (provider, provider_transfer_id),
+            ).fetchone()
+            return dict(row)
+        return dict(self.conn.execute("SELECT * FROM bank_payouts WHERE id=?", (pid,)).fetchone())
+
+    def bank_payout_cents(self) -> int:
+        row = self.conn.execute(
+            "SELECT COALESCE(SUM(amount_cents),0) s FROM bank_payouts WHERE status='confirmed'"
+        ).fetchone()
+        return int(row["s"])

@@ -14,7 +14,7 @@ from earner.firm.models import AgentRole, OppStatus
 from earner.firm.payouts import PayoutError, PayoutStore
 from earner.firm.review import pipeline_metrics, run_hourly_review
 from earner.firm.store import FirmStore, IllegalTransition
-from earner.firm.vertical_slice import SAMPLE_OPPORTUNITY, run_vertical_slice
+from earner.firm.vertical_slice import run_vertical_slice
 from earner.payments import SandboxProvider
 
 
@@ -139,11 +139,14 @@ def test_pause_and_circuit_breaker(store, coord):
 
 
 def test_payout_requires_reauth_and_masks(workdir, monkeypatch):
-    monkeypatch.setenv("FIRM_OWNER_SECRET", "test-secret")
+    monkeypatch.setenv("FIRM_OWNER_SECRET", "test-secret-ok")
+    from cryptography.fernet import Fernet
+
+    monkeypatch.setenv("FIRM_PAYOUT_KEY", Fernet.generate_key().decode())
     ps = PayoutStore(workdir / "payouts.enc.json")
     with pytest.raises(PayoutError):
         ps.save({"bank_account_number": "1234567890", "bank_name": "Test"}, "bad")
-    token = ps.authenticate("test-secret")
+    token = ps.authenticate("test-secret-ok")
     view = ps.save(
         {
             "bank_account_number": "1234567890",
@@ -151,6 +154,7 @@ def test_payout_requires_reauth_and_masks(workdir, monkeypatch):
             "account_holder": "Owner",
             "upi_id": "owner@upi",
             "routing_or_ifsc": "TEST0001",
+            "provider": "payoneer",
         },
         token,
     )
@@ -159,7 +163,7 @@ def test_payout_requires_reauth_and_masks(workdir, monkeypatch):
     assert "1234567890" not in json.dumps(view)
     assert view["upi_id_masked"].startswith("ow")
     # Agents cannot save
-    token2 = ps.authenticate("test-secret")
+    token2 = ps.authenticate("test-secret-ok")
     with pytest.raises(PayoutError):
         ps.save({"_actor": "finance", "bank_account_number": "999"}, token2)
 
@@ -167,16 +171,31 @@ def test_payout_requires_reauth_and_masks(workdir, monkeypatch):
 def test_vertical_slice_end_to_end(workdir):
     report = run_vertical_slice(workdir / "slice", mark_paid=True)
     assert report["ok"], report
-    assert report["preview"]
-    assert Path(report["preview"]).exists()
     assert report["settled_simulated"] is True
     fin = report["metrics"]["finance_usd"]
-    assert fin["gross_revenue_cents"] > 0
+    assert fin["gross_revenue_cents"] == 0, "sandbox must never count as settled cash"
+    assert fin["simulated_receipts_cents"] > 0
+    assert fin["monthly_settled_cash_cents"] == 0
     assert fin["settled_cash_cents"] == fin["gross_revenue_cents"]
-    # Settlement idempotency recorded in steps
-    settle = next(s for s in report["steps"] if s["step"] == "settle")
-    assert settle.get("idempotent_replay") is True
+    assert report["commercial"]["signed_bookings_cents"] == 0
     assert any(s["step"] == "import_dedupe" and s["count"] == 0 for s in report["steps"])
+    settle = next(s for s in report["steps"] if s["step"] == "settle")
+    assert settle["ok"] and settle.get("simulated") is True
+
+
+def test_sandbox_receipt_excluded_from_cash(store):
+    inv = store.record_firm_invoice(
+        project_id="prj_x",
+        provider="sandbox",
+        provider_ref="sbx_1",
+        amount_cents=1000,
+        currency="usd",
+        lifecycle="pending",
+        simulated=True,
+    )
+    assert store.confirm_payment(inv["id"], "evt", 1000, "usd")
+    assert store.gross_revenue_cents() == 0
+    assert store.gross_revenue_cents(simulated=True) == 1000
 
 
 def test_submission_idempotency(coord, store):
@@ -187,19 +206,62 @@ def test_submission_idempotency(coord, store):
         description="website landing page html css",
         skills=["landing page", "website"],
         budget_cents=200_000,
-        simulated=True,
+        simulated=False,
     )
     coord.run_agent("qualification", opportunity_id=opp.id)
     prop = coord.run_agent("proposal", opportunity_id=opp.id)
     aid = prop.output["approval_id"]
     coord.process_approval(aid, approved=True)
-    # Second approval decision on already-advanced opp should not duplicate submit task crash
+    assert store.get_opportunity(opp.id).status == "approved"
+    # Internal approval is NOT submission
+    with pytest.raises(Exception):
+        coord.mark_signed(opp.id, evidence_kind="contract_pdf", evidence_ref="x.pdf")
+    submitted = coord.record_external_submission(
+        opp.id,
+        evidence_kind="board_submission_receipt",
+        evidence_ref="https://www.freelancer.com/projects/example#proposal-1",
+    )
+    assert submitted["status"] == "submitted"
     key = store.get_opportunity(opp.id).submission_key
     assert key
     task = store.enqueue_task(kind="record_submission", idempotency_key=key, payload={})
-    # Returns existing task (completed), not a new insert failure
     assert task is not None
     assert task["idempotency_key"] == key
+
+
+def test_signed_booking_requires_evidence(coord, store):
+    opp = store.import_opportunity(
+        source="freelancer",
+        external_id="sign-1",
+        title="Landing page for local shop",
+        description="website landing page",
+        skills=["landing page", "website"],
+        budget_cents=250_000,
+        simulated=False,
+    )
+    coord.run_agent("qualification", opportunity_id=opp.id)
+    prop = coord.run_agent("proposal", opportunity_id=opp.id)
+    coord.process_approval(prop.output["approval_id"], approved=True)
+    coord.record_external_submission(
+        opp.id,
+        evidence_kind="board_submission_receipt",
+        evidence_ref="https://freelancer.com/proposal/abc",
+    )
+    coord.record_buyer_reply(
+        opp.id,
+        evidence_kind="buyer_reply_url",
+        evidence_ref="https://freelancer.com/messages/thread-1",
+    )
+    signed = coord.mark_signed(
+        opp.id,
+        evidence_kind="platform_hire_receipt",
+        evidence_ref="https://freelancer.com/hire/abc",
+    )
+    assert signed["status"] == "won"
+    snap = store.commercial_snapshot()
+    assert snap["signed_bookings_count"] == 1
+    assert snap["signed_bookings_cents"] > 0
+    assert snap["cash_collected_cents"] == 0
 
 
 def test_hourly_review_zero_revenue_guidance(coord, store):

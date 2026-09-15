@@ -5,6 +5,7 @@ description = "A framework for AI agents that do real, billable work and get pai
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.60",
+    "cryptography>=44",
 ]
 
 [project.optional-dependencies]
