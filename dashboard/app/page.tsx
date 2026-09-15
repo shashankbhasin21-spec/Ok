@@ -78,6 +78,7 @@ export default function HomePage() {
     routing_or_ifsc: "",
     upi_id: "",
     currency: "usd",
+    provider: "payoneer",
   });
 
   const refresh = useCallback(async () => {
