@@ -163,6 +163,20 @@ It stops itself, on any of four conditions:
 
 An autonomous system with no stop condition is how money leaks, so there isn't a mode without one.
 
+## Multi-agent firm (opportunity → cash)
+
+The `earner firm` control plane adds the full services pipeline: qualify, propose,
+approve, deliver in isolated workspaces, review, invoice, and track settled USD
+cash toward a **$20,000** milestone (aspirational rate **$1,000/h** is a target,
+not a spawn budget). See [docs/FIRM.md](docs/FIRM.md) and
+[docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md).
+
+```bash
+earner firm slice                 # end-to-end demo with labeled SAMPLE data
+earner firm serve --port 8787     # API for the owner dashboard
+cd dashboard && npm install && npm run dev   # http://localhost:3000
+```
+
 ## Talking to the CEO
 
 ```

@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from PIL import Image
+import pytest
 
-from earner.media import REEL_SIZE, Scene, VideoSpec, render_video
 from earner.platform import Platform
 
 
 def test_reel_frames_render_and_text_fits(tmp_path):
+    pytest.importorskip("PIL")
+    from PIL import Image
+
+    from earner.media import REEL_SIZE, Scene, VideoSpec, render_video
+
     spec = VideoSpec(
         title="t",
         scenes=[
