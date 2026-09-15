@@ -39,6 +39,10 @@ type Dashboard = {
   payouts: Record<string, unknown>;
   standing_auth: Array<Record<string, unknown>>;
   integrations: Record<string, string>;
+  readiness?: Array<{ name: string; ok: boolean; detail: string }>;
+  blocked?: Array<{ name: string; detail: string }>;
+  live_mode?: boolean;
+  provider?: string | null;
   simulated_data_policy: string;
 };
 
@@ -130,12 +134,22 @@ export default function HomePage() {
             className="primary"
             disabled={!!busy}
             onClick={() =>
-              run("slice", async () => {
-                await api("/vertical-slice", { method: "POST", body: JSON.stringify({ mark_paid: true }) });
+              run("sweep", async () => {
+                await api("/live/sweep", { method: "POST", body: "{}" });
               })
             }
           >
-            {busy === "slice" ? "Running…" : "Run vertical slice"}
+            {busy === "sweep" ? "Sweeping…" : "Sweep live boards"}
+          </button>
+          <button
+            disabled={!!busy}
+            onClick={() =>
+              run("collect", async () => {
+                await api("/live/collect", { method: "POST", body: "{}" });
+              })
+            }
+          >
+            {busy === "collect" ? "Collecting…" : "Collect Stripe payments"}
           </button>
           <button
             disabled={!!busy}
@@ -157,6 +171,12 @@ export default function HomePage() {
 
       {data?.paused && <div className="banner paused">Firm is paused. External actions and agent ticks are suspended.</div>}
       {error && <div className="banner paused error">{error}</div>}
+      {data && (data.blocked?.length ?? 0) > 0 && (
+        <div className="banner paused">
+          Live invoicing blocked until you add Stripe credentials:{" "}
+          {(data.blocked || []).map((b) => b.name).join(", ")}. Settled cash stays $0 until Stripe confirms payment.
+        </div>
+      )}
       {data && <div className="banner">{data.simulated_data_policy}</div>}
 
       {data && (

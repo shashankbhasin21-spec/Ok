@@ -571,6 +571,7 @@ def cmd_firm(platform: Platform, args) -> int:
     """Multi-agent firm control plane (opportunity pipeline + dashboard API)."""
     from .firm.api import serve
     from .firm.coordinator import Coordinator
+    from .firm.live_ops import collect_live_settlements, live_readiness, sweep_live_boards
     from .firm.review import pipeline_metrics, run_hourly_review
     from .firm.store import FirmStore
     from .firm.vertical_slice import load_sample_file, run_vertical_slice
@@ -586,6 +587,11 @@ def cmd_firm(platform: Platform, args) -> int:
     if args.action == "serve":
         serve(host=args.host, port=args.port, workdir=workdir)
         return 0
+
+    if args.action == "ready":
+        for name, ok, detail in live_readiness(platform.cfg):
+            print(f"  [{'x' if ok else ' '}] {name:<22} {detail}")
+        return 0 if all(ok for _, ok, _ in live_readiness(platform.cfg)[:3]) else 1
 
     store = FirmStore(workdir / "firm.db")
     try:
@@ -610,6 +616,12 @@ def cmd_firm(platform: Platform, args) -> int:
         if args.action == "review":
             coord = Coordinator(store, workdir, provider=platform.provider)
             print(json.dumps(run_hourly_review(coord), indent=2, default=str))
+            return 0
+        if args.action == "sweep":
+            print(json.dumps(sweep_live_boards(store, workdir, platform.cfg), indent=2, default=str))
+            return 0
+        if args.action == "collect":
+            print(json.dumps(collect_live_settlements(store, workdir, platform.cfg), indent=2, default=str))
             return 0
     finally:
         if args.action != "serve":
@@ -760,13 +772,13 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("firm", help="multi-agent firm: pipeline, slice, API, review")
     s.add_argument(
         "action",
-        choices=["slice", "serve", "review", "status", "import", "pause", "resume"],
+        choices=["slice", "serve", "review", "status", "import", "pause", "resume", "sweep", "collect", "ready"],
     )
     s.add_argument("--workdir", help="firm workdir (default: EARNER_WORKDIR/firm)")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8787)
     s.add_argument("--file", help="opportunity JSON for import")
-    s.add_argument("--no-settle", action="store_true", help="slice without sandbox mark_paid")
+    s.add_argument("--no-settle", action="store_true", help="slice without attempting sandbox settle")
     s.set_defaults(func=cmd_firm)
 
     return p

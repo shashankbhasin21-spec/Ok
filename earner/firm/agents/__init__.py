@@ -421,8 +421,25 @@ class FinanceAgent(BaseFirmAgent):
         )
         # Finance records the intent; settlement only after provider confirmation.
         if provider is None:
-            from ..payments import SandboxProvider
-            provider = SandboxProvider(self.workdir / "sandbox_invoices.json")
+            from .. import config as earner_config
+            from ..payments import SandboxProvider, build_provider
+            cfg = earner_config.load()
+            if cfg.is_live:
+                provider = build_provider(cfg)
+                if getattr(provider, "name", "") == "sandbox":
+                    return self._finish(
+                        AgentResult(False, error="live mode requires Stripe — sandbox refused")
+                    )
+            else:
+                return self._finish(
+                    AgentResult(
+                        False,
+                        error=(
+                            "Refusing sandbox invoice. Set EARNER_MODE=live and "
+                            "STRIPE_API_KEY to issue real invoices."
+                        ),
+                    )
+                )
 
         handle = provider.create_invoice(
             customer_email=customer_email,

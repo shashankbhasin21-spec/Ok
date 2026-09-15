@@ -1024,7 +1024,20 @@ class FirmStore:
         amount_cents: int,
         currency: str = "usd",
     ) -> bool:
-        """Idempotent payment confirmation. Returns False if already applied."""
+        """Idempotent payment confirmation. Returns False if already applied.
+
+        Sandbox/simulated invoices are refused — they must never enter settled cash.
+        """
+        row = self.conn.execute(
+            "SELECT * FROM firm_invoices WHERE id=?", (invoice_id,)
+        ).fetchone()
+        if row is None:
+            raise KeyError(invoice_id)
+        inv = dict(row)
+        if inv.get("simulated") or inv.get("provider") == "sandbox":
+            raise ValueError(
+                "refusing to settle sandbox/simulated invoice as real revenue"
+            )
         pid = f"fpay_{uuid.uuid4().hex[:12]}"
         try:
             self.conn.execute(
@@ -1050,8 +1063,11 @@ class FirmStore:
         return True
 
     def gross_revenue_cents(self) -> int:
+        """Provider-confirmed cash only. Simulated/sandbox invoices never count."""
         row = self.conn.execute(
-            "SELECT COALESCE(SUM(amount_cents),0) s FROM firm_payments"
+            "SELECT COALESCE(SUM(p.amount_cents),0) s FROM firm_payments p"
+            " JOIN firm_invoices i ON i.id = p.invoice_id"
+            " WHERE COALESCE(i.simulated,0)=0 AND i.provider != 'sandbox'"
         ).fetchone()
         return int(row["s"])
 
@@ -1059,6 +1075,7 @@ class FirmStore:
         row = self.conn.execute(
             "SELECT COALESCE(SUM(amount_cents),0) s FROM firm_invoices"
             " WHERE lifecycle NOT IN ('void','settled')"
+            " AND COALESCE(simulated,0)=0 AND provider != 'sandbox'"
         ).fetchone()
         return int(row["s"])
 
