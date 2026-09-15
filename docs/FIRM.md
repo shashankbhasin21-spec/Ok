@@ -13,7 +13,14 @@ EARNER_MODE=live
 STRIPE_API_KEY=sk_live_...          # or sk_test_... first
 STRIPE_WEBHOOK_SECRET=whsec_...     # Dashboard → Webhooks → invoice.paid
 FIRM_OWNER_SECRET=choose-a-strong-secret
+FIRM_PAYOUT_KEY=...                 # Fernet.generate_key().decode()
 ```
+
+Set a private `FIRM_OWNER_SECRET`; there is no default password. Payout storage
+requires `cryptography` and a valid Fernet `FIRM_PAYOUT_KEY` kept outside the database.
+Reauthentication expires after five minutes and is consumed by a successful write.
+Legacy local-salt/XOR payout files must be re-entered with the new key; they are not
+automatically decrypted or migrated. Back up existing configuration securely first.
 
 Complete Stripe account verification and add your **USD bank payout** in the
 Stripe Dashboard. Do not put bank/UPI numbers in source code.
@@ -43,8 +50,18 @@ Dashboard actions:
 
 | Counts as revenue | Does not |
 |---|---|
-| Stripe `invoice.paid` / settlement poll | Sandbox `mark_paid` |
-| Provider event id (idempotent) | Screenshots, promises, generated invoices |
+| Stripe `invoice.paid` / settlement poll (non-sandbox USD) | Sandbox / `simulated=1` receipts |
+| Provider event id (idempotent) | Screenshots, promises, generated invoices, foreign currency (no invented FX) |
+
+## Targets (USD)
+
+| Target | Value | Meaning |
+|---|---|---|
+| Aspirational per-agent rate | $2,000 / hour | Reporting target only — not spawn or spend authorization |
+| Monthly cash goal | $300,000 / UTC month | Recorded non-sandbox USD receipts |
+| First milestone | $20,000 | Cumulative provider-confirmed settled cash |
+
+Gross revenue, simulated receipts, costs, net contribution, and settled cash are tracked separately.
 
 ## Still manual
 

@@ -140,6 +140,9 @@ def test_pause_and_circuit_breaker(store, coord):
 
 def test_payout_requires_reauth_and_masks(workdir, monkeypatch):
     monkeypatch.setenv("FIRM_OWNER_SECRET", "test-secret-ok")
+    from cryptography.fernet import Fernet
+
+    monkeypatch.setenv("FIRM_PAYOUT_KEY", Fernet.generate_key().decode())
     ps = PayoutStore(workdir / "payouts.enc.json")
     with pytest.raises(PayoutError):
         ps.save({"bank_account_number": "1234567890", "bank_name": "Test"}, "bad")
@@ -168,15 +171,19 @@ def test_payout_requires_reauth_and_masks(workdir, monkeypatch):
 def test_vertical_slice_end_to_end(workdir):
     report = run_vertical_slice(workdir / "slice", mark_paid=True)
     assert report["ok"], report
-    assert report["settled_simulated"] is False
-    assert report.get("settle_refused")
+    assert report["settled_simulated"] is True
     fin = report["metrics"]["finance_usd"]
     assert fin["gross_revenue_cents"] == 0, "sandbox must never count as settled cash"
+    assert fin["simulated_receipts_cents"] > 0
+    assert fin["monthly_settled_cash_cents"] == 0
+    assert fin["settled_cash_cents"] == fin["gross_revenue_cents"]
     assert report["commercial"]["signed_bookings_cents"] == 0
     assert any(s["step"] == "import_dedupe" and s["count"] == 0 for s in report["steps"])
+    settle = next(s for s in report["steps"] if s["step"] == "settle")
+    assert settle["ok"] and settle.get("simulated") is True
 
 
-def test_sandbox_confirm_payment_refused(store):
+def test_sandbox_receipt_excluded_from_cash(store):
     inv = store.record_firm_invoice(
         project_id="prj_x",
         provider="sandbox",
@@ -186,9 +193,9 @@ def test_sandbox_confirm_payment_refused(store):
         lifecycle="pending",
         simulated=True,
     )
-    with pytest.raises(ValueError, match="sandbox"):
-        store.confirm_payment(inv["id"], "evt", 1000, "usd")
+    assert store.confirm_payment(inv["id"], "evt", 1000, "usd")
     assert store.gross_revenue_cents() == 0
+    assert store.gross_revenue_cents(simulated=True) == 1000
 
 
 def test_submission_idempotency(coord, store):

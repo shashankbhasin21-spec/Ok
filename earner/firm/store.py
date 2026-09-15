@@ -1058,18 +1058,15 @@ class FirmStore:
     ) -> bool:
         """Idempotent payment confirmation. Returns False if already applied.
 
-        Sandbox/simulated invoices are refused — they must never enter settled cash.
+        Sandbox/simulated invoices may be recorded for audit, but
+        ``gross_revenue_cents()`` never includes them as real cash. Live Stripe
+        webhooks must refuse simulated rows before calling this.
         """
         row = self.conn.execute(
             "SELECT * FROM firm_invoices WHERE id=?", (invoice_id,)
         ).fetchone()
         if row is None:
             raise KeyError(invoice_id)
-        inv = dict(row)
-        if inv.get("simulated") or inv.get("provider") == "sandbox":
-            raise ValueError(
-                "refusing to settle sandbox/simulated invoice as real revenue"
-            )
         pid = f"fpay_{uuid.uuid4().hex[:12]}"
         try:
             self.conn.execute(
@@ -1094,12 +1091,26 @@ class FirmStore:
         )
         return True
 
-    def gross_revenue_cents(self) -> int:
-        """Provider-confirmed cash only. Simulated/sandbox invoices never count."""
+    def gross_revenue_cents(
+        self,
+        *,
+        simulated: bool = False,
+        since: float | None = None,
+        until: float | None = None,
+    ) -> int:
+        """USD receipts only; sandbox receipts never contribute to real cash."""
+        predicate = (
+            "(COALESCE(i.simulated,0)=1 OR i.provider='sandbox')"
+            if simulated
+            else "(COALESCE(i.simulated,0)=0 AND i.provider!='sandbox')"
+        )
         row = self.conn.execute(
             "SELECT COALESCE(SUM(p.amount_cents),0) s FROM firm_payments p"
-            " JOIN firm_invoices i ON i.id = p.invoice_id"
-            " WHERE COALESCE(i.simulated,0)=0 AND i.provider != 'sandbox'"
+            " JOIN firm_invoices i ON i.id=p.invoice_id WHERE " + predicate +
+            " AND lower(p.currency)='usd' AND lower(i.currency)='usd'"
+            " AND (? IS NULL OR p.confirmed_at>=?)"
+            " AND (? IS NULL OR p.confirmed_at<?)",
+            (since, since, until, until),
         ).fetchone()
         return int(row["s"])
 
@@ -1107,7 +1118,8 @@ class FirmStore:
         row = self.conn.execute(
             "SELECT COALESCE(SUM(amount_cents),0) s FROM firm_invoices"
             " WHERE lifecycle NOT IN ('void','settled')"
-            " AND COALESCE(simulated,0)=0 AND provider != 'sandbox'"
+            " AND COALESCE(simulated,0)=0 AND provider!='sandbox'"
+            " AND lower(currency)='usd'"
         ).fetchone()
         return int(row["s"])
 

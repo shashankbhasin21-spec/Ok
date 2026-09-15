@@ -1,7 +1,7 @@
 """End-to-end workflow helpers.
 
-Live settlement requires Stripe. This module no longer marks sandbox invoices
-paid — simulated cash is refused by the ledger.
+Live settlement requires Stripe. Simulated receipts may be recorded for audit
+but never count toward recorded USD cash metrics.
 """
 
 from __future__ import annotations
@@ -131,9 +131,9 @@ def run_pipeline_to_invoice(
 
 
 # Kept for tests that exercise the state machine without Stripe.
-# Does NOT settle — confirm_payment refuses sandbox.
-def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
-    """Deterministic pipeline test helper. Settlement is disabled (mark_paid ignored)."""
+# Simulated settlement may be recorded for audit but never counts as real cash.
+def run_vertical_slice(workdir: Path, *, mark_paid: bool = True) -> dict:
+    """Deterministic pipeline test helper. Simulated receipts stay out of cash metrics."""
     from ..payments import SandboxProvider
 
     sample = {
@@ -187,8 +187,7 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
     # Do not auto-mark submitted/won/paid — that requires external evidence.
     steps.append({"step": "note", "ok": True, "detail": "awaiting external submission evidence"})
 
-    # Prove sandbox settlement is refused if attempted
-    settle_error = None
+    settled_simulated = False
     if mark_paid:
         handle = provider.create_invoice(
             customer_email="buyer@acme.example", description="test",
@@ -199,11 +198,10 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
             amount_cents=1000, currency="usd", lifecycle="pending", url=handle.url, simulated=True,
         )
         provider.mark_paid(handle.provider_ref)
-        try:
-            store.confirm_payment(inv["id"], f"{handle.provider_ref}:x", 1000, "usd")
-        except ValueError as exc:
-            settle_error = str(exc)
-        steps.append({"step": "settle_refused", "ok": settle_error is not None, "error": settle_error})
+        settled_simulated = store.confirm_payment(
+            inv["id"], f"{handle.provider_ref}:x", 1000, "usd"
+        )
+        steps.append({"step": "settle", "ok": settled_simulated, "simulated": True})
 
     review = run_hourly_review(coord)
     steps.append({"step": "hourly_review", "ok": True, "bottleneck": review["bottleneck"]})
@@ -214,8 +212,7 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
         "project_id": None,
         "preview": None,
         "invoice_id": None,
-        "settled_simulated": False,
-        "settle_refused": settle_error,
+        "settled_simulated": settled_simulated,
         "steps": steps,
         "metrics": metrics,
         "latest_review": store.latest_review(),
@@ -223,6 +220,7 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
         "commercial": store.commercial_snapshot(),
     }
     assert metrics["finance_usd"]["gross_revenue_cents"] == 0
+    assert metrics["finance_usd"]["simulated_receipts_cents"] >= (1000 if mark_paid else 0)
     assert summary["commercial"]["signed_bookings_cents"] == 0
     (workdir / "vertical_slice_report.json").write_text(json.dumps(summary, indent=2, default=str))
     store.close()
@@ -230,12 +228,24 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
 
 
 def integration_status() -> dict:
-    from .live_ops import live_readiness
-    rows = live_readiness()
-    status = {name: ("ready" if ok else f"blocked — {detail}") for name, ok, detail in rows}
-    status["proposal_submit"] = "manual handoff only — no official submit API"
-    status["payout_config"] = "encrypted local store — configure via dashboard"
-    return status
+    import os
+
+    def configured(variable: str) -> str:
+        return "configured — unverified" if os.environ.get(variable) else "missing configuration"
+
+    return {
+        "anthropic": configured("ANTHROPIC_API_KEY"),
+        "stripe": (
+            configured("STRIPE_API_KEY")
+            if os.environ.get("EARNER_MODE") == "live"
+            else "sandbox — simulated payments"
+        ),
+        "upwork": configured("UPWORK_CLIENT_ID"),
+        "freelancer_rss": "read-only adapter — unverified",
+        "proposal_submit": "manual handoff — submission receipt required",
+        "gmail": configured("GMAIL_USER"),
+        "payout_config": "local configuration only — no payout rail verification",
+    }
 
 
 def load_sample_file(path: Path) -> list[dict]:

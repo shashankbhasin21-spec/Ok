@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timezone
 
-from . import ASPIRATIONAL_RATE_CENTS_PER_HOUR, HOURLY_REVIEW_SECONDS, MILESTONE_CENTS
+from . import (
+    ASPIRATIONAL_RATE_CENTS_PER_HOUR,
+    HOURLY_REVIEW_SECONDS,
+    MILESTONE_CENTS,
+    MONTHLY_CASH_TARGET_CENTS,
+)
 from .agents import ExperimentAnalyst
 from .authorization import Authorization
 from .coordinator import Coordinator
@@ -24,7 +30,18 @@ def pipeline_metrics(store: FirmStore) -> dict:
     app_to_reply = (replied / submitted) if submitted else None
     reply_to_win = (won / replied) if replied else None
 
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_end = (
+        month_start.replace(year=now.year + 1, month=1)
+        if now.month == 12
+        else month_start.replace(month=now.month + 1)
+    )
+    monthly_cash = store.gross_revenue_cents(
+        since=month_start.timestamp(), until=month_end.timestamp()
+    )
     gross = store.gross_revenue_cents()
+    simulated = store.gross_revenue_cents(simulated=True)
     costs = store.total_agent_cost_cents()
     invoiced = store.invoiced_cents()
 
@@ -50,6 +67,11 @@ def pipeline_metrics(store: FirmStore) -> dict:
         },
         "finance_usd": {
             "gross_revenue_cents": gross,
+            "simulated_receipts_cents": simulated,
+            "monthly_target_cents": MONTHLY_CASH_TARGET_CENTS,
+            "monthly_settled_cash_cents": monthly_cash,
+            "monthly_target_progress": monthly_cash / MONTHLY_CASH_TARGET_CENTS,
+            "month_utc": month_start.strftime("%Y-%m"),
             "invoiced_outstanding_cents": invoiced,
             "costs_cents": costs,
             "net_contribution_cents": gross - costs,
@@ -65,7 +87,7 @@ def pipeline_metrics(store: FirmStore) -> dict:
             "Zero settled cash is not business failure — distinguish buyer response time, "
             "delivery time, and payment settlement delays. Bookings require signed evidence."
             if gross == 0
-            else "Settled cash only includes provider-confirmed payments."
+            else "Recorded USD receipts exclude sandbox payments. Bank payouts and refunds are not reconciled here."
         ),
     }
 

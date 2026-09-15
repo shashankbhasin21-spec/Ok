@@ -14,6 +14,11 @@ type Dashboard = {
       costs_cents: number;
       net_contribution_cents: number;
       settled_cash_cents: number;
+      simulated_receipts_cents: number;
+      monthly_target_cents: number;
+      monthly_settled_cash_cents: number;
+      monthly_target_progress: number;
+      month_utc: string;
       milestone_cents: number;
       milestone_progress: number;
       observed_rate_cents_per_hour: number;
@@ -207,9 +212,9 @@ export default function HomePage() {
       {data && (
         <div className="grid">
           <section className="panel span-4">
-            <h2>Settled cash (USD)</h2>
+            <h2>Recorded cash (USD)</h2>
             <div className="metric">
-              <span className="label">Provider-confirmed</span>
+              <span className="label">Non-sandbox receipts</span>
               <span className="value">{usd(fin?.settled_cash_cents)}</span>
               <span className="hint">{data.metrics.note}</span>
             </div>
@@ -217,7 +222,10 @@ export default function HomePage() {
               <span style={{ width: `${progress}%` }} />
             </div>
             <p className="muted" style={{ marginTop: "0.5rem" }}>
-              Milestone {usd(fin?.milestone_cents)} · {progress.toFixed(1)}%
+              Monthly goal {usd(fin?.monthly_target_cents)} · {fin?.month_utc} UTC<br />
+              Collected this month: {usd(fin?.monthly_settled_cash_cents)}<br />
+              Simulated receipts (excluded): {usd(fin?.simulated_receipts_cents)}<br />
+              Cumulative milestone {usd(fin?.milestone_cents)} · {progress.toFixed(1)}%
             </p>
           </section>
 
@@ -528,7 +536,7 @@ export default function HomePage() {
               {Object.entries(data.integrations).map(([k, v]) => (
                 <div className="row" key={k}>
                   <span className="muted">{k}</span>
-                  <span className={String(v).includes("mock") || String(v).includes("missing") || String(v).includes("manual") ? "tag warn" : "tag ok"}>
+                  <span className="tag warn">
                     {v}
                   </span>
                 </div>

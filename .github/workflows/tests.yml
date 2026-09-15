@@ -17,7 +17,7 @@ jobs:
       - name: No third-party imports in the trading stack
         run: python -c "import earner.trading.live, earner.trading.engine, earner.trading.orders"
 
-      - run: pip install pytest pyflakes
+      - run: pip install pytest pyflakes cryptography
       # Scoped to the trading stack and its tests; the older earner/ package
       # predates this work and is linted separately.
       - run: python -m pyflakes earner/trading/ tests/test_{trading,strategy,engine,orders,live,backtest,research}.py
