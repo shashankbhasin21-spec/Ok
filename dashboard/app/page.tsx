@@ -131,12 +131,24 @@ export default function HomePage() {
           </p>
         </div>
         <div className="actions">
+          <input
+            style={{ minWidth: "12rem" }}
+            type="password"
+            placeholder="Owner secret"
+            value={ownerSecret}
+            onChange={(e) => setOwnerSecret(e.target.value)}
+            autoComplete="off"
+          />
           <button
             className="primary"
             disabled={!!busy}
             onClick={() =>
               run("sweep", async () => {
-                await api("/live/sweep", { method: "POST", body: "{}" });
+                await api("/live/sweep", {
+                  method: "POST",
+                  body: "{}",
+                  headers: { "X-Owner-Secret": ownerSecret },
+                });
               })
             }
           >
@@ -146,15 +158,27 @@ export default function HomePage() {
             disabled={!!busy}
             onClick={() =>
               run("collect", async () => {
-                await api("/live/collect", { method: "POST", body: "{}" });
+                await api("/live/collect", {
+                  method: "POST",
+                  body: "{}",
+                  headers: { "X-Owner-Secret": ownerSecret },
+                });
               })
             }
           >
-            {busy === "collect" ? "Collecting…" : "Collect Stripe payments"}
+            Collect Stripe
           </button>
           <button
             disabled={!!busy}
-            onClick={() => run("review", async () => { await api("/review", { method: "POST", body: "{}" }); })}
+            onClick={() =>
+              run("review", async () => {
+                await api("/review", {
+                  method: "POST",
+                  body: "{}",
+                  headers: { "X-Owner-Secret": ownerSecret },
+                });
+              })
+            }
           >
             Hourly review
           </button>
@@ -327,6 +351,7 @@ export default function HomePage() {
                         run("apr", async () => {
                           await api("/approvals/decide", {
                             method: "POST",
+                            headers: { "X-Owner-Secret": ownerSecret },
                             body: JSON.stringify({ approval_id: a.id, approved: true }),
                           });
                         })
@@ -340,6 +365,7 @@ export default function HomePage() {
                         run("apr", async () => {
                           await api("/approvals/decide", {
                             method: "POST",
+                            headers: { "X-Owner-Secret": ownerSecret },
                             body: JSON.stringify({ approval_id: a.id, approved: false }),
                           });
                         })

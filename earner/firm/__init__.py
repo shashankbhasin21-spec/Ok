@@ -4,7 +4,8 @@ from __future__ import annotations
 
 # Financial targets (USD). Targets only — not spend or spawn authorizations.
 ASPIRATIONAL_RATE_CENTS_PER_HOUR = 100_000  # $1,000 / hour
-MILESTONE_CENTS = 2_000_000  # $20,000 cumulative settled cash
+MILESTONE_CENTS = 2_000_000  # $20,000 first cash milestone (collected)
+BOOKINGS_TARGET_CENTS = 30_000_000  # $300,000 signed bookings by 2026-09-30
 
 SUPPORTED_SERVICES = (
     "website",

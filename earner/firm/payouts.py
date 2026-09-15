@@ -59,7 +59,11 @@ class PayoutStore:
     def authenticate(self, owner_secret: str) -> str:
         """Re-auth for payout changes. Returns a short-lived session token."""
         expected = os.environ.get("FIRM_OWNER_SECRET", "owner-dev-secret")
-        if not secrets.compare_digest(owner_secret, expected):
+        if os.environ.get("EARNER_MODE", "").lower() == "live" and expected == "owner-dev-secret":
+            raise PayoutError("FIRM_OWNER_SECRET must be set to a non-default value in live mode")
+        if len(expected) < 12:
+            raise PayoutError("FIRM_OWNER_SECRET must be at least 12 characters")
+        if not secrets.compare_digest(owner_secret or "", expected):
             raise PayoutError("owner reauthentication failed")
         self._session_token = secrets.token_urlsafe(24)
         return self._session_token

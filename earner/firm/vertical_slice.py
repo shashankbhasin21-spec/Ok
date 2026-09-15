@@ -22,8 +22,10 @@ def run_pipeline_to_invoice(
     provider,
     customer_email: str,
     auto_approve: bool = False,
+    submission_evidence: dict | None = None,
+    sign_evidence: dict | None = None,
 ) -> dict:
-    """Import → qualify → propose → (optional approve) → won → build → review → invoice.
+    """Import → qualify → propose → approve → submit(evidence) → sign(evidence) → deliver → invoice.
 
     Does not settle. Settlement is Stripe-only via collect/webhook.
     """
@@ -74,8 +76,25 @@ def run_pipeline_to_invoice(
         store.close()
         return out
 
-    won = coord.mark_won(oid)
-    steps.append({"step": "won", "ok": won["status"] == "won", "status": won["status"]})
+    if not submission_evidence or not sign_evidence:
+        store.close()
+        return {
+            "ok": True,
+            "awaiting_external_evidence": True,
+            "opportunity_id": oid,
+            "steps": steps,
+            "note": "Provide board submission + signed contract evidence before delivery/invoice",
+        }
+
+    coord.record_external_submission(oid, **submission_evidence)
+    coord.record_buyer_reply(
+        oid,
+        evidence_kind="buyer_reply_url",
+        evidence_ref=sign_evidence.get("evidence_ref", "reply"),
+        note="bundled with sign evidence path",
+    )
+    won = coord.mark_signed(oid, **sign_evidence)
+    steps.append({"step": "signed", "ok": won["status"] == "won", "status": won["status"]})
 
     r = coord.run_agent("delivery_planner", opportunity_id=oid)
     steps.append({"step": "plan", "ok": r.ok, "output": r.output, "error": r.error})
@@ -164,56 +183,27 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
     approval_id = r.output.get("approval_id")
     coord.process_approval(approval_id, approved=True, reason="test approval")
     steps.append({"step": "approve", "ok": True})
-    coord.mark_won(oid)
-    steps.append({"step": "won", "ok": True})
+    assert store.get_opportunity(oid).status == "approved"
+    # Do not auto-mark submitted/won/paid — that requires external evidence.
+    steps.append({"step": "note", "ok": True, "detail": "awaiting external submission evidence"})
 
-    r = coord.run_agent("delivery_planner", opportunity_id=oid)
-    project_id = r.output.get("project_id")
-    steps.append({"step": "plan", "ok": r.ok})
-    r = coord.run_agent("engineering", project_id=project_id)
-    preview = r.output.get("preview")
-    steps.append({"step": "build", "ok": r.ok})
-    r = coord.run_agent("independent_reviewer", project_id=project_id)
-    steps.append({"step": "review", "ok": r.ok})
-
-    # Sandbox invoice is allowed only inside this test helper; it is labeled simulated
-    # and confirm_payment will refuse to settle it as real revenue.
-    handle = provider.create_invoice(
-        customer_email="buyer@acme.example",
-        description="test",
-        amount_cents=153_000,
-        currency="usd",
-        metadata={"project_id": project_id},
-    )
-    inv = store.record_firm_invoice(
-        project_id=project_id,
-        provider=handle.provider,
-        provider_ref=handle.provider_ref,
-        amount_cents=handle.amount_cents,
-        currency=handle.currency,
-        lifecycle="pending",
-        url=handle.url,
-        simulated=True,
-    )
-    from .models import OppStatus
-    store.advance(oid, OppStatus.INVOICED)
-    steps.append({"step": "invoice", "ok": True, "simulated": True, "invoice_id": inv["id"]})
-
-    settle_ok = False
+    # Prove sandbox settlement is refused if attempted
     settle_error = None
     if mark_paid:
+        handle = provider.create_invoice(
+            customer_email="buyer@acme.example", description="test",
+            amount_cents=1000, currency="usd",
+        )
+        inv = store.record_firm_invoice(
+            project_id="prj_test", provider=handle.provider, provider_ref=handle.provider_ref,
+            amount_cents=1000, currency="usd", lifecycle="pending", url=handle.url, simulated=True,
+        )
         provider.mark_paid(handle.provider_ref)
         try:
-            store.confirm_payment(inv["id"], f"{handle.provider_ref}:x", 153_000, "usd")
-            settle_ok = True
+            store.confirm_payment(inv["id"], f"{handle.provider_ref}:x", 1000, "usd")
         except ValueError as exc:
             settle_error = str(exc)
-        steps.append({
-            "step": "settle_refused",
-            "ok": settle_error is not None,
-            "error": settle_error,
-            "note": "sandbox settlements cannot enter settled cash",
-        })
+        steps.append({"step": "settle_refused", "ok": settle_error is not None, "error": settle_error})
 
     review = run_hourly_review(coord)
     steps.append({"step": "hourly_review", "ok": True, "bottleneck": review["bottleneck"]})
@@ -221,17 +211,19 @@ def run_vertical_slice(workdir: Path, *, mark_paid: bool = False) -> dict:
     summary = {
         "ok": True,
         "opportunity_id": oid,
-        "project_id": project_id,
-        "preview": preview,
-        "invoice_id": inv["id"],
+        "project_id": None,
+        "preview": None,
+        "invoice_id": None,
         "settled_simulated": False,
         "settle_refused": settle_error,
         "steps": steps,
         "metrics": metrics,
         "latest_review": store.latest_review(),
         "integrations": integration_status(),
+        "commercial": store.commercial_snapshot(),
     }
     assert metrics["finance_usd"]["gross_revenue_cents"] == 0
+    assert summary["commercial"]["signed_bookings_cents"] == 0
     (workdir / "vertical_slice_report.json").write_text(json.dumps(summary, indent=2, default=str))
     store.close()
     return summary

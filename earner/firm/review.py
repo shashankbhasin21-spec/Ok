@@ -60,9 +60,10 @@ def pipeline_metrics(store: FirmStore) -> dict:
             "observed_rate_cents_per_hour": int(observed_rate),
             "measurement_window_hours": round(window_h, 3),
         },
+        "commercial": store.commercial_snapshot(),
         "note": (
             "Zero settled cash is not business failure — distinguish buyer response time, "
-            "delivery time, and payment settlement delays."
+            "delivery time, and payment settlement delays. Bookings require signed evidence."
             if gross == 0
             else "Settled cash only includes provider-confirmed payments."
         ),

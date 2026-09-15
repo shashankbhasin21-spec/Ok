@@ -12,6 +12,8 @@ async function forward(req: NextRequest, path: string[]) {
   if (owner) headers["X-Owner-Secret"] = owner;
   const session = req.headers.get("x-payout-session");
   if (session) headers["X-Payout-Session"] = session;
+  const ownerSession = req.headers.get("x-owner-session");
+  if (ownerSession) headers["X-Owner-Session"] = ownerSession;
 
   const init: RequestInit = { method: req.method, headers };
   if (req.method !== "GET" && req.method !== "HEAD") {
