@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 type Dashboard = {
   paused: boolean;
-  targets: { aspirational_rate_usd_per_hour: number; milestone_usd: number; label: string };
+  targets: { aspirational_rate_usd_per_hour: number; cash_milestone_usd: number; label: string };
   metrics: {
     by_status: Record<string, number>;
     conversion: { application_to_reply: number | null; reply_to_win: number | null };
@@ -544,7 +544,7 @@ export default function HomePage() {
             </div>
             <p className="muted" style={{ marginTop: "0.75rem" }}>
               {data.targets.label}. Aspirational rate ${data.targets.aspirational_rate_usd_per_hour}/h ·
-              first milestone ${data.targets.milestone_usd.toLocaleString()}.
+              first milestone ${data.targets.cash_milestone_usd.toLocaleString()}.
             </p>
           </section>
         </div>
