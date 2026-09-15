@@ -82,7 +82,7 @@ class PayoutStore:
             "account_holder": config.get("account_holder", ""),
             "upi_id_masked": _mask_upi(config.get("upi_id", "")),
             "currency": config.get("currency", "usd"),
-            "provider": config.get("provider", "manual"),
+            "provider": config.get("provider", "payoneer"),
             "notes": config.get("notes", ""),
             # Encrypted blob holds full sensitive fields.
             "_encrypted": True,
@@ -91,6 +91,9 @@ class PayoutStore:
             "bank_account_number": config.get("bank_account_number", ""),
             "routing_or_ifsc": config.get("routing_or_ifsc", ""),
             "upi_id": config.get("upi_id", ""),
+            "payoneer_email": config.get("payoneer_email", ""),
+            "wise_email": config.get("wise_email", ""),
+            "swift_code": config.get("swift_code", ""),
         }
         f = self._fernet()
         blob = f.encrypt(json.dumps(sensitive).encode())
@@ -111,7 +114,13 @@ class PayoutStore:
                 "account_holder": None,
                 "upi_id_masked": None,
                 "currency": "usd",
-                "note": "No payout method configured. Configure via private payout screen.",
+                "provider": None,
+                "note": (
+                    "No payout method configured. Indian Kotak accounts often cannot be "
+                    "linked as a US-Stripe payout bank. Prefer: (1) Freelancer/Upwork escrow "
+                    "→ Payoneer/Wise → Kotak, (2) Stripe India for INR, or (3) Wise/Payoneer "
+                    "USD receiving details for direct invoices. UPI does not accept USD."
+                ),
             }
         data = json.loads(self.path.read_text())
         return {
@@ -122,9 +131,9 @@ class PayoutStore:
             "upi_id_masked": data.get("upi_id_masked"),
             "currency": data.get("currency", "usd"),
             "provider": data.get("provider", "manual"),
-            "note": (
-                "UPI IDs are typically INR-domestic and do not accept international "
-                "USD settlements. Prefer Stripe Connect / bank rails for USD."
+            "note": data.get("notes") or (
+                "UPI is INR-domestic and does not accept international USD. "
+                "If Kotak cannot link to Stripe US, use Payoneer/Wise or marketplace escrow."
             ),
         }
 

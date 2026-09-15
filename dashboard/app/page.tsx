@@ -410,8 +410,9 @@ export default function HomePage() {
           <section className="panel span-6">
             <h2>Payout configuration</h2>
             <p className="muted">
-              Private owner screen. Agents cannot modify the beneficiary. Full bank/UPI details
-              never appear in this bundle after save — only masked fields.
+              Private owner screen. Agents cannot modify the beneficiary.
+              If Kotak cannot link to US Stripe, use Payoneer/Wise or marketplace
+              escrow — see docs/INDIA-PAYOUTS.md. UPI does not accept USD.
             </p>
             {data.payouts.configured ? (
               <div className="stack" style={{ margin: "0.75rem 0" }}>
@@ -431,6 +432,13 @@ export default function HomePage() {
               <label>
                 Session token
                 <input value={payoutSession} onChange={(e) => setPayoutSession(e.target.value)} readOnly placeholder="Authenticate first" />
+              </label>
+              <label>
+                Payout provider (payoneer / wise / stripe_india / kotak_swift / upi_inr)
+                <input
+                  value={payoutForm.provider || "payoneer"}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, provider: e.target.value })}
+                />
               </label>
               <label>
                 Account holder
