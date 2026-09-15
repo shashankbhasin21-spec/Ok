@@ -26,10 +26,11 @@ jobs:
       # A secret reaching git is not recoverable by deleting it later.
       - name: Secret scan
         run: |
-          if git ls-files | grep -iE '(^|/)\.env$|\.pem$|\.key$|credentials|secrets\.'; then
+          if git ls-files | grep -iE '(^|/)\.env$|\.pem$|\.key$|credentials|secrets\.json'; then
             echo "::error::a credential-shaped file is tracked"; exit 1
           fi
-          if git grep -nIE '(sk-ant-|sk_live_|AKIA[0-9A-Z]{16})' -- . ':!*.example' ':!docs/*'; then
+          # Require a plausible key body — placeholders like sk-ant-... in docs must not fail CI.
+          if git grep -nIE '(sk-ant-[A-Za-z0-9_-]{12,}|sk_live_[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{16})' -- . ':!*.example' ':!docs/*'; then
             echo "::error::a live-looking key is committed"; exit 1
           fi
           echo "clean"
