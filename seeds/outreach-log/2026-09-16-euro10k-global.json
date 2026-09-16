@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-16",
+  "campaign": "euro10k-global-2026-09-16",
+  "pipeline_reset": true,
+  "prior_batch_suppressed": true,
+  "no_resend_to_prior_7": true,
+  "price_eur": 10000,
+  "freelancer_research": "seeds/opportunities/FREELANCER-10K-EUR-RESEARCH.md",
+  "freelancer_mailable_from_board": 0,
+  "russia_china_freelancer_hits": 0,
+  "sent": [
+    {
+      "email": "info@lmg.ae",
+      "country": "uae",
+      "id": "1a0ab41a68ec9597"
+    },
+    {
+      "email": "info@centralclinic.ae",
+      "country": "uae",
+      "id": "1a0ab41a964ce27e"
+    },
+    {
+      "email": "info@gdc.me",
+      "country": "uae",
+      "id": "1a0ab41ab70d8a07"
+    },
+    {
+      "email": "info@drparis.co.uk",
+      "country": "uk",
+      "id": "1a0ab41b0b1949dc"
+    },
+    {
+      "email": "info@hotelbayard.fr",
+      "country": "france",
+      "id": "1a0ab41b60c51b65"
+    },
+    {
+      "email": "info@9hotelbastillelyon.com",
+      "country": "france",
+      "id": "1a0ab41beee710b9"
+    },
+    {
+      "email": "hello@magellan-solutions.com",
+      "country": "philippines",
+      "id": "1a0ab4248469ed8e"
+    },
+    {
+      "email": "info@cottijohnson.com",
+      "country": "usa",
+      "id": "1a0ab424bc596b7c"
+    },
+    {
+      "email": "office@hvac247pro.com",
+      "country": "usa",
+      "id": "1a0ab424c4737647"
+    }
+  ],
+  "daily_cap_note": "9 new stranger sends this wave; prior 7 suppressed not resent; self-log excluded",
+  "requirements": "seeds/requirements/euro10k_digital_ops_package.md"
+}
