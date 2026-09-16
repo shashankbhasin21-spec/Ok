@@ -41,7 +41,7 @@ Log: `seeds/outreach-log/2026-09-16-iawf-login-check.json`
 
 ## Local pipeline DB (gitignored)
 Path: `.earner/outreach.db`  
-Stages: SENT=17, BOUNCED=1, RESEARCHED=0  
+Stages: SENT=17, BOUNCED=1, RESEARCHED=17 (world-fresh held)  
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
@@ -81,6 +81,8 @@ python3 -c "from earner.watch import freelancer_sources; print(sum(len(f()) for 
 4. On reply → move prospect SENT→REPLIED→quote EUR/USD honestly from offer catalog.
 
 ## Key seed paths
+- `seeds/GROK-PROMPT.md` — paste into Grok
+- `seeds/leads/euro10k-world-fresh-2026-09-16.csv`
 - `seeds/leads/*.csv`
 - `seeds/proposals/*`
 - `seeds/requirements/*`
