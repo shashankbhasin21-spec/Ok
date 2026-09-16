@@ -1,0 +1,53 @@
+{
+  "gmail_master_draft_id": "r780583678775568680",
+  "thread_id": "1a0ab959a6476785",
+  "to": "shashankbhasin21@gmail.com",
+  "subject": "[MASTER APPLY DRAFT] IAWF + Freelancer paste packets \u2014 login check done",
+  "refreshed_at": "2026-09-16T18:58:41Z",
+  "iawf_login_check": {
+    "account_exists": true,
+    "cloud_logged_in": false,
+    "log": "seeds/outreach-log/2026-09-16-iawf-login-check.json"
+  },
+  "auto_applied_gmail": [
+    [
+      "info@docmedc.com",
+      "1a0ab69d12617720",
+      "EUR 10,000 \u2014 DOC multi-branch specialty package landing"
+    ],
+    [
+      "info@polandhospital.co.ke",
+      "1a0ab69d25e341bf",
+      "EUR 10,000 \u2014 Nairobi clinic package landing + follow-up"
+    ],
+    [
+      "info@lutonhospital.co.ke",
+      "1a0ab69d4d31318a",
+      "EUR 10,000 \u2014 MRI/specialist package landing (Luton Nairobi)"
+    ],
+    [
+      "info@zhordaniaclinic.ge",
+      "1a0ab69d8fcc39c9",
+      "EUR 10,000 \u2014 Tbilisi clinic international enquiry landing"
+    ],
+    [
+      "info@mkdental.ge",
+      "1a0ab69df4338ee0",
+      "EUR 10,000 \u2014 Tbilisi dental treatment-package landing"
+    ]
+  ],
+  "pipeline": {
+    "SENT": 17,
+    "BOUNCED": 1,
+    "RESEARCHED": 0
+  },
+  "still_needs_owner_paste": [
+    "IAWF Submittable (account created; login in owner browser)",
+    "Freelancer multilingual",
+    "Freelancer yoga",
+    "Freelancer Lithuania ERP"
+  ],
+  "handoff_doc": "seeds/HANDOFF-NEXT-AGENT.md",
+  "grok_handoff_draft_id": "r2547786456106441221",
+  "grok_handoff_thread_id": "1a0ab959538b0660"
+}

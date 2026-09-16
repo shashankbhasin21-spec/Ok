@@ -1,0 +1,117 @@
+{
+  "created_at": "2026-09-16T17:35:00Z",
+  "auto_apply": {
+    "freelancer": false,
+    "upwork": false,
+    "submittable": false,
+    "reason": "No official proposal-submit API; firm requires owner paste + board_submission_receipt. Submittable needs interactive login/session."
+  },
+  "gmail_outreach": {
+    "automated_via_mcp": true,
+    "daily_cap": 20,
+    "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check",
+    "master_draft_thread_id": "1a0ab959a6476785",
+    "master_draft_id": "r780583678775568680",
+    "held_batch_sent": [
+      {
+        "email": "info@docmedc.com",
+        "id": "1a0ab69d12617720"
+      },
+      {
+        "email": "info@polandhospital.co.ke",
+        "id": "1a0ab69d25e341bf"
+      },
+      {
+        "email": "info@lutonhospital.co.ke",
+        "id": "1a0ab69d4d31318a"
+      },
+      {
+        "email": "info@zhordaniaclinic.ge",
+        "id": "1a0ab69d8fcc39c9"
+      },
+      {
+        "email": "info@mkdental.ge",
+        "id": "1a0ab69df4338ee0"
+      }
+    ],
+    "iawf_login_check": {
+      "at": "2026-09-16T18:55:00Z",
+      "account_created": true,
+      "welcome_thread_id": "1a0ab8badbfa3a11",
+      "cloud_browser_logged_in": false,
+      "log": "seeds/outreach-log/2026-09-16-iawf-login-check.json"
+    },
+    "grok_handoff_draft_id": "r2547786456106441221"
+  },
+  "queue": [
+    {
+      "id": "iawf-website-2026",
+      "channel": "submittable",
+      "url": "https://iawf.submittable.com/submit/364943/rfp-for-new-iawf-website",
+      "deadline": "2026-09-18 (confirm on form; PDF header also mentions Sep 15)",
+      "fee_usd": 38000,
+      "packet": "seeds/proposals/iawf-website-submittable-2026-09-16.md",
+      "do_not_email": [
+        "execdir@iawfonline.org"
+      ],
+      "status": "BLOCKED_NEEDS_OWNER_SUBMITTABLE_SESSION",
+      "auto_submitted": false,
+      "emailed_execdir": false,
+      "gmail_self_draft": true,
+      "blocker": "Account welcome email received for shashankbhasin21@gmail.com; cloud browser still hits accounts.submittable.com login wall (Continue with Google available). Owner must complete login then paste packet.",
+      "submittable_account_exists": true,
+      "login_checked_at": "2026-09-16T18:55:00Z"
+    },
+    {
+      "id": "fl-multilingual-us-printer",
+      "channel": "freelancer",
+      "url": "https://www.freelancer.com/projects/web-development/Multilingual-Website-Upgrade-for-Global.html",
+      "packet": "seeds/proposals/freelancer-multilingual-website-us-printer.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    },
+    {
+      "id": "fl-yoga-uk",
+      "channel": "freelancer",
+      "url": "https://www.freelancer.com/projects/web-development/Yoga-Studio-Website-Development.html",
+      "packet": "seeds/proposals/freelancer-yoga-studio-website-scoped.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    },
+    {
+      "id": "fl-lithuania-cnc-erp",
+      "channel": "freelancer",
+      "packet": "seeds/proposals/freelancer-lithuania-cnc-erp-scoped.md",
+      "status": "DRAFT_READY_CONFIRM_URL",
+      "auto_submitted": false
+    }
+  ],
+  "rejected_auto_bid": [
+    {
+      "title": "Hotel Renovation Toronto",
+      "reason": "construction \u2014 not in catalog"
+    },
+    {
+      "title": "Android Entertainment App IAP",
+      "reason": "native mobile app \u2014 not in catalog"
+    },
+    {
+      "title": "SaaS Acquisition Broker",
+      "reason": "M&A sales role \u2014 not delivery offer"
+    },
+    {
+      "title": "Wellness Clinic Development",
+      "reason": "clinic business consulting \u2014 not website/automation catalog"
+    },
+    {
+      "title": "AI Object Detection System",
+      "reason": "CV/model pipeline beyond verified offers"
+    }
+  ],
+  "owner_action_required": [
+    "Log into Submittable (Google OK) as shashankbhasin21@gmail.com",
+    "Paste IAWF packet into Submittable (do not email execdir@) \u2014 open MASTER APPLY DRAFT",
+    "Paste Freelancer drafts from master Gmail draft while logged into Freelancer",
+    "Reply with board_submission_receipt after each paste"
+  ]
+}

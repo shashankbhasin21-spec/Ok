@@ -1,0 +1,49 @@
+{
+  "sent": [
+    {
+      "email": "info@dohadentalcenter.com",
+      "id": "1a0ab471f09beea9",
+      "subject": "EUR 10,000 \u2014 multi-branch dental package landing (Qatar)"
+    },
+    {
+      "email": "info@hygeiclinics.com.ng",
+      "id": "1a0ab4721ccaa8a0",
+      "subject": "EUR 10,000 \u2014 Lagos clinic package landing + follow-up"
+    },
+    {
+      "email": "info@thalyshotel.com",
+      "id": "1a0ab4722e54a4c6",
+      "subject": "EUR 10,000 \u2014 Accra spa-hotel direct-book landing"
+    },
+    {
+      "email": "info@hoteladamo.com",
+      "id": "1a0ab4725abf391e",
+      "subject": "EUR 10,000 \u2014 Tbilisi direct-book landing + enquiry automation"
+    }
+  ],
+  "held_researched_for_next_day": [
+    {
+      "email": "info@docmedc.com",
+      "company": "DOC Medical Centers Doha"
+    },
+    {
+      "email": "info@polandhospital.co.ke",
+      "company": "Poland Hospital Nairobi"
+    },
+    {
+      "email": "info@lutonhospital.co.ke",
+      "company": "Luton Hospital Nairobi"
+    },
+    {
+      "email": "info@zhordaniaclinic.ge",
+      "company": "Zhordania Clinic Tbilisi"
+    },
+    {
+      "email": "info@mkdental.ge",
+      "company": "MK Dental Tbilisi"
+    }
+  ],
+  "reason_held": "daily Gmail stranger-send cap ~20 already used by earlier waves",
+  "freelancer_globe": "seeds/opportunities/freelancer-globe-hunt-2026-09-16.json",
+  "coverage": "seeds/opportunities/GLOBE-HUNT-COVERAGE.md"
+}
