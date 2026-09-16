@@ -9,8 +9,8 @@
   "gmail_outreach": {
     "automated_via_mcp": true,
     "daily_cap": 20,
-    "status": "held RESEARCHED batch sent 2026-09-16 evening",
-    "master_draft_thread_id": "1a0ab692dddb9a8a",
+    "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check",
+    "master_draft_thread_id": "1a0ab959a6476785",
     "master_draft_id": "r780583678775568680",
     "held_batch_sent": [
       {
@@ -33,7 +33,15 @@
         "email": "info@mkdental.ge",
         "id": "1a0ab69df4338ee0"
       }
-    ]
+    ],
+    "iawf_login_check": {
+      "at": "2026-09-16T18:55:00Z",
+      "account_created": true,
+      "welcome_thread_id": "1a0ab8badbfa3a11",
+      "cloud_browser_logged_in": false,
+      "log": "seeds/outreach-log/2026-09-16-iawf-login-check.json"
+    },
+    "grok_handoff_draft_id": "r2547786456106441221"
   },
   "queue": [
     {
@@ -46,11 +54,13 @@
       "do_not_email": [
         "execdir@iawfonline.org"
       ],
-      "status": "BLOCKED_NEEDS_SUBMITTABLE_LOGIN",
+      "status": "BLOCKED_NEEDS_OWNER_SUBMITTABLE_SESSION",
       "auto_submitted": false,
       "emailed_execdir": false,
       "gmail_self_draft": true,
-      "blocker": "Submittable redirects Continue \u2192 accounts.submittable.com login; Google OAuth unavailable in cloud browser; no password provided"
+      "blocker": "Account welcome email received for shashankbhasin21@gmail.com; cloud browser still hits accounts.submittable.com login wall (Continue with Google available). Owner must complete login then paste packet.",
+      "submittable_account_exists": true,
+      "login_checked_at": "2026-09-16T18:55:00Z"
     },
     {
       "id": "fl-multilingual-us-printer",
@@ -99,7 +109,8 @@
     }
   ],
   "owner_action_required": [
-    "Paste IAWF packet into Submittable (do not email execdir@) \u2014 open master Gmail draft",
+    "Log into Submittable (Google OK) as shashankbhasin21@gmail.com",
+    "Paste IAWF packet into Submittable (do not email execdir@) \u2014 open MASTER APPLY DRAFT",
     "Paste Freelancer drafts from master Gmail draft while logged into Freelancer",
     "Reply with board_submission_receipt after each paste"
   ]
