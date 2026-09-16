@@ -9,7 +9,31 @@
   "gmail_outreach": {
     "automated_via_mcp": true,
     "daily_cap": 20,
-    "status": "cap reached or near-cap for 2026-09-16; 5 RESEARCHED held"
+    "status": "held RESEARCHED batch sent 2026-09-16 evening",
+    "master_draft_thread_id": "1a0ab692dddb9a8a",
+    "master_draft_id": "r780583678775568680",
+    "held_batch_sent": [
+      {
+        "email": "info@docmedc.com",
+        "id": "1a0ab69d12617720"
+      },
+      {
+        "email": "info@polandhospital.co.ke",
+        "id": "1a0ab69d25e341bf"
+      },
+      {
+        "email": "info@lutonhospital.co.ke",
+        "id": "1a0ab69d4d31318a"
+      },
+      {
+        "email": "info@zhordaniaclinic.ge",
+        "id": "1a0ab69d8fcc39c9"
+      },
+      {
+        "email": "info@mkdental.ge",
+        "id": "1a0ab69df4338ee0"
+      }
+    ]
   },
   "queue": [
     {
@@ -19,12 +43,14 @@
       "deadline": "2026-09-18 (confirm on form; PDF header also mentions Sep 15)",
       "fee_usd": 38000,
       "packet": "seeds/proposals/iawf-website-submittable-2026-09-16.md",
-      "do_not_email": ["execdir@iawfonline.org"],
+      "do_not_email": [
+        "execdir@iawfonline.org"
+      ],
       "status": "BLOCKED_NEEDS_SUBMITTABLE_LOGIN",
       "auto_submitted": false,
       "emailed_execdir": false,
       "gmail_self_draft": true,
-      "blocker": "Submittable redirects Continue → accounts.submittable.com login; Google OAuth unavailable in cloud browser; no password provided"
+      "blocker": "Submittable redirects Continue \u2192 accounts.submittable.com login; Google OAuth unavailable in cloud browser; no password provided"
     },
     {
       "id": "fl-multilingual-us-printer",
@@ -51,15 +77,30 @@
     }
   ],
   "rejected_auto_bid": [
-    {"title": "Hotel Renovation Toronto", "reason": "construction — not in catalog"},
-    {"title": "Android Entertainment App IAP", "reason": "native mobile app — not in catalog"},
-    {"title": "SaaS Acquisition Broker", "reason": "M&A sales role — not delivery offer"},
-    {"title": "Wellness Clinic Development", "reason": "clinic business consulting — not website/automation catalog"},
-    {"title": "AI Object Detection System", "reason": "CV/model pipeline beyond verified offers"}
+    {
+      "title": "Hotel Renovation Toronto",
+      "reason": "construction \u2014 not in catalog"
+    },
+    {
+      "title": "Android Entertainment App IAP",
+      "reason": "native mobile app \u2014 not in catalog"
+    },
+    {
+      "title": "SaaS Acquisition Broker",
+      "reason": "M&A sales role \u2014 not delivery offer"
+    },
+    {
+      "title": "Wellness Clinic Development",
+      "reason": "clinic business consulting \u2014 not website/automation catalog"
+    },
+    {
+      "title": "AI Object Detection System",
+      "reason": "CV/model pipeline beyond verified offers"
+    }
   ],
   "owner_action_required": [
-    "Paste IAWF packet into Submittable (do not email execdir@)",
-    "Paste Freelancer drafts while logged into Freelancer",
-    "Reply with board_submission_receipt (URL + timestamp) after each paste so the firm can mark SUBMITTED"
+    "Paste IAWF packet into Submittable (do not email execdir@) \u2014 open master Gmail draft",
+    "Paste Freelancer drafts from master Gmail draft while logged into Freelancer",
+    "Reply with board_submission_receipt after each paste"
   ]
 }
