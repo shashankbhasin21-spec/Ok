@@ -308,40 +308,90 @@ export default function HomePage() {
 
           <section className="panel span-8">
             <h2>Opportunity pipeline</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Status</th>
-                  <th>Fit</th>
-                  <th>Budget</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.opportunities.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="muted">
-                      No opportunities yet. Run the vertical slice or import samples.
-                    </td>
-                  </tr>
-                )}
-                {data.opportunities.map((o) => (
-                  <tr key={String(o.id)}>
-                    <td>
-                      {String(o.title)}{" "}
-                      {o.simulated ? <span className="tag sim">SAMPLE</span> : null}
-                    </td>
-                    <td>{String(o.status)}</td>
-                    <td>{o.fit_score != null ? Number(o.fit_score).toFixed(2) : "—"}</td>
-                    <td>
-                      {o.budget_cents != null
-                        ? `${usd(Number(o.budget_cents))} ${String(o.budget_currency || "usd").toUpperCase()}`
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="muted" style={{ marginBottom: "0.75rem" }}>
+              Tap a row to open proposal text, bid, and Freelancer link. Approved ≠ sent — copy the proposal onto the board yourself.
+            </p>
+            <div className="stack">
+              {data.opportunities.length === 0 && (
+                <p className="muted">No opportunities yet. Sweep live boards first.</p>
+              )}
+              {data.opportunities.map((o) => {
+                const proposal =
+                  o.proposal && typeof o.proposal === "object"
+                    ? (o.proposal as Record<string, unknown>)
+                    : null;
+                return (
+                  <details
+                    key={String(o.id)}
+                    style={{ borderBottom: "1px solid var(--line)", paddingBottom: "0.65rem" }}
+                  >
+                    <summary style={{ cursor: "pointer", listStyle: "none" }}>
+                      <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                        <strong style={{ flex: 1 }}>{String(o.title)}</strong>
+                        <span className="tag warn">{String(o.status)}</span>
+                        <span className="muted">
+                          fit {o.fit_score != null ? Number(o.fit_score).toFixed(2) : "—"}
+                        </span>
+                        <span className="muted">
+                          {o.budget_cents != null
+                            ? `${usd(Number(o.budget_cents))} ${String(o.budget_currency || "usd").toUpperCase()}`
+                            : "—"}
+                        </span>
+                      </div>
+                    </summary>
+                    <div className="stack" style={{ marginTop: "0.65rem" }}>
+                      {o.source_url ? (
+                        <a href={String(o.source_url)} target="_blank" rel="noreferrer">
+                          Open job on Freelancer
+                        </a>
+                      ) : null}
+                      <div>
+                        <div className="muted">Job description</div>
+                        <div style={{ whiteSpace: "pre-wrap" }}>{String(o.description || "—")}</div>
+                      </div>
+                      {proposal ? (
+                        <>
+                          <div>
+                            <div className="muted">Proposal summary (copy this)</div>
+                            <div style={{ whiteSpace: "pre-wrap" }}>{String(proposal.summary || "—")}</div>
+                          </div>
+                          <div className="row">
+                            <span className="muted">Bid</span>
+                            <strong>
+                              {proposal.bid_cents != null
+                                ? `${usd(Number(proposal.bid_cents))} ${String(proposal.currency || "usd").toUpperCase()}`
+                                : "—"}
+                            </strong>
+                          </div>
+                          <div className="row">
+                            <span className="muted">Service</span>
+                            <strong>{String(proposal.service || "—")}</strong>
+                          </div>
+                          <div>
+                            <div className="muted">Approach</div>
+                            <ul style={{ margin: "0.25rem 0 0 1rem" }}>
+                              {(Array.isArray(proposal.approach) ? proposal.approach : []).map((step, i) => (
+                                <li key={i}>{String(step)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <div className="muted">Exclusions</div>
+                            <ul style={{ margin: "0.25rem 0 0 1rem" }}>
+                              {(Array.isArray(proposal.exclusions) ? proposal.exclusions : []).map((step, i) => (
+                                <li key={i}>{String(step)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="muted">No proposal draft (usually rejected / not qualified).</p>
+                      )}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
           </section>
 
           <section className="panel span-4">
@@ -352,6 +402,18 @@ export default function HomePage() {
                 <div key={String(a.id)} style={{ borderBottom: "1px solid var(--line)", paddingBottom: "0.5rem" }}>
                   <div>{String(a.summary)}</div>
                   <div className="muted">{a.amount_cents != null ? usd(Number(a.amount_cents)) : ""}</div>
+                  {a.body ? (
+                    <pre
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        fontSize: "0.85rem",
+                        marginTop: "0.4rem",
+                        opacity: 0.9,
+                      }}
+                    >
+                      {String(a.body)}
+                    </pre>
+                  ) : null}
                   <div className="actions" style={{ marginTop: "0.4rem" }}>
                     <button
                       className="primary"
