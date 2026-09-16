@@ -1,0 +1,1070 @@
+{
+  "captured_at": "2026-09-16T17:31:05.767040+00:00",
+  "method": "Freelancer RSS keyword sweep + project-page About the client location parse",
+  "unique_openings": 554,
+  "pages_fetched": 160,
+  "countries_detected_counter": {
+    "India": 47,
+    "United States": 33,
+    "United Kingdom": 22,
+    "Canada": 6,
+    "South Africa": 5,
+    "Australia": 5,
+    "United Arab Emirates": 5,
+    "Italy": 4,
+    "Argentina": 4,
+    "Mexico": 4,
+    "Germany": 3,
+    "China": 3,
+    "Spain": 3,
+    "Malaysia": 3,
+    "Nigeria": 2,
+    "Qatar": 2,
+    "Colombia": 2,
+    "Turkey": 2,
+    "Egypt": 2,
+    "Ghana": 2,
+    "Pakistan": 2,
+    "Ireland": 2,
+    "Algeria": 2,
+    "Netherlands": 1,
+    "Lithuania": 1,
+    "Saudi Arabia": 1,
+    "Poland": 1,
+    "Venezuela": 1,
+    "Switzerland": 1,
+    "Finland": 1,
+    "Portugal": 1,
+    "Indonesia": 1,
+    "Georgia": 1,
+    "Uzbekistan": 1,
+    "Japan": 1,
+    "Peru": 1,
+    "Kenya": 1,
+    "Oman": 1,
+    "Dominican": 1,
+    "Armenia": 1,
+    "Brazil": 1,
+    "Denmark": 1,
+    "Vietnam": 1,
+    "Bangladesh": 1,
+    "Singapore": 1
+  },
+  "countries_detected_count": 45,
+  "jobs_kept_ge2k_or_interesting": 45,
+  "jobs_ge10k_eur": 10,
+  "jobs_ge5k_eur": 25,
+  "mailable_on_freelancer": 0,
+  "non_big5_country_jobs": [
+    {
+      "title": "Educational Immersive Dome Content",
+      "url": "https://www.freelancer.com/projects/2d-animation/Educational-Immersive-Dome-Content.html",
+      "budget_low": 50000.0,
+      "budget_high": 100000.0,
+      "currency": "usd",
+      "approx_eur_high": 92000,
+      "client_location_guess": "Cape Town, South Africa",
+      "countries": [
+        "South Africa"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I'm seeking a creative professional to develop educational immersive dome content focused on history. This content will be displayed in a dome environment and should cater to an audience aged 6 to 90.... (Budget: $50000 - $100000 USD, Jobs: 2D Animation, 3D Animation, 3D Design, 3D Rendering, Animation, Graphic Design)"
+    },
+    {
+      "title": "MCP Server Development for Microsoft Tools",
+      "url": "https://www.freelancer.com/projects/api-integration/MCP-Server-Development-for-Microsoft.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Pretoria, South Africa",
+      "countries": [
+        "South Africa"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Job title: Build a Low-Latency MCP Server for Excel, Microsoft Project and Word I\u2019m looking for an experienced developer to build a Model Context Protocol (MCP) server and tools that allow an AI assistant to interact with Microsoft Excel, Microsoft Project and Microsoft Word through a connector... (Budget: $5000 - $10000 USD, Jobs: .NET, .NET Core, API Integration, Backend Development, Microsoft Graph, Microsoft Office, Microsoft Project, OAuth, Project Management, Python)"
+    },
+    {
+      "title": "Residential Client Acquisition Agent",
+      "url": "https://www.freelancer.com/projects/facebook-ads/Residential-Client-Acquisition-Agent.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Lagos, Nigeria",
+      "countries": [
+        "India",
+        "Nigeria"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I\u2019m expanding my residential real-estate practice and want a results-driven partner who can consistently bring in qualified buyers and sellers. Your entire focus will be client acquisition: creating and managing targeted social-media campaigns that turn clicks into appointments I can close... (Budget: $5000 - $10000 USD, Jobs: Digital Marketing, Facebook Ads, Facebook Marketing, Instagram Marketing, Internet Marketing, Lead Generation, Social Media Marketing, Twitter)"
+    },
+    {
+      "title": "Cross-Platform Mobile App (iOS/Android) for Motorcycle Utility & Geo-Location MVP",
+      "url": "https://www.freelancer.com/projects/flutter/Cross-Platform-Mobile-App-iOS.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Modena, Italy",
+      "countries": [
+        "Italy"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Looking for a talented individual freelance developer (no agencies or software houses) to build a lean MVP for a motorcycle utility and geo-location app for iOS & Android. Key Features (MVP Scope):  Garage Utility: Simple dashboard for tracking bike service logs and document expiry reminders... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Android, API Integration, Flutter, Geolocation, GPS, iOS, Mobile App Development, React Native, Supabase)"
+    },
+    {
+      "title": "Fintech MVP Marketplace for Business Financing products: Senior Full-Stack Developer",
+      "url": "https://www.freelancer.com/projects/software-development/Senior-Full-Stack-Developer-for.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Rome, Italy",
+      "countries": [
+        "Italy"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are building Fidati, a standalone fintech platform that helps Italian SMEs compare business financing products, generate a qualified financing enquiry and prepare a structured credit dossier.  We are... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Credit Analysis, Credit Repair, Finance, Risk Assessment, Software Development, Website Design)"
+    },
+    {
+      "title": "Implement Self-Hosted ERP for CNC Manufacturer",
+      "url": "https://www.freelancer.com/projects/odoo/Implement-Self-Hosted-ERP-for.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Kaunas, Lithuania",
+      "countries": [
+        "Lithuania"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Looking for a Freelancer to Implement a Self-Hosted ERP System for a CNC Manufacturing Company  We are a CNC manufacturing company with 26 employees. We are looking for an experienced ERP freelancer or a small development team to implement and customize an ERP system for our business... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Database Management, ERP, ERPNext, Manufacturing, Odoo, Open Source, PHP, Python, Software Architecture)"
+    },
+    {
+      "title": "Professional Turkish Document Translation",
+      "url": "https://www.freelancer.com/projects/turkish-translator/Professional-Turkish-Document.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Eygelshoven, Netherlands",
+      "countries": [
+        "Netherlands"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I have a set of documents that need to be translated accurately into Turkish while preserving tone, formatting, and any nuanced meaning they carry. The files are primarily text-based and do not belong... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Content Writing, Editing, English (US) Translator, Language Tutoring, Proofreading, Traditional Chinese (Hong Kong), Translation, Turkish Translator)"
+    },
+    {
+      "title": "Expert UGC Agency / Creator Needed for Long-Term E-Commerce Project (200+ Product Videos)",
+      "url": "https://www.freelancer.com/projects/video-production/Expert-UGC-Agency-Creator-Needed.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "Doha, Qatar",
+      "countries": [
+        "Qatar"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Hello! We are a rapidly growing e-commerce brand specializing in premium lifestyle, wellness, beauty, and smart tech products. We are looking to partner with a highly experienced UGC creator, or preferably... (Budget: $3000 - $5000 USD, Jobs: Advertising, Audio Services, Content Creation, Final Cut Pro, Motion Graphics, Social Media Marketing, Video Editing, Video Production, Video Services, Voice Talent)"
+    },
+    {
+      "title": "Expert UI/UX & Full-Stack Developer Needed] High-End, Innovative Heavy Transport & Flatbed Booking Platform (Apps + Dashboard)",
+      "url": "https://www.freelancer.com/projects/ui-design/Expert-Full-Stack-Developer-Needed.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "Delhi, Saudi Arabia",
+      "countries": [
+        "Saudi Arabia"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are looking for a top-tier, highly skilled software developer or agency to build a cutting-edge, premium-quality mobile and web platform operating in Saudi Arabia.\u00a0  We are not just looking for a standard... (Budget: $3000 - $5000 USD, Jobs: Android, Full Stack Development, Graphic Design, iOS, JavaScript, Mobile App Development, UI / User Interface, User Interface / IA, UX / User Experience, Web Development)"
+    },
+    {
+      "title": "Network Engineer for Redundant Internet Failover System in Lagos",
+      "url": "https://www.freelancer.com/projects/cisco/Network-Engineer-for-Redundant-Internet.html",
+      "budget_low": 1750.0,
+      "budget_high": 3500.0,
+      "currency": "usd",
+      "approx_eur_high": 3220,
+      "client_location_guess": "Lagos, Nigeria",
+      "countries": [
+        "Nigeria",
+        "Poland"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are seeking a skilled Network Engineer to design and configure a redundant internet failover system for an enterprise client in Nigeria. The goal is to achieve 99.9% uptime using two internet sources with automatic switching... (Budget: $1750 - $3500 USD, Jobs: Cisco, Computer Security, Internet Security, Local Job, Network Administration, Wireless)"
+    },
+    {
+      "title": "HEMS Entwicklung: SPiNE One & evcc",
+      "url": "https://www.freelancer.com/projects/architecture/HEMS-Entwicklung-SPiNE-One-evcc.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "eur",
+      "approx_eur_high": 3000,
+      "client_location_guess": "Stuttgart, Germany",
+      "countries": [
+        "Germany"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "HEMS Entwicklung auf SPiNE One Basis evcc  Projektziel   Home Energy Management Systems HEMS das lokal auf SPiNE One l\u00e4uft und evcc als Kern Energieoptimierer nutzt. Erweiterte Funktionen wie Mieterstrom... (Budget: \u20ac1500 - \u20ac3000 EUR, Jobs: Architecture, Cloud Development, Docker, Documentation, Local Area Networking, Node.js, PostgreSQL, REST API)"
+    },
+    {
+      "title": "Clone Pragmatic Slot Games Source",
+      "url": "https://www.freelancer.com/projects/documentation/Clone-Pragmatic-Slot-Games-Source.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Burzaco, Argentina",
+      "countries": [
+        "Argentina"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need full source-code replicas of the slot titles released by Pragmatic Play. Every visual, audio, math model and game mechanic must match the originals exactly, including bonus rounds and free-spins sequences, while delivering the same high RTP percentages players expect from the provider... (Budget: $1500 - $3000 USD, Jobs: Documentation, Game Design, Game Development, Game Programming, HTML5, JavaScript, Mobile Development, PHP, Unity, Unity 3D)"
+    },
+    {
+      "title": "Copyright Dispute Resolution Expert Needed",
+      "url": "https://www.freelancer.com/projects/data-protection/Copyright-Dispute-Resolution-Expert.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Federal Way, Switzerland",
+      "countries": [
+        "India",
+        "Switzerland"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Looking to retain legal counsel with direct experience or established contacts at TikTok / ByteDance and can operate in the EU and UK to support account reinstatement, compel compliance with data protection laws, and address cross-border platform-facilitated harassment... (Budget: $1500 - $3000 USD, Jobs: Compliance, Corporate Law, Data Protection, Employment Law, Legal, Legal Consultation, Legal Research, Legal Writing)"
+    },
+    {
+      "title": "Desarrollo Integral de Plataforma SaaS Ahorros Colaborativos",
+      "url": "https://www.freelancer.com/projects/php/Desarrollo-Integral-Plataforma-SaaS.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Venezuela",
+      "countries": [
+        "United Arab Emirates",
+        "Venezuela"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Buscamos un Desarrollador Full-Stack Senior o Agencia para llevar a cabo el desarrollo integral de misanvirtual.com, una plataforma SaaS orientada a la gesti\u00f3n automatizada de ahorros colaborativos (sistemas tipo \"San\", \"Sus\u00fa\" o \"Juntas\")... (Budget: $1500 - $3000 USD, Jobs: Google Cloud Platform, MySQL, Node.js, PHP, PostgreSQL, React.js, Software Architecture, Vue.js)"
+    },
+    {
+      "title": "Jamison Woopsa(WSDIST) to NECS Entr\u00e9e ERP Migration",
+      "url": "https://www.freelancer.com/projects/data-integration/Jamison-Woopsa-NECS-Entr-Migration.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Brooklyn, United States",
+      "countries": [
+        "Mexico",
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need all live data from our Jamison Woopsa ERP moved seamlessly into NECS entr\u00e9e. The scope covers customer records, full inventory catalogs, and complete sales history. Every field has to land in the exact entr\u00e9e-native structure so our team can switch over with no manual cleanup... (Budget: $1500 - $3000 USD, Jobs: Data Integration, Data Processing, ERP, MySQL, SQL)"
+    },
+    {
+      "title": "Odoo POS Specialist for Apparel Retailer",
+      "url": "https://www.freelancer.com/projects/xero/Odoo-POS-Specialist-for-Apparel.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Cape Town, South Africa",
+      "countries": [
+        "South Africa"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Project Title: Odoo POS Setup and Integration for Multi-Store Apparel Retailer  We are a South African apparel company operating approximately six retail stores, an online Shopify store, a warehouse and our own manufacturing facility... (Budget: $1500 - $3000 USD, Jobs: API Integration, JavaScript, Odoo, Shopify, Xero)"
+    },
+    {
+      "title": "Youtube AI Summarizer & PDF Boost + Text Editor",
+      "url": "https://www.freelancer.com/projects/ai-content-creation/Youtube-Summarizer-PDF-Boost-Text.html",
+      "budget_low": 500.0,
+      "budget_high": 2000.0,
+      "currency": "eur",
+      "approx_eur_high": 2000,
+      "client_location_guess": "",
+      "countries": [
+        "Germany",
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I want to launch a full-featured web app that lets users:   \u2022 paste a YouTube link and instantly receive an AI-generated written summary;   \u2022 create or upload documents, enhance them as polished PDFs,... (Budget: \u20ac500 - \u20ac2000 EUR, Jobs: AI Content Creation, AI Text-to-text, HTML, JavaScript, NLP, PHP, Web Development, WordPress)"
+    }
+  ],
+  "top_jobs": [
+    {
+      "title": "Educational Immersive Dome Content",
+      "url": "https://www.freelancer.com/projects/2d-animation/Educational-Immersive-Dome-Content.html",
+      "budget_low": 50000.0,
+      "budget_high": 100000.0,
+      "currency": "usd",
+      "approx_eur_high": 92000,
+      "client_location_guess": "Cape Town, South Africa",
+      "countries": [
+        "South Africa"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I'm seeking a creative professional to develop educational immersive dome content focused on history. This content will be displayed in a dome environment and should cater to an audience aged 6 to 90.... (Budget: $50000 - $100000 USD, Jobs: 2D Animation, 3D Animation, 3D Design, 3D Rendering, Animation, Graphic Design)"
+    },
+    {
+      "title": "Cross Chain DeFi Routing Architecture Lead",
+      "url": "https://www.freelancer.com/projects/blockchain/Cross-Chain-DeFi-Routing-Architecture.html",
+      "budget_low": 50000.0,
+      "budget_high": 100000.0,
+      "currency": "cad",
+      "approx_eur_high": 68000,
+      "client_location_guess": "Toronto, Canada",
+      "countries": [
+        "Canada"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": true,
+      "description": "I\u2019m ready to move our hybrid DeFi infrastructure from concept to production and need a senior architect who can own the full cross-chain routing stack end-to-end. The core networks in scope are Base (EVM), Solana (SVM) and Sui (Move)... (Budget: $50000 - $100000 CAD, Jobs: AI Development, Blockchain, CI/CD, Documentation, Hardhat, Microservices, Rust, Security Auditing, Smart Contracts, Solidity)"
+    },
+    {
+      "title": "Multilingual Website Upgrade for Global Printer -- 2",
+      "url": "https://www.freelancer.com/projects/web-development/Multilingual-Website-Upgrade-for-Global.html",
+      "budget_low": 20000.0,
+      "budget_high": 50000.0,
+      "currency": "usd",
+      "approx_eur_high": 46000,
+      "client_location_guess": "Tinley Park, United States",
+      "countries": [
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are a very large global label and packaging printer / converter. The majority of our revenue is driven from North America (USA), but we are significant players across all continents. We produce product labels for some of the most recognizable brands in the world... (Budget: $20000 - $50000 USD, Jobs: Content Management System (CMS), Graphic Design, HTML, PHP, Web Development, Web Hosting, Website Design, Website Management, Website Optimization)"
+    },
+    {
+      "title": "Lead Gen Specialist for Social Media",
+      "url": "https://www.freelancer.com/projects/digital-marketing/Lead-Gen-Specialist-for-Social.html",
+      "budget_low": 26000.0,
+      "budget_high": 35000.0,
+      "currency": "gbp",
+      "approx_eur_high": 40950,
+      "client_location_guess": "Kensington, United Kingdom",
+      "countries": [
+        "United Kingdom"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I'm looking for a digital marketing executive to focus on lead generation. The primary channels will be social media, email marketing, and HubSpot.   Key Tasks: - Create and manage engaging content on... (Budget: \u00a326000 - \u00a335000 GBP, Jobs: Digital Marketing, Email Marketing, Hubspot Marketing, Internet Marketing, Lead Generation, Marketing, Social Media Marketing)"
+    },
+    {
+      "title": "Android Entertainment App IAP Integration",
+      "url": "https://www.freelancer.com/projects/android-app-development/Android-Entertainment-App-IAP.html",
+      "budget_low": 1000000.0,
+      "budget_high": 2500000.0,
+      "currency": "inr",
+      "approx_eur_high": 26250,
+      "client_location_guess": "Lucknow, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I\u2019m building an Android entertainment app and need a developer who can take it from concept to a polished release on Google Play, complete with in-app purchase capability. Because the core focus is entertainment\u2014think... (Budget: \u20b91000000 - \u20b92500000 INR, Jobs: Android, Android App Development, API Integration, Git, Java, Kotlin, Mobile App Development)"
+    },
+    {
+      "title": "CEX & DEX Arbitrage Bot Development",
+      "url": "https://www.freelancer.com/projects/cryptocurrency/CEX-DEX-Arbitrage-Bot-Development.html",
+      "budget_low": 100000.0,
+      "budget_high": 2000000.0,
+      "currency": "inr",
+      "approx_eur_high": 21000,
+      "client_location_guess": "Panchkula, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": true,
+      "description": "The objective is to build a production-ready crypto-arbitrage bot that can scan price differences and execute trades across Binance, Coinbase and Uniswap in real time. I need the code to support three... (Budget: \u20b9100000 - \u20b92000000 INR, Jobs: API, Bot Development, C# Programming, C++ Programming, Cryptocurrency, Docker, PHP, Software Architecture)"
+    },
+    {
+      "title": "Structural Engineer of Record (Florida PE) for Industrial Steel Crane Building",
+      "url": "https://www.freelancer.com/projects/structural-engineering/Structural-Engineer-Record-Florida-for.html",
+      "budget_low": 10000.0,
+      "budget_high": 20000.0,
+      "currency": "usd",
+      "approx_eur_high": 18400,
+      "client_location_guess": "Walden, United States",
+      "countries": [
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Structural Engineer of Record (Florida PE) for Industrial Steel Crane Building Project Overview We are seeking an experienced Florida Licensed Structural Engineer (PE) or structural engineering firm to... (Budget: $10000 - $20000 USD, Jobs: Building Design, Civil Engineering, Engineering, Engineering Drawing, Geotechnical Engineering, Industrial Engineering, Structural Engineering)"
+    },
+    {
+      "title": "Hotel Renovation in Downtown Toronto",
+      "url": "https://www.freelancer.com/projects/project-management/Hotel-Renovation-Downtown-Toronto.html",
+      "budget_low": 10000.0,
+      "budget_high": 20000.0,
+      "currency": "cad",
+      "approx_eur_high": 13600,
+      "client_location_guess": "markham, Canada",
+      "countries": [
+        "Canada"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I'm seeking a skilled renovation team to update a small hotel in downtown Toronto. The project includes:    Guest Rooms:  - Renovate furniture and decor  - Update bathrooms  - Upgrade lighting and electrical... (Budget: $10000 - $20000 CAD, Jobs: Building Architecture, Construction, Furniture Design, Home Design, Interior Design, Lighting Design, Local Job, Project Management)"
+    },
+    {
+      "title": "SaaS Acquisition Agent / Broker / Specialist Needed",
+      "url": "https://www.freelancer.com/projects/saas/SaaS-Acquisition-Agent-Broker-Specialist.html",
+      "budget_low": 500000.0,
+      "budget_high": 1000000.0,
+      "currency": "inr",
+      "approx_eur_high": 10500,
+      "client_location_guess": "Visakhapatnam, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Summary We are looking for an experienced SaaS acquisition broker, business broker, M&A deal sourcer, or deal closer who can help us find a serious buyer for our product \u2014 a fully developed, production-ready, pre-revenue, multi-tenant SaaS platform... (Budget: \u20b9500000 - \u20b91000000 INR, Jobs: Business Development, Business Strategy, Financial Analysis, Lead Generation, Market Research, Mergers and Acquisitions, SaaS, Sales, Software Sales, Strategic Planning)"
+    },
+    {
+      "title": "Senior Fintech / Full-Stack Developer \u2014 Marketplace Monetization, Payments & Payouts",
+      "url": "https://www.freelancer.com/projects/nodejs/Senior-Fintech-Full-Stack-Developer.html",
+      "budget_low": 500000.0,
+      "budget_high": 1000000.0,
+      "currency": "inr",
+      "approx_eur_high": 10500,
+      "client_location_guess": "Ahmedabad, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Project Overview  We have an existing multi-module marketplace built with React.js, Node.js/NestJS, MongoDB, REST APIs, cloud infrastructure, authentication/admin systems and GitHub.  We need an experienced... (Budget: \u20b9500000 - \u20b91000000 INR, Jobs: Amazon Web Services, API Integration, FinTech, MongoDB, Next.js, Node.js, Payment Gateway Integration, Payment Processing, React.js, Software Architecture)"
+    },
+    {
+      "title": "AI Object Detection System Build",
+      "url": "https://www.freelancer.com/projects/computer-vision/Object-Detection-System-Build.html",
+      "budget_low": 2500.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Pratapgarh, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I\u2019m diving deep into AI and Machine Learning with a clear objective: design and implement a robust Computer Vision pipeline dedicated to accurate, real-time Object Detection. I already have several experimental... (Budget: $2500 - $10000 USD, Jobs: Computer Vision, Java, JavaScript, Object Detection, OpenCV, Python, Software Architecture, YOLO)"
+    },
+    {
+      "title": "High-Ticket Client Acquisition Specialist",
+      "url": "https://www.freelancer.com/projects/sales/High-Ticket-Client-Acquisition.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Delhi, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I really want is someone who has experience closing a high-ticket client. I don't only need experience; I need someone who has a network of mid-size and large-size property management companies in the US because I want to close the two deals this month... (Budget: $5000 - $10000 USD, Jobs: AI Automation, Business Development, Business Strategy, Closer, Lead Generation, Property Law, Property Management, Property Tax, Real Estate Management, Sales)"
+    },
+    {
+      "title": "MCP Server Development for Microsoft Tools",
+      "url": "https://www.freelancer.com/projects/api-integration/MCP-Server-Development-for-Microsoft.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Pretoria, South Africa",
+      "countries": [
+        "South Africa"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Job title: Build a Low-Latency MCP Server for Excel, Microsoft Project and Word I\u2019m looking for an experienced developer to build a Model Context Protocol (MCP) server and tools that allow an AI assistant to interact with Microsoft Excel, Microsoft Project and Microsoft Word through a connector... (Budget: $5000 - $10000 USD, Jobs: .NET, .NET Core, API Integration, Backend Development, Microsoft Graph, Microsoft Office, Microsoft Project, OAuth, Project Management, Python)"
+    },
+    {
+      "title": "Residential Client Acquisition Agent",
+      "url": "https://www.freelancer.com/projects/facebook-ads/Residential-Client-Acquisition-Agent.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Lagos, Nigeria",
+      "countries": [
+        "India",
+        "Nigeria"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I\u2019m expanding my residential real-estate practice and want a results-driven partner who can consistently bring in qualified buyers and sellers. Your entire focus will be client acquisition: creating and managing targeted social-media campaigns that turn clicks into appointments I can close... (Budget: $5000 - $10000 USD, Jobs: Digital Marketing, Facebook Ads, Facebook Marketing, Instagram Marketing, Internet Marketing, Lead Generation, Social Media Marketing, Twitter)"
+    },
+    {
+      "title": "SaaS Sales Partner Needed",
+      "url": "https://www.freelancer.com/projects/sales/SaaS-Sales-Partner-Needed.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Naperville, United States",
+      "countries": [
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I have built an AI-powered, cloud-native SaaS platform that helps small and medium-sized businesses run leaner and faster. Its single purpose is to improve operational efficiency for any company already operating on AWS, Azure or Google Cloud... (Budget: $5000 - $10000 USD, Jobs: Business Development, Lead Generation, SaaS, Sales, Sales Management)"
+    },
+    {
+      "title": "Wellness Clinic Development",
+      "url": "https://www.freelancer.com/projects/marketing/Wellness-Clinic-Development.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Osceola, United States",
+      "countries": [
+        "Australia",
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I'm looking to establish a comprehensive wellness clinic that focuses on therapeutic sessions. We will offer aesthetic services, bioidentical hormone replacement therapy (BHRT), weight loss programs, and functional medicine... (Budget: $5000 - $10000 USD, Jobs: Business Consulting, Business Development, Compliance, Health Care Management, Health Planning, Marketing, Project Management)"
+    },
+    {
+      "title": "\u2022 Senior DevOps / Cloud / SRE Engineer \u2022 Senior AI / Machine Learning Engineer \u2022 Senior Data Engineer",
+      "url": "https://www.freelancer.com/projects/devops/Senior-DevOps-Cloud-SRE-Engineer.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "usd",
+      "approx_eur_high": 9200,
+      "client_location_guess": "Chesterfield, United States",
+      "countries": [
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Talsolution is seeking experienced U.S.-based technical professionals for potential client engagements.    Open Technical Areas:    \u2022 Senior DevOps / Cloud / SRE Engineer  \u2022 Senior AI / Machine Learning... (Budget: $5000 - $10000 USD, Jobs: Azure, Big Data Sales, DevOps, Docker, Hadoop, Kubernetes, Linux, Local Job, Python)"
+    },
+    {
+      "title": "High-End OData Solution Development",
+      "url": "https://www.freelancer.com/projects/postgresql/High-End-OData-Solution-Development.html",
+      "budget_low": 5000.0,
+      "budget_high": 10000.0,
+      "currency": "aud",
+      "approx_eur_high": 6100,
+      "client_location_guess": "Sydney, Australia",
+      "countries": [
+        "Australia"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I'm looking for an experienced developer to build an OData V4 solution integrated with PostgreSQL, hosted within our AWS environment. The primary purpose of this solution will be data analysis and reporting, enabling customers to securely build their own reports via OData... (Budget: $5000 - $10000 AUD, Jobs: API Development, Data Analysis, Data Integration, Data Management, Data Modeling, Data Visualization, Database Design, PostgreSQL)"
+    },
+    {
+      "title": "Yoga Studio Website Development",
+      "url": "https://www.freelancer.com/projects/web-development/Yoga-Studio-Website-Development.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "gbp",
+      "approx_eur_high": 5850,
+      "client_location_guess": "Greenwich, United Kingdom",
+      "countries": [
+        "United Kingdom"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need a new website for my yoga studio with integration to Mindbody booking system.   The site should have the following pages: - Home - Class Schedule - About Us - Therapies - Workshops and Retreats... (Budget: \u00a33000 - \u00a35000 GBP, Jobs: CSS, Graphic Design, HTML, JavaScript, PHP, Shopify, Web Development, Website Design)"
+    },
+    {
+      "title": "E-Commerce Website & App Build",
+      "url": "https://www.freelancer.com/projects/mobile-app-development/Commerce-Website-App-Build-40715649.html",
+      "budget_low": 250000.0,
+      "budget_high": 500000.0,
+      "currency": "inr",
+      "approx_eur_high": 5250,
+      "client_location_guess": "Mumbai, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need a complete online store for physical goods, delivered as both a responsive web site and companion iOS/Android app. At minimum the system must let shoppers create secure user accounts and maintain personal profiles so they can track orders, manage saved addresses, and view purchase history... (Budget: \u20b9250000 - \u20b9500000 INR, Jobs: eCommerce, iPhone, Mobile App Development, Payment Gateway Integration, PHP, Shopify, Web Development, Website Design)"
+    },
+    {
+      "title": "Freelance Sales Specialist for Software Services",
+      "url": "https://www.freelancer.com/projects/sales/Freelance-Sales-Specialist-for-Software.html",
+      "budget_low": 250000.0,
+      "budget_high": 500000.0,
+      "currency": "inr",
+      "approx_eur_high": 5250,
+      "client_location_guess": "New Delhi, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Summary About Us  We are a software development company specialising in custom CRM, ERP, business automation, and bespoke software solutions for businesses across different industries.  We help companies... (Budget: \u20b9250000 - \u20b9500000 INR, Jobs: Business Development, Lead Generation, Sales, Sales Calling, Software Sales, Technology Sales)"
+    },
+    {
+      "title": "Cross-Platform Mobile App (iOS/Android) for Motorcycle Utility & Geo-Location MVP",
+      "url": "https://www.freelancer.com/projects/flutter/Cross-Platform-Mobile-App-iOS.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Modena, Italy",
+      "countries": [
+        "Italy"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Looking for a talented individual freelance developer (no agencies or software houses) to build a lean MVP for a motorcycle utility and geo-location app for iOS & Android. Key Features (MVP Scope):  Garage Utility: Simple dashboard for tracking bike service logs and document expiry reminders... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Android, API Integration, Flutter, Geolocation, GPS, iOS, Mobile App Development, React Native, Supabase)"
+    },
+    {
+      "title": "Fintech MVP Marketplace for Business Financing products: Senior Full-Stack Developer",
+      "url": "https://www.freelancer.com/projects/software-development/Senior-Full-Stack-Developer-for.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Rome, Italy",
+      "countries": [
+        "Italy"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are building Fidati, a standalone fintech platform that helps Italian SMEs compare business financing products, generate a qualified financing enquiry and prepare a structured credit dossier.  We are... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Credit Analysis, Credit Repair, Finance, Risk Assessment, Software Development, Website Design)"
+    },
+    {
+      "title": "Implement Self-Hosted ERP for CNC Manufacturer",
+      "url": "https://www.freelancer.com/projects/odoo/Implement-Self-Hosted-ERP-for.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Kaunas, Lithuania",
+      "countries": [
+        "Lithuania"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Looking for a Freelancer to Implement a Self-Hosted ERP System for a CNC Manufacturing Company  We are a CNC manufacturing company with 26 employees. We are looking for an experienced ERP freelancer or a small development team to implement and customize an ERP system for our business... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Database Management, ERP, ERPNext, Manufacturing, Odoo, Open Source, PHP, Python, Software Architecture)"
+    },
+    {
+      "title": "Professional Turkish Document Translation",
+      "url": "https://www.freelancer.com/projects/turkish-translator/Professional-Turkish-Document.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "eur",
+      "approx_eur_high": 5000,
+      "client_location_guess": "Eygelshoven, Netherlands",
+      "countries": [
+        "Netherlands"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I have a set of documents that need to be translated accurately into Turkish while preserving tone, formatting, and any nuanced meaning they carry. The files are primarily text-based and do not belong... (Budget: \u20ac3000 - \u20ac5000 EUR, Jobs: Content Writing, Editing, English (US) Translator, Language Tutoring, Proofreading, Traditional Chinese (Hong Kong), Translation, Turkish Translator)"
+    },
+    {
+      "title": "B2B Closer Needed: Commission-Based U.S. Property Tech",
+      "url": "https://www.freelancer.com/projects/sales/Closer-Needed-Commission-Based-Property.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "Delhi, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Commission-Only High-Ticket Sales Partner \u2014 U.S. Property Management  I\u2019m looking for a high-ticket B2B closer in the U.S. who works purely on commission.  This is not a salaried position, hourly role, or traditional sales job... (Budget: $3000 - $5000 USD, Jobs: Account Management, B2B Marketing, Business Development, Business Plans, Closer, Lead Generation, Property Management, Real Estate, Real Estate Management, Sales)"
+    },
+    {
+      "title": "Expert UGC Agency / Creator Needed for Long-Term E-Commerce Project (200+ Product Videos)",
+      "url": "https://www.freelancer.com/projects/video-production/Expert-UGC-Agency-Creator-Needed.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "Doha, Qatar",
+      "countries": [
+        "Qatar"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Hello! We are a rapidly growing e-commerce brand specializing in premium lifestyle, wellness, beauty, and smart tech products. We are looking to partner with a highly experienced UGC creator, or preferably... (Budget: $3000 - $5000 USD, Jobs: Advertising, Audio Services, Content Creation, Final Cut Pro, Motion Graphics, Social Media Marketing, Video Editing, Video Production, Video Services, Voice Talent)"
+    },
+    {
+      "title": "Expert UI/UX & Full-Stack Developer Needed] High-End, Innovative Heavy Transport & Flatbed Booking Platform (Apps + Dashboard)",
+      "url": "https://www.freelancer.com/projects/ui-design/Expert-Full-Stack-Developer-Needed.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "Delhi, Saudi Arabia",
+      "countries": [
+        "Saudi Arabia"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are looking for a top-tier, highly skilled software developer or agency to build a cutting-edge, premium-quality mobile and web platform operating in Saudi Arabia.\u00a0  We are not just looking for a standard... (Budget: $3000 - $5000 USD, Jobs: Android, Full Stack Development, Graphic Design, iOS, JavaScript, Mobile App Development, UI / User Interface, User Interface / IA, UX / User Experience, Web Development)"
+    },
+    {
+      "title": "High-Ticket Commission-Only B2B Sales Professional",
+      "url": "https://www.freelancer.com/projects/sales/High-Ticket-Commission-Only-Sales-40710424.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "New Delhi, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Commission-Only High-Ticket Sales Partner \u2014 U.S. Property Management  I\u2019m looking for a high-ticket B2B closer in the U.S. who works purely on commission.  This is not a salaried position, hourly role, or traditional sales job... (Budget: $3000 - $5000 USD, Jobs: Business Development, Business Plans, Closer, Lead Generation, Network Sales, Private Client, Property Management, Real Estate, Real Estate Management, Sales)"
+    },
+    {
+      "title": "High-Ticket Sales Expert Needed",
+      "url": "https://www.freelancer.com/projects/sales/High-Ticket-Sales-Expert-Needed.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "New Delhi, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I really want is someone who has experience closing a high-ticket client. I don't only need experience; I need someone who has a network of mid-size and large-size property management companies in the US because I want to close the two deals this month... (Budget: $3000 - $5000 USD, Jobs: AI Automation, Business Development, Business Strategy, Closer, Lead Generation, Property Management, Property Tax, Real Estate, Real Estate Management, Sales)"
+    },
+    {
+      "title": "React Native Developer for Student Community App",
+      "url": "https://www.freelancer.com/projects/android/React-Native-Developer-for-Student.html",
+      "budget_low": 3000.0,
+      "budget_high": 5000.0,
+      "currency": "usd",
+      "approx_eur_high": 4600,
+      "client_location_guess": "kanpur, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need an experienced React Native/Expo developer or small team to build Phase 2 of an existing Canadian student community platform.  Phase 1 is complete and includes a Next.js/TypeScript website, Supabase/PostgreSQL... (Budget: $3000 - $5000 USD, Jobs: Android, Expo, iOS Development, Mobile App Development, Next.js, PostgreSQL, Push Notification, React Native, Supabase, Typescript)"
+    },
+    {
+      "title": "Custom CRM & HR Web App",
+      "url": "https://www.freelancer.com/projects/rest-api/Custom-CRM-Web-App.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "gbp",
+      "approx_eur_high": 3510,
+      "client_location_guess": "Letchworth Garden City, United Kingdom",
+      "countries": [
+        "India",
+        "United Kingdom"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I\u2019m commissioning a ground-up CRM and HR management platform that will go live in roughly 4\u20136 weeks. The vision is a sleek React interface backed by Django, though I\u2019m open to alternative suggestions if you can justify clear benefits around speed, security, or long-term maintainability... (Budget: \u00a31500 - \u00a33000 GBP, Jobs: Backend Development, Django, Frontend Development, JavaScript, PHP, Python, REST API, Web Development)"
+    },
+    {
+      "title": "Network Engineer for Redundant Internet Failover System in Lagos",
+      "url": "https://www.freelancer.com/projects/cisco/Network-Engineer-for-Redundant-Internet.html",
+      "budget_low": 1750.0,
+      "budget_high": 3500.0,
+      "currency": "usd",
+      "approx_eur_high": 3220,
+      "client_location_guess": "Lagos, Nigeria",
+      "countries": [
+        "Nigeria",
+        "Poland"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "We are seeking a skilled Network Engineer to design and configure a redundant internet failover system for an enterprise client in Nigeria. The goal is to achieve 99.9% uptime using two internet sources with automatic switching... (Budget: $1750 - $3500 USD, Jobs: Cisco, Computer Security, Internet Security, Local Job, Network Administration, Wireless)"
+    },
+    {
+      "title": "HEMS Entwicklung: SPiNE One & evcc",
+      "url": "https://www.freelancer.com/projects/architecture/HEMS-Entwicklung-SPiNE-One-evcc.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "eur",
+      "approx_eur_high": 3000,
+      "client_location_guess": "Stuttgart, Germany",
+      "countries": [
+        "Germany"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "HEMS Entwicklung auf SPiNE One Basis evcc  Projektziel   Home Energy Management Systems HEMS das lokal auf SPiNE One l\u00e4uft und evcc als Kern Energieoptimierer nutzt. Erweiterte Funktionen wie Mieterstrom... (Budget: \u20ac1500 - \u20ac3000 EUR, Jobs: Architecture, Cloud Development, Docker, Documentation, Local Area Networking, Node.js, PostgreSQL, REST API)"
+    },
+    {
+      "title": "Clone Pragmatic Slot Games Source",
+      "url": "https://www.freelancer.com/projects/documentation/Clone-Pragmatic-Slot-Games-Source.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Burzaco, Argentina",
+      "countries": [
+        "Argentina"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need full source-code replicas of the slot titles released by Pragmatic Play. Every visual, audio, math model and game mechanic must match the originals exactly, including bonus rounds and free-spins sequences, while delivering the same high RTP percentages players expect from the provider... (Budget: $1500 - $3000 USD, Jobs: Documentation, Game Design, Game Development, Game Programming, HTML5, JavaScript, Mobile Development, PHP, Unity, Unity 3D)"
+    },
+    {
+      "title": "Copyright Dispute Resolution Expert Needed",
+      "url": "https://www.freelancer.com/projects/data-protection/Copyright-Dispute-Resolution-Expert.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Federal Way, Switzerland",
+      "countries": [
+        "India",
+        "Switzerland"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Looking to retain legal counsel with direct experience or established contacts at TikTok / ByteDance and can operate in the EU and UK to support account reinstatement, compel compliance with data protection laws, and address cross-border platform-facilitated harassment... (Budget: $1500 - $3000 USD, Jobs: Compliance, Corporate Law, Data Protection, Employment Law, Legal, Legal Consultation, Legal Research, Legal Writing)"
+    },
+    {
+      "title": "Delaware Co-Counsel for Chancery Filing",
+      "url": "https://www.freelancer.com/projects/contracts/Delaware-Counsel-for-Chancery-Filing.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "North Hollywood, United States",
+      "countries": [
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need a Delaware-licensed co-counsel to assist in filing civil suits in the Court of Chancery. The suits involve breach of contract and intellectual property rights.   Key tasks include: - Filing legal... (Budget: $1500 - $3000 USD, Jobs: Contracts, Intellectual Property Law, Legal, Legal Analysis, Legal Assistance, Legal Consultation, Legal Research, Tax Law)"
+    },
+    {
+      "title": "Desarrollo Integral de Plataforma SaaS Ahorros Colaborativos",
+      "url": "https://www.freelancer.com/projects/php/Desarrollo-Integral-Plataforma-SaaS.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Venezuela",
+      "countries": [
+        "United Arab Emirates",
+        "Venezuela"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Buscamos un Desarrollador Full-Stack Senior o Agencia para llevar a cabo el desarrollo integral de misanvirtual.com, una plataforma SaaS orientada a la gesti\u00f3n automatizada de ahorros colaborativos (sistemas tipo \"San\", \"Sus\u00fa\" o \"Juntas\")... (Budget: $1500 - $3000 USD, Jobs: Google Cloud Platform, MySQL, Node.js, PHP, PostgreSQL, React.js, Software Architecture, Vue.js)"
+    },
+    {
+      "title": "Jamison Woopsa(WSDIST) to NECS Entr\u00e9e ERP Migration",
+      "url": "https://www.freelancer.com/projects/data-integration/Jamison-Woopsa-NECS-Entr-Migration.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Brooklyn, United States",
+      "countries": [
+        "Mexico",
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I need all live data from our Jamison Woopsa ERP moved seamlessly into NECS entr\u00e9e. The scope covers customer records, full inventory catalogs, and complete sales history. Every field has to land in the exact entr\u00e9e-native structure so our team can switch over with no manual cleanup... (Budget: $1500 - $3000 USD, Jobs: Data Integration, Data Processing, ERP, MySQL, SQL)"
+    },
+    {
+      "title": "Odoo POS Specialist for Apparel Retailer",
+      "url": "https://www.freelancer.com/projects/xero/Odoo-POS-Specialist-for-Apparel.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Cape Town, South Africa",
+      "countries": [
+        "South Africa"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "Project Title: Odoo POS Setup and Integration for Multi-Store Apparel Retailer  We are a South African apparel company operating approximately six retail stores, an online Shopify store, a warehouse and our own manufacturing facility... (Budget: $1500 - $3000 USD, Jobs: API Integration, JavaScript, Odoo, Shopify, Xero)"
+    },
+    {
+      "title": "Ongoing Monthly Artificial Intelligence Projects - 16/09/2026 11:04 EDT",
+      "url": "https://www.freelancer.com/projects/ai-agents/Ongoing-Monthly-Artificial-Intelligence-40715406.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "usd",
+      "approx_eur_high": 2760,
+      "client_location_guess": "Eagan, United States",
+      "countries": [
+        "United States"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "## AI Developer / AI Engineer \u2013 Ongoing Monthly Projects  We are looking for an experienced **AI Developer/Engineer** to work with us on an ongoing monthly basis to help design, prototype, and build AI-powered solutions... (Budget: $1500 - $3000 USD, Jobs: AI Agents, AI Automation, AI Development, Graphic Design, Large Language Models (LLMs), User Interface / IA, UX / User Experience, Website Design)"
+    },
+    {
+      "title": "Complete Shopify Store With AI",
+      "url": "https://www.freelancer.com/projects/shopify-site/Complete-Shopify-Store-With.html",
+      "budget_low": 150000.0,
+      "budget_high": 250000.0,
+      "currency": "inr",
+      "approx_eur_high": 2625,
+      "client_location_guess": "Jaipur, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "My Shopify site is started but far from finished. I need someone to take it across the line, polish the design into a truly luxury-feel storefront, and wire in the practical pieces that will let me launch and scale... (Budget: \u20b9150000 - \u20b9250000 INR, Jobs: AI Chatbot Development, eCommerce, HTML, Payment Gateway Integration, PHP, Shopify, Web Development, Website Design)"
+    },
+    {
+      "title": "Full-Stack Developer for Social Platform",
+      "url": "https://www.freelancer.com/projects/full-stack-development/Full-Stack-Developer-for-Social-40713439.html",
+      "budget_low": 150000.0,
+      "budget_high": 250000.0,
+      "currency": "inr",
+      "approx_eur_high": 2625,
+      "client_location_guess": "Bengaluru, India",
+      "countries": [
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "iOS + Android + Web App Developer/Team Needed We are looking for an experienced full-stack developer or development team to build a social/community platform for iOS, Android, and Web, inspired by platforms such as Meetup and Dil Mil... (Budget: \u20b9150000 - \u20b9250000 INR, Jobs: API Development, Full Stack Development, iOS Development, Mobile App Development, Next.js, Node.js, NoSQL Couch & Mongo, Python, React Native, Web Development)"
+    },
+    {
+      "title": "Toronto Courier SEO + Hostinger Website + Instant Delivery Booking System",
+      "url": "https://www.freelancer.com/projects/conversion-rate-optimization/Toronto-Courier-SEO-Hostinger-Website.html",
+      "budget_low": 1500.0,
+      "budget_high": 3000.0,
+      "currency": "cad",
+      "approx_eur_high": 2040,
+      "client_location_guess": "North York, Canada",
+      "countries": [
+        "Canada",
+        "United Kingdom"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I own Cargaroo.ca, a Toronto-based same-day courier and business delivery company.  My website is built and hosted on HOSTINGER.  I am looking for an experienced SEO + Website Optimization + Web Development... (Budget: $1500 - $3000 CAD, Jobs: Conversion Rate Optimization, Google Analytics, Google Maps API, JavaScript, Keyword Research, Link Building, SEO, Web Development, Website Design, Website Optimization)"
+    },
+    {
+      "title": "Youtube AI Summarizer & PDF Boost + Text Editor",
+      "url": "https://www.freelancer.com/projects/ai-content-creation/Youtube-Summarizer-PDF-Boost-Text.html",
+      "budget_low": 500.0,
+      "budget_high": 2000.0,
+      "currency": "eur",
+      "approx_eur_high": 2000,
+      "client_location_guess": "",
+      "countries": [
+        "Germany",
+        "India"
+      ],
+      "emails_in_posting": [],
+      "mailable": false,
+      "avoid_capability": false,
+      "description": "I want to launch a full-featured web app that lets users:   \u2022 paste a YouTube link and instantly receive an AI-generated written summary;   \u2022 create or upload documents, enhance them as polished PDFs,... (Budget: \u20ac500 - \u20ac2000 EUR, Jobs: AI Content Creation, AI Text-to-text, HTML, JavaScript, NLP, PHP, Web Development, WordPress)"
+    }
+  ],
+  "limits": "Freelancer hides buyer emails; country list is only clients who posted in this live feed window \u2014 not every country on Earth."
+}
