@@ -10,7 +10,7 @@
     "automated_via_mcp": true,
     "daily_cap": 20,
     "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check",
-    "master_draft_thread_id": "1a0ab959a6476785",
+    "master_draft_thread_id": "1a0ab9d9426d4650",
     "master_draft_id": "r780583678775568680",
     "held_batch_sent": [
       {
@@ -35,7 +35,7 @@
       }
     ],
     "iawf_login_check": {
-      "at": "2026-09-16T18:55:00Z",
+      "at": "2026-09-16T19:07:07Z",
       "account_created": true,
       "welcome_thread_id": "1a0ab8badbfa3a11",
       "cloud_browser_logged_in": false,
@@ -60,7 +60,7 @@
       "gmail_self_draft": true,
       "blocker": "Account welcome email received for shashankbhasin21@gmail.com; cloud browser still hits accounts.submittable.com login wall (Continue with Google available). Owner must complete login then paste packet.",
       "submittable_account_exists": true,
-      "login_checked_at": "2026-09-16T18:55:00Z"
+      "login_checked_at": "2026-09-16T19:07:07Z"
     },
     {
       "id": "fl-multilingual-us-printer",

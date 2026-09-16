@@ -1,12 +1,13 @@
 {
   "gmail_master_draft_id": "r780583678775568680",
-  "thread_id": "1a0ab959a6476785",
+  "thread_id": "1a0ab9d9426d4650",
   "to": "shashankbhasin21@gmail.com",
-  "subject": "[MASTER APPLY DRAFT] IAWF + Freelancer paste packets \u2014 login check done",
-  "refreshed_at": "2026-09-16T18:58:41Z",
+  "subject": "[MASTER APPLY DRAFT] IAWF login STILL NEEDED \u2014 paste packet ready",
+  "refreshed_at": "2026-09-16T19:07:23Z",
   "iawf_login_check": {
     "account_exists": true,
     "cloud_logged_in": false,
+    "rechecked_at": "2026-09-16T19:07:23Z",
     "log": "seeds/outreach-log/2026-09-16-iawf-login-check.json"
   },
   "auto_applied_gmail": [

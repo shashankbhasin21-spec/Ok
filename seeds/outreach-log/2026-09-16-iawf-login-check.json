@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-09-16T18:55:00Z",
+  "checked_at": "2026-09-16T19:07:07Z",
   "owner_request": "Iref login check",
   "interpreted_as": "IAWF Submittable login check",
   "gmail_account": "shashankbhasin21@gmail.com",
@@ -7,27 +7,26 @@
     "welcome_email_received": true,
     "welcome_thread_id": "1a0ab8badbfa3a11",
     "welcome_at": "2026-09-16T18:47:32Z",
-    "subject": "Welcome to Submittable"
+    "newer_submittable_mail": false
   },
   "browser_check": {
     "rfp_url": "https://iawf.submittable.com/submit/364943/rfp-for-new-iawf-website",
     "final_url": "https://accounts.submittable.com/u/login/identifier",
     "logged_in": false,
-    "blocker": "Log in to International Association of Wildland Fire to continue to Submittable",
-    "oauth_buttons": ["Continue with Google", "Continue with Facebook"],
-    "email_password_form": true,
-    "paste_submit_possible_without_owner_session": false,
-    "deadline_shown_on_page": "2026-09-19 (timeline also cites 18 Sep Pacific)"
+    "manage_submittable_com": "404 / no session",
+    "blocker": "Log in to International Association of Wildland Fire to continue to Submittable.",
+    "oauth_buttons": [
+      "Continue with Google",
+      "Continue with Facebook"
+    ],
+    "paste_submit_possible_without_owner_session": false
   },
-  "agent_cannot": [
-    "Complete Google OAuth in cloud browser without owner",
-    "Submit IAWF packet without authenticated Submittable session",
-    "Email packet to execdir@iawfonline.org"
-  ],
   "owner_next": [
-    "Log into Submittable as shashankbhasin21@gmail.com (Google OAuth OK)",
-    "Open RFP URL and paste packet from MASTER APPLY DRAFT or seeds/proposals/iawf-website-submittable-2026-09-16.md",
-    "Reply with submission confirmation ID for board_submission_receipt"
+    "On your phone/desktop: Continue with Google as shashankbhasin21@gmail.com",
+    "Open https://iawf.submittable.com/submit/364943/rfp-for-new-iawf-website",
+    "Paste from Gmail MASTER APPLY DRAFT section A",
+    "Reply with confirmation ID"
   ],
-  "master_draft_id": "r780583678775568680"
+  "master_draft_id": "r780583678775568680",
+  "prior_check": "2026-09-16T18:55:00Z \u2014 same result"
 }
