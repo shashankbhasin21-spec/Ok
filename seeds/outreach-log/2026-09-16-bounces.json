@@ -1,19 +1,57 @@
 {
-  "checked_at": "2026-09-16T18:06:00Z",
-  "gmail_from": "shashankbhasin21@gmail.com",
-  "note": "All firm outreach and drafts use this Gmail account via Gmail MCP.",
-  "outreach_bounces_today": [
+  "checked_at": "2026-09-16T18:07:00Z",
+  "gmail_account": "shashankbhasin21@gmail.com",
+  "window": "newer_than:3d mailer-daemon / DSN",
+  "firm_outreach": {
+    "bounced": [
+      {
+        "to": "info@thalyshotel.com",
+        "company": "Thalys SPA Hotel Accra",
+        "subject": "EUR 10,000 — Accra spa-hotel direct-book landing",
+        "dsn": "Address not found — domain thalyshotel.com could not be found",
+        "thread_id": "1a0ab4722e54a4c6",
+        "pipeline": "BOUNCED"
+      }
+    ],
+    "sent_no_dsn_yet": [
+      "info@lmg.ae",
+      "info@centralclinic.ae",
+      "info@gdc.me",
+      "info@drparis.co.uk",
+      "info@hotelbayard.fr",
+      "info@9hotelbastillelyon.com",
+      "hello@magellan-solutions.com",
+      "info@cottijohnson.com",
+      "office@hvac247pro.com",
+      "info@dohadentalcenter.com",
+      "info@hygeiclinics.com.ng",
+      "info@hoteladamo.com",
+      "hello@dripyogastudio.com",
+      "hello@tangerine.yoga",
+      "info@helloyoga.life",
+      "info@bodhiyogastudio.com",
+      "info@kendrickhvac.com",
+      "info@weikleshometownhvac.com",
+      "info@aceshvacllc.com"
+    ],
+    "bounce_rate_outreach": "1 / ~20 stranger sends today"
+  },
+  "unrelated_dsn": [
     {
-      "to": "info@thalyshotel.com",
-      "subject": "EUR 10,000 — Accra spa-hotel direct-book landing",
-      "reason": "Delivery Status Notification (Failure): domain thalyshotel.com could not be found",
-      "thread_id": "1a0ab4722e54a4c6",
-      "pipeline_stage": "BOUNCED"
+      "to": "adspcsccic.cowe-tnpol@gov.in",
+      "reason": "address not found (police follow-up, not firm outreach)"
+    },
+    {
+      "to": "cyberpstsrl.pol@kerala.gov.in",
+      "reason": "address not found (police follow-up, not firm outreach)"
+    },
+    {
+      "to": "d72d8809-...@reply.linkedin.com",
+      "reason": "expired LinkedIn reply address"
+    },
+    {
+      "to": "info@kokilabenhospital.com",
+      "reason": "permanent delivery failure (personal medical mail)"
     }
-  ],
-  "other_dsn_not_outreach": [
-    "gov.in police follow-ups (address not found)",
-    "LinkedIn reply address expired",
-    "info@kokilabenhospital.com permanent failure (unrelated medical mail)"
   ]
 }
