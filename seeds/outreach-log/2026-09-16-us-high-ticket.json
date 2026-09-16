@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-16",
+  "mode": ["draft_only", "gmail_authorized"],
+  "daily_cap": 20,
+  "sent_count": 7,
+  "currency": "USD",
+  "offers": {
+    "landing_page": 180000,
+    "workflow_automation": 250000
+  },
+  "sends": [
+    {"company": "drip yoga Glen Ellyn", "email": "hello@dripyogastudio.com", "offer": "landing_page", "price_usd": 1800, "gmail_message_id": "1a0ab3b2e2f951ca", "thread_id": "1a0ab3b2e2f951ca"},
+    {"company": "Tangerine Yoga Brooklyn", "email": "hello@tangerine.yoga", "offer": "landing_page", "price_usd": 1800, "gmail_message_id": "1a0ab3b3103a1427", "thread_id": "1a0ab3b3103a1427"},
+    {"company": "Hello Yoga Costa Mesa", "email": "info@helloyoga.life", "offer": "landing_page", "price_usd": 1800, "gmail_message_id": "1a0ab3b315f90a9b", "thread_id": "1a0ab3b315f90a9b"},
+    {"company": "Bodhi Yoga Studio Miami", "email": "info@bodhiyogastudio.com", "offer": "landing_page", "price_usd": 1800, "gmail_message_id": "1a0ab3b36665a356", "thread_id": "1a0ab3b36665a356"},
+    {"company": "Kendrick Heating & Air", "email": "info@kendrickhvac.com", "offer": "workflow_automation", "price_usd": 2500, "gmail_message_id": "1a0ab3b3f21daa6c", "thread_id": "1a0ab3b3f21daa6c"},
+    {"company": "Weikle Hometown Heating & Air", "email": "info@weikleshometownhvac.com", "offer": "workflow_automation", "price_usd": 2500, "gmail_message_id": "1a0ab3b4bf2802a9", "thread_id": "1a0ab3b4bf2802a9"},
+    {"company": "ACES Heating & Cooling", "email": "info@aceshvacllc.com", "offer": "workflow_automation", "price_usd": 2500, "gmail_message_id": "1a0ab3b552f2922c", "thread_id": "1a0ab3b552f2922c"}
+  ],
+  "marketplace_drafts_manual_paste": [
+    "seeds/proposals/freelancer-yoga-studio-website-scoped.md"
+  ],
+  "requirements": [
+    "seeds/requirements/landing_page.md",
+    "seeds/requirements/workflow_automation.md"
+  ],
+  "leads_csv": "seeds/leads/us-high-ticket-2026-09-16.csv",
+  "not_done": [
+    "Freelancer/Upwork proposal submit (no API — paste manually)",
+    "Seller phone numbers (not present on these leads; email-only)",
+    "Revenue / signed contracts (awaiting replies)",
+    "earner pipeline SMTP send (GMAIL_APP_PASSWORD unset — used Gmail MCP instead)"
+  ]
+}
