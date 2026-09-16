@@ -20,8 +20,11 @@
       "fee_usd": 38000,
       "packet": "seeds/proposals/iawf-website-submittable-2026-09-16.md",
       "do_not_email": ["execdir@iawfonline.org"],
-      "status": "DRAFT_READY_PASTE",
-      "auto_submitted": false
+      "status": "BLOCKED_NEEDS_SUBMITTABLE_LOGIN",
+      "auto_submitted": false,
+      "emailed_execdir": false,
+      "gmail_self_draft": true,
+      "blocker": "Submittable redirects Continue → accounts.submittable.com login; Google OAuth unavailable in cloud browser; no password provided"
     },
     {
       "id": "fl-multilingual-us-printer",
