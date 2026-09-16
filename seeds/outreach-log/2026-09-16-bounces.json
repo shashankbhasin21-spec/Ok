@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-09-16T18:06:00Z",
+  "gmail_from": "shashankbhasin21@gmail.com",
+  "note": "All firm outreach and drafts use this Gmail account via Gmail MCP.",
+  "outreach_bounces_today": [
+    {
+      "to": "info@thalyshotel.com",
+      "subject": "EUR 10,000 — Accra spa-hotel direct-book landing",
+      "reason": "Delivery Status Notification (Failure): domain thalyshotel.com could not be found",
+      "thread_id": "1a0ab4722e54a4c6",
+      "pipeline_stage": "BOUNCED"
+    }
+  ],
+  "other_dsn_not_outreach": [
+    "gov.in police follow-ups (address not found)",
+    "LinkedIn reply address expired",
+    "info@kokilabenhospital.com permanent failure (unrelated medical mail)"
+  ]
+}
