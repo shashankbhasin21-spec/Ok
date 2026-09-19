@@ -1,0 +1,26 @@
+# Grey Quantum public storefront (Next.js)
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY dashboard/package.json dashboard/package-lock.json ./
+RUN npm ci
+
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY dashboard/ ./
+ARG FIRM_API_URL=http://127.0.0.1:8787
+ENV FIRM_API_URL=$FIRM_API_URL
+RUN npm run build
+
+FROM node:20-alpine AS run
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/next.config.js ./next.config.js
+COPY --from=build /app/tsconfig.json ./tsconfig.json
+RUN mkdir -p ./public
+EXPOSE 3000
+CMD ["sh", "-c", "npx next start -p ${PORT:-3000}"]

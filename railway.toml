@@ -1,0 +1,10 @@
+# API service defaults (legacy railway.toml still accepted for existing flows).
+# Prefer two Railway services: "api" uses Dockerfile.api, "web" uses Dockerfile.web.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.api"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
