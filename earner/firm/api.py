@@ -329,8 +329,10 @@ def make_handler(store: FirmStore, workdir: Path, payouts: PayoutStore, provider
                 self._json(401, {"error": str(exc), "code": "owner_auth"})
             except LiveRequired as exc:
                 self._json(503, {"error": str(exc), "code": "live_required"})
-            except (EvidenceRequired, CapacityExceeded, PayoutError, KeyError, ValueError) as exc:
+            except (EvidenceRequired, CapacityExceeded, PayoutError, ValueError) as exc:
                 self._json(400, {"error": str(exc)})
+            except KeyError as exc:
+                self._json(404, {"error": f"not found: {exc}"})
             except Exception as exc:  # noqa: BLE001
                 self._json(500, {"error": f"{type(exc).__name__}: {exc}"})
 
