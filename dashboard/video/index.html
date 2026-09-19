@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Video Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/dashboard/assets/styles.css" />
+</head>
+<body>
+  <div class="bg"></div>
+  <header class="top">
+    <div class="brand">
+      <span class="mark">VG</span>
+      <div>
+        <h1>Video Gateway</h1>
+        <p class="tag">Open-model control plane · Instagram / YouTube</p>
+      </div>
+    </div>
+    <nav>
+      <button data-tab="health" class="active">Gateway Health</button>
+      <button data-tab="generate">Generate</button>
+      <button data-tab="jobs">Jobs</button>
+      <button data-tab="providers">Providers</button>
+      <button data-tab="models">Models</button>
+      <button data-tab="metrics">Metrics</button>
+      <button data-tab="outputs">Outputs</button>
+    </nav>
+    <div class="auth">
+      <label>API Key <input id="apiKey" type="password" placeholder="X-API-Key" /></label>
+    </div>
+  </header>
+
+  <main>
+    <section id="health" class="panel active">
+      <h2>Gateway Health</h2>
+      <p class="lede">generation_available is true only when a CUDA worker with a ready engine is connected.</p>
+      <pre id="healthOut" class="code">Loading…</pre>
+    </section>
+
+    <section id="generate" class="panel">
+      <h2>Generate</h2>
+      <form id="genForm" class="form">
+        <label>Prompt<textarea name="prompt" rows="4" required placeholder="Cinematic futuristic AI office transformation"></textarea></label>
+        <div class="row">
+          <label>Duration (s)<input name="duration" type="number" value="30" min="1" /></label>
+          <label>Aspect
+            <select name="aspect_ratio">
+              <option value="9:16">9:16 vertical</option>
+              <option value="16:9">16:9 YouTube</option>
+              <option value="1:1">1:1</option>
+              <option value="4:5">4:5</option>
+            </select>
+          </label>
+          <label>Quality
+            <select name="quality">
+              <option>draft</option>
+              <option>standard</option>
+              <option selected>high</option>
+              <option>max</option>
+            </select>
+          </label>
+          <label>Engine
+            <select name="engine">
+              <option selected>auto</option>
+              <option>fast</option>
+              <option>quality</option>
+              <option>low_vram</option>
+              <option>wan</option>
+              <option>ltx</option>
+              <option>framepack</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Seed<input name="seed" type="number" placeholder="optional" /></label>
+          <label>Negative prompt<input name="negative_prompt" placeholder="optional" /></label>
+          <label>Input image path<input name="input_image" placeholder="optional local path" /></label>
+          <label>Input video path<input name="input_video" placeholder="optional local path" /></label>
+        </div>
+        <div class="row checks">
+          <label><input type="checkbox" name="audio" /> Audio</label>
+          <label><input type="checkbox" name="captions" /> Captions</label>
+          <label><input type="checkbox" name="allow_short" /> Allow &lt;30s</label>
+        </div>
+        <button type="submit" class="cta">Queue generation</button>
+      </form>
+      <div id="liveJob" class="live"></div>
+    </section>
+
+    <section id="jobs" class="panel">
+      <h2>Jobs</h2>
+      <button id="refreshJobs" class="ghost">Refresh</button>
+      <div id="jobsOut" class="table"></div>
+    </section>
+
+    <section id="providers" class="panel">
+      <h2>Providers</h2>
+      <p class="lede">Statuses: AVAILABLE · MODEL NOT INSTALLED · GPU UNAVAILABLE · UNHEALTHY · DISABLED</p>
+      <div id="providersOut" class="cards"></div>
+    </section>
+
+    <section id="models" class="panel">
+      <h2>Models</h2>
+      <pre id="modelsOut" class="code">Connect a worker to list models.</pre>
+    </section>
+
+    <section id="metrics" class="panel">
+      <h2>Metrics</h2>
+      <pre id="metricsOut" class="code"></pre>
+    </section>
+
+    <section id="outputs" class="panel">
+      <h2>Outputs</h2>
+      <p class="lede">READY assets only (QC passed). READY ≠ PUBLISHED.</p>
+      <div id="outputsOut" class="table"></div>
+    </section>
+  </main>
+  <script src="/dashboard/assets/app.js"></script>
+</body>
+</html>

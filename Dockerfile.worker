@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+# GPU worker image — requires NVIDIA Container Toolkit at runtime.
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv ffmpeg git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY worker ./worker
+COPY pyproject.toml ./
+
+RUN pip3 install --no-cache-dir \
+    "fastapi>=0.115" \
+    "uvicorn[standard]>=0.32" \
+    "pydantic>=2.0" \
+    "pydantic-settings>=2.0" \
+    "httpx>=0.27" \
+    "pillow>=10.0" \
+    "numpy>=1.26" \
+    "imageio>=2.34" \
+    "imageio-ffmpeg>=0.5"
+
+# Torch CUDA wheels installed separately per host CUDA version — see docs/GPU_SETUP.md
+# pip3 install torch --index-url https://download.pytorch.org/whl/cu124
+
+ENV MODEL_CACHE=/models \
+    HF_HOME=/models/hf \
+    STORAGE_PATH=/data \
+    WORKER_HOST=0.0.0.0 \
+    WORKER_PORT=8090 \
+    ALLOW_MOCK_INFERENCE=false \
+    PYTHONPATH=/app
+
+VOLUME ["/models", "/data"]
+EXPOSE 8090
+
+CMD ["python3", "-m", "uvicorn", "worker.main:app", "--host", "0.0.0.0", "--port", "8090"]

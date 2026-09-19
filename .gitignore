@@ -7,3 +7,12 @@ __pycache__/
 dashboard/node_modules/
 dashboard/.next/
 dashboard/.env.local
+# Video gateway
+data/
+models/
+outputs/
+third_party/
+*.mp4
+*.safetensors
+.venv/
+venv/
