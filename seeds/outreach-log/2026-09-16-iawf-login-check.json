@@ -7,6 +7,7 @@
     "welcome_email_received": true,
     "welcome_thread_id": "1a0ab8badbfa3a11",
     "welcome_at": "2026-09-16T18:47:32Z",
+    "subject": "Welcome to Submittable",
     "newer_submittable_mail": false
   },
   "browser_check": {
@@ -19,8 +20,15 @@
       "Continue with Google",
       "Continue with Facebook"
     ],
-    "paste_submit_possible_without_owner_session": false
+    "email_password_form": true,
+    "paste_submit_possible_without_owner_session": false,
+    "deadline_shown_on_page": "2026-09-19 (timeline also cites 18 Sep Pacific)"
   },
+  "agent_cannot": [
+    "Complete Google OAuth in cloud browser without owner",
+    "Submit IAWF packet without authenticated Submittable session",
+    "Email packet to execdir@iawfonline.org"
+  ],
   "owner_next": [
     "On your phone/desktop: Continue with Google as shashankbhasin21@gmail.com",
     "Open https://iawf.submittable.com/submit/364943/rfp-for-new-iawf-website",
@@ -28,5 +36,5 @@
     "Reply with confirmation ID"
   ],
   "master_draft_id": "r780583678775568680",
-  "prior_check": "2026-09-16T18:55:00Z \u2014 same result"
+  "prior_check": "2026-09-16T18:55:00Z — same result"
 }

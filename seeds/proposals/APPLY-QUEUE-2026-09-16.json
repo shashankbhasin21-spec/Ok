@@ -9,7 +9,7 @@
   "gmail_outreach": {
     "automated_via_mcp": true,
     "daily_cap": 20,
-    "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check",
+    "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check; world-fresh RESEARCHED held",
     "master_draft_thread_id": "1a0ab9d9426d4650",
     "master_draft_id": "r780583678775568680",
     "held_batch_sent": [
@@ -89,19 +89,19 @@
   "rejected_auto_bid": [
     {
       "title": "Hotel Renovation Toronto",
-      "reason": "construction \u2014 not in catalog"
+      "reason": "construction — not in catalog"
     },
     {
       "title": "Android Entertainment App IAP",
-      "reason": "native mobile app \u2014 not in catalog"
+      "reason": "native mobile app — not in catalog"
     },
     {
       "title": "SaaS Acquisition Broker",
-      "reason": "M&A sales role \u2014 not delivery offer"
+      "reason": "M&A sales role — not delivery offer"
     },
     {
       "title": "Wellness Clinic Development",
-      "reason": "clinic business consulting \u2014 not website/automation catalog"
+      "reason": "clinic business consulting — not website/automation catalog"
     },
     {
       "title": "AI Object Detection System",
@@ -110,8 +110,9 @@
   ],
   "owner_action_required": [
     "Log into Submittable (Google OK) as shashankbhasin21@gmail.com",
-    "Paste IAWF packet into Submittable (do not email execdir@) \u2014 open MASTER APPLY DRAFT",
+    "Paste IAWF packet into Submittable (do not email execdir@) — open MASTER APPLY DRAFT",
     "Paste Freelancer drafts from master Gmail draft while logged into Freelancer",
-    "Reply with board_submission_receipt after each paste"
+    "Reply with board_submission_receipt after each paste",
+    "AUTHORIZE SEND before mailing world-fresh RESEARCHED leads"
   ]
 }

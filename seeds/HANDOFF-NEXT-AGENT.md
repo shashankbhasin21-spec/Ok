@@ -1,10 +1,10 @@
 # HANDOFF — resume this chat (for Grok / next agent)
 
 **Branch:** `cursor/us-high-ticket-outreach-3ae6`  
-**PR:** https://github.com/shashankbhasin21-spec/Ok/pull/4  
+**PR:** https://github.com/shashankbhasin21-spec/Ok/pull/5  
 **Owner Gmail (all sends/drafts):** `shashankbhasin21@gmail.com`  
 **Phone on packets:** `+91 7972836653`  
-**Updated:** 2026-09-16T19:00Z
+**Updated:** 2026-09-16T20:10Z
 
 ## What is already done (do not redo)
 1. US high-ticket Gmail wave ($1.8k / $2.5k) — sent; prior batch suppressed for no-resend.
@@ -15,6 +15,8 @@
 6. Grok handoff Gmail draft id `r2547786456106441221` (subject contains `GROK HANDOFF`).
 7. IAWF Submittable packet saved; **do not email** `execdir@iawfonline.org`.
 8. **IAWF/Submittable login check** (owner: “Iref login check”) — see below.
+9. Fresh world EUR10k leads held as RESEARCHED (17) — mail only on AUTHORIZE SEND.
+10. Paste-ready Grok prompt: `seeds/GROK-PROMPT.md` (also emailed to owner).
 
 ## IAWF / Submittable login check (2026-09-16)
 | Fact | Evidence |
@@ -71,14 +73,15 @@ python3 -c "from earner.watch import freelancer_sources; print(sum(len(f()) for 
 ## Firm rules that must stay
 - No mock requirements — use `seeds/requirements/*`
 - Marketplace = draft + owner paste + `board_submission_receipt`
-- Daily Gmail stranger cap ~20 (already heavy today — prefer draft/hold unless owner authorizes more)
+- Daily Gmail stranger cap ~20 (already heavy — prefer draft/hold unless owner authorizes more)
 - Targets ≠ spend authorization; evidence required for external outcomes
 
 ## Next agent priority
 1. If owner confirms Submittable logged-in session usable → submit IAWF from packet; record confirmation ID.
 2. If Freelancer session available → paste B1/B2/B3 from master draft; record receipts.
-3. Otherwise: keep drafts current; check DSN/bounces; do not spam resent SENT addresses.
-4. On reply → move prospect SENT→REPLIED→quote EUR/USD honestly from offer catalog.
+3. If owner says AUTHORIZE SEND → mail RESEARCHED world-fresh leads within remaining daily cap.
+4. Otherwise: keep drafts current; check DSN/bounces; do not spam resent SENT addresses.
+5. On reply → move prospect SENT→REPLIED→quote EUR/USD honestly from offer catalog.
 
 ## Key seed paths
 - `seeds/GROK-PROMPT.md` — paste into Grok
