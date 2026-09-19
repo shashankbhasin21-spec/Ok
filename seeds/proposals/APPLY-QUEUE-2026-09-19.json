@@ -1,0 +1,131 @@
+{
+  "created_at": "2026-09-19T14:30:00Z",
+  "auto_apply": {
+    "freelancer": false,
+    "upwork": false,
+    "submittable": false,
+    "reason": "No official proposal-submit API; firm requires owner paste + board_submission_receipt."
+  },
+  "gmail": {
+    "owner": "shashankbhasin21@gmail.com",
+    "master_draft_id": "r4121722235428562281",
+    "master_draft_thread_id": "1a0ba0ce8e47a062",
+    "master_draft_subject": "[MASTER APPLY DRAFT 2026-09-19] 5 Freelancer pastes READY — IAWF CLOSED",
+    "prior_master_draft_id": "r780583678775568680",
+    "note": "Prior Sep 16 drafts still in Gmail; this queue supersedes paste content."
+  },
+  "closed_or_stale": [
+    {
+      "id": "iawf-website-2026",
+      "status": "CLOSED_DEADLINE_PASSED",
+      "deadline_was": "2026-09-18",
+      "checked_at": "2026-09-19T14:25:00Z",
+      "evidence": "Submittable org page no longer lists RFP-for-new-IAWF-website; only mentee/mentor/Fired Up/membership forms visible.",
+      "url": "https://iawf.submittable.com/submit/364943/rfp-for-new-iawf-website"
+    },
+    {
+      "id": "fl-multilingual-us-printer",
+      "status": "GONE_FROM_FEED",
+      "url": "https://www.freelancer.com/projects/web-development/Multilingual-Website-Upgrade-for-Global.html"
+    },
+    {
+      "id": "fl-yoga-uk",
+      "status": "GONE_FROM_FEED",
+      "url": "https://www.freelancer.com/projects/web-development/Yoga-Studio-Website-Development.html"
+    }
+  ],
+  "rejected_this_sweep": [
+    {
+      "title": "Full-Stack Developer for Luxury Beauty Tech",
+      "reason": "Budget $2–$8 USD — not a real MVP fee"
+    },
+    {
+      "title": "Shiprocket API Cart Enhancements",
+      "reason": "Budget ~$7–$18 USD — below floor"
+    },
+    {
+      "title": "Extract Structured PDF Data to Excel",
+      "reason": "Budget $8–$15 — data-entry economics"
+    },
+    {
+      "title": "Marriage Registration Appointment System",
+      "reason": "Government appointment automation — refuse"
+    },
+    {
+      "title": "NSE / Stock trading automation",
+      "reason": "Trading bot — forbidden / out of capability"
+    },
+    {
+      "title": "Azure Data Engineer Pune on-site",
+      "reason": "On-site Pune — cannot deliver"
+    },
+    {
+      "title": "FRINGE OS art festivals",
+      "reason": "min $50 AUD for platform MVP — ask for real budget before bidding"
+    },
+    {
+      "title": "Yourdocdays healthcare marketplace",
+      "reason": "Two-sided marketplace at ~$151 USD — under-scoped; skip"
+    }
+  ],
+  "queue": [
+    {
+      "id": "fl-claude-mcp-ops",
+      "channel": "freelancer",
+      "priority": 1,
+      "url": "https://www.freelancer.com/projects/ai-automation/Claude-MCP-Automation-Developer-Small.html",
+      "budget": "AUD 750–1500",
+      "packet": "seeds/proposals/freelancer-claude-mcp-roofing-airbnb.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false,
+      "why": "Best catalog match — Claude + MCP + Zapier/Make for real ops"
+    },
+    {
+      "id": "fl-ghl-sms-email",
+      "channel": "freelancer",
+      "priority": 2,
+      "url": "https://www.freelancer.com/projects/workflow-automation/Marketing-Automation-Specialist-SMS.html",
+      "budget": "GBP 20–250",
+      "packet": "seeds/proposals/freelancer-ghl-sms-email-workflows.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    },
+    {
+      "id": "fl-ghl-ig-funnel",
+      "channel": "freelancer",
+      "priority": 3,
+      "url": "https://www.freelancer.com/projects/go-high-level/Instagram-GoHighLevel-Lead-Gen-Funnel.html",
+      "budget": "GBP 20–250",
+      "packet": "seeds/proposals/freelancer-ghl-instagram-lead-funnel.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    },
+    {
+      "id": "fl-ai-doc-automation",
+      "channel": "freelancer",
+      "priority": 4,
+      "url": "https://www.freelancer.com/projects/full-stack-development/Powered-Document-Automation-App.html",
+      "budget": "INR 150000–250000",
+      "packet": "seeds/proposals/freelancer-ai-document-automation-webapp.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    },
+    {
+      "id": "fl-reviva-wp",
+      "channel": "freelancer",
+      "priority": 5,
+      "url": "https://www.freelancer.com/projects/web-development/WordPress-Developer-for-Reviva-Hair.html",
+      "budget": "INR 37500–75000",
+      "packet": "seeds/proposals/freelancer-reviva-wordpress-maintain.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    }
+  ],
+  "owner_actions": [
+    "Open Gmail Drafts → subject contains MASTER APPLY DRAFT 2026-09-19",
+    "Paste B1 first (Claude MCP) while still open",
+    "Paste B2/B3 if GHL access is realistic for you",
+    "Reply in this chat with Freelancer bid confirmation IDs for board_submission_receipt",
+    "Do not email IAWF — RFP form closed"
+  ]
+}
