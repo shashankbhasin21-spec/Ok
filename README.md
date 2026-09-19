@@ -2,6 +2,8 @@
 
 A small firm of AI agents that does real client work and bills real money through real payment rails. You talk to the CEO; the CEO runs the staff.
 
+**Grey Quantum** (CEO **Anestasis Grey**) is the product commerce vertical: scan margin loops, publish store pages, draft Meta/YouTube/Instagram ads, take unpaid reservations until payment providers confirm cash. See [docs/GREY_QUANTUM.md](docs/GREY_QUANTUM.md).
+
 ```
                     ┌───────────┐
         you ◄──────►│    CEO    │  reports settled cash, issues directives
