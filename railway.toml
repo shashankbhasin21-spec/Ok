@@ -1,0 +1,25 @@
+# Railway-compatible gateway-only service.
+# This deployment is the PUBLIC control plane / MCP entry.
+# It does NOT include GPU inference. Set VIDEO_WORKER_URL to a private GPU worker.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.gateway"
+
+[deploy]
+startCommand = "python -m uvicorn gateway.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+
+# Required env vars (set in Railway dashboard — never commit secrets):
+# API_KEY
+# WORKER_TOKEN
+# VIDEO_WORKER_URL=https://your-gpu-worker.internal:8090
+# DATABASE_URL=sqlite:////data/video_gateway.db  (or Postgres)
+# STORAGE_PATH=/data
+# DEFAULT_ENGINE=auto
+# LOG_LEVEL=INFO
+#
+# generation_available will be FALSE until VIDEO_WORKER_URL points at a
+# healthy CUDA worker with at least one installed+ready open engine.

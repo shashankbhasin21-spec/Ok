@@ -1,3 +1,23 @@
+# Video Gateway + earner
+
+## Video creation control plane
+
+This repository includes a **self-hostable open-model AI video generation gateway** (Wan 2.2 / LTX-Video / FramePack) for Instagram & YouTube automation.
+
+→ Start here: **[VIDEO_GATEWAY.md](VIDEO_GATEWAY.md)** · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/GPU_SETUP.md](docs/GPU_SETUP.md)
+
+```bash
+pip install -e ".[video,dev]"
+cp .env.video.example .env
+uvicorn gateway.main:app --port 8080
+curl http://127.0.0.1:8080/health   # generation_available=false without GPU worker
+pytest tests/video -q
+```
+
+**OPEN-SOURCE MODEL ≠ FREE COMPUTE.** The gateway never silently uses paid video APIs and never reports fake AI renders as generation.
+
+---
+
 # earner
 
 A small firm of AI agents that does real client work and bills real money through real payment rails. You talk to the CEO; the CEO runs the staff.

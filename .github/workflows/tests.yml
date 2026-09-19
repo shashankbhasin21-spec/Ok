@@ -18,6 +18,12 @@ jobs:
         run: python -c "import earner.trading.live, earner.trading.engine, earner.trading.orders"
 
       - run: pip install pytest pyflakes cryptography
+      # Video gateway tests need FastAPI and related optional deps + ffmpeg for QC.
+      - name: Install video gateway test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          pip install -e ".[dev,video]"
       # Scoped to the trading stack and its tests; the older earner/ package
       # predates this work and is linted separately.
       - run: python -m pyflakes earner/trading/ tests/test_{trading,strategy,engine,orders,live,backtest,research}.py

@@ -70,7 +70,7 @@ def test_a_posting_feeds_straight_into_the_bidder(cfg, ledger, provider):
     """Discovery and scoring must speak the same shape."""
     from earner import approval
     from earner.agents.bidding import BiddingAgent
-    from conftest import FakeLLM
+    from tests.fakes import FakeLLM
 
     job = UpworkChannel(cfg)._to_job({
         "id": "3", "title": "Automate quote desk", "description": "tests required",

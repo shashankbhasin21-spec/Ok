@@ -9,7 +9,7 @@ from earner import approval, ledger as L
 from earner.agents.service_desk import ServiceDeskAgent
 from earner.agent import PREPAY
 
-from conftest import FakeLLM, write_request
+from tests.fakes import FakeLLM, write_request
 
 QUOTE = json.dumps(
     {
