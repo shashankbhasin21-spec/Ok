@@ -11,7 +11,7 @@ from earner.agents.quality import QualityAgent
 from earner.ledger import DELIVERED
 from earner.platform import Platform
 
-from conftest import FakeLLM
+from tests.fakes import FakeLLM
 
 
 def test_target_reports_honestly_about_unpaid_invoices(ledger):

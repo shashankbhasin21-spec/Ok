@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -32,7 +29,6 @@ def client(tmp_path, monkeypatch):
     Base.metadata.drop_all(bind=dbmod.engine)
     Base.metadata.create_all(bind=dbmod.engine)
 
-    # Refresh app-bound services with new settings
     from gateway.jobs import JobService
     from gateway.worker_client import WorkerClient
 

@@ -7,7 +7,7 @@ import pytest
 from earner import approval
 from earner.agents.bidding import BiddingAgent
 
-from conftest import FakeLLM
+from tests.fakes import FakeLLM
 
 
 def _bidder(cfg, ledger, provider, responses=None):
