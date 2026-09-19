@@ -6,7 +6,7 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from .. import config as earner_config
 from ..payments import build_provider
@@ -28,10 +28,14 @@ from .payouts import PayoutError, PayoutStore
 from .review import pipeline_metrics, run_hourly_review
 from .store import FirmStore
 from .vertical_slice import integration_status, load_sample_file
+from ..commerce.engine import open_commerce, snapshot as commerce_snapshot
+from ..commerce.orders import create_customer_order
 
 
 def make_handler(store: FirmStore, workdir: Path, payouts: PayoutStore, provider, cfg, owner_auth: OwnerAuth):
     coord = Coordinator(store, workdir, provider=provider)
+    commerce_dir = workdir / "commerce"
+    commerce_store, commerce_ceo = open_commerce(commerce_dir)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
@@ -106,7 +110,40 @@ def make_handler(store: FirmStore, workdir: Path, payouts: PayoutStore, provider
                 return self._json(200, {"items": store.recent_audit(100)})
             if path.startswith("/api/preview/"):
                 return self._serve_preview(path.split("/api/preview/", 1)[1])
+            if path == "/api/commerce":
+                return self._json(200, commerce_snapshot(commerce_store, commerce_ceo))
+            if path == "/api/commerce/products":
+                qs = parse_qs(urlparse(self.path).query)
+                published = (qs.get("published") or ["0"])[0] == "1"
+                items = commerce_store.list_products(published_only=published)
+                return self._json(200, {"items": items})
+            if path.startswith("/api/commerce/products/"):
+                slug = path.split("/api/commerce/products/", 1)[1]
+                try:
+                    return self._json(200, commerce_store.get_product_by_slug(slug))
+                except KeyError:
+                    return self._json(404, {"error": "product not found"})
+            if path == "/api/commerce/ceo":
+                return self._json(200, commerce_ceo.status())
+            if path.startswith("/api/commerce/pages/"):
+                return self._serve_commerce_page(path.split("/api/commerce/pages/", 1)[1])
             self._json(404, {"error": "not found"})
+
+        def _serve_commerce_page(self, slug: str) -> None:
+            try:
+                product = commerce_store.get_product_by_slug(slug)
+            except KeyError:
+                return self._json(404, {"error": "product not found"})
+            path = product.get("page_html_path")
+            if not path or not Path(path).exists():
+                return self._json(404, {"error": "no product page yet — run webpage developer"})
+            data = Path(path).read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
 
         def _serve_preview(self, project_id: str) -> None:
             try:
@@ -146,6 +183,27 @@ def make_handler(store: FirmStore, workdir: Path, payouts: PayoutStore, provider
                         live_mode=cfg.is_live,
                     )
                     return self._json(200, {"session": token, "expires_in_sec": 3600})
+
+                if path == "/api/commerce/checkout":
+                    try:
+                        order = create_customer_order(
+                            commerce_store,
+                            product_id=body.get("product_id"),
+                            product_slug=body.get("product_slug"),
+                            customer_email=body.get("customer_email") or "",
+                            customer_name=body.get("customer_name") or "",
+                            ship_country=body.get("ship_country") or "IN",
+                        )
+                    except (ValueError, KeyError) as exc:
+                        return self._json(400, {"error": str(exc)})
+                    return self._json(200, {
+                        "order": order,
+                        "next": (
+                            "Order reserved as pending_payment. Connect Stripe or Razorpay, "
+                            "collect payment, then owner marks paid with provider_ref. "
+                            "Indian Kotak/UPI payout details are configured later by the owner."
+                        ),
+                    })
 
                 self._require_owner()
 
@@ -246,6 +304,26 @@ def make_handler(store: FirmStore, workdir: Path, payouts: PayoutStore, provider
                     ))
                 if path == "/api/vertical-slice":
                     return self._json(410, {"error": "Demo removed. Use live sweep + evidence-backed transitions."})
+                if path == "/api/commerce/run":
+                    publish = bool(body.get("publish", False))
+                    result = commerce_ceo.run_company_day(
+                        publish=publish,
+                        outreach=bool(body.get("outreach", True)),
+                    )
+                    return self._json(200, result)
+                if path == "/api/commerce/directive":
+                    d = commerce_ceo.direct(
+                        body.get("directive") or "",
+                        priority=body.get("priority") or "high",
+                    )
+                    return self._json(200, d)
+                if path == "/api/commerce/orders/mark-paid":
+                    order = commerce_store.mark_order_paid(
+                        body["order_id"],
+                        provider=body.get("provider") or "",
+                        provider_ref=body.get("provider_ref") or "",
+                    )
+                    return self._json(200, order)
                 self._json(404, {"error": "not found"})
             except OwnerAuthError as exc:
                 self._json(401, {"error": str(exc), "code": "owner_auth"})

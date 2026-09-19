@@ -629,6 +629,34 @@ def cmd_firm(platform: Platform, args) -> int:
     return 2
 
 
+def cmd_commerce(platform: Platform, args) -> int:
+    """Grey Quantum Commerce under CEO Anestasis Grey."""
+    from .commerce.engine import open_commerce, snapshot
+
+    workdir = Path(args.workdir) if args.workdir else platform.cfg.workdir / "firm" / "commerce"
+    store, ceo = open_commerce(workdir)
+    try:
+        if args.action == "status":
+            print(json.dumps(ceo.status(), indent=2, default=str))
+            return 0
+        if args.action == "run":
+            result = ceo.run_company_day(publish=bool(args.publish), outreach=not args.no_outreach)
+            print(json.dumps(result, indent=2, default=str))
+            return 0
+        if args.action == "snapshot":
+            print(json.dumps(snapshot(store, ceo), indent=2, default=str))
+            return 0
+        if args.action == "direct":
+            if not args.text:
+                print("Provide --text for the CEO directive", file=sys.stderr)
+                return 2
+            print(json.dumps(ceo.direct(args.text, priority=args.priority), indent=2, default=str))
+            return 0
+    finally:
+        store.close()
+    return 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="earner", description="An AI firm that bills real customers.")
     p.add_argument("--live", action="store_true", help="use real payment rails (needs STRIPE_API_KEY)")
@@ -780,6 +808,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--file", help="opportunity JSON for import")
     s.add_argument("--no-settle", action="store_true", help="slice without attempting sandbox settle")
     s.set_defaults(func=cmd_firm)
+
+    s = sub.add_parser("commerce", help="Grey Quantum storefront + Anestasis Grey CEO command")
+    s.add_argument("action", choices=["status", "run", "snapshot", "direct"])
+    s.add_argument("--workdir", help="commerce workdir (default: EARNER_WORKDIR/firm/commerce)")
+    s.add_argument("--publish", action="store_true", help="publish draft product pages on run")
+    s.add_argument("--no-outreach", action="store_true", help="skip outreach draft team")
+    s.add_argument("--text", help="CEO directive text for `direct`")
+    s.add_argument("--priority", default="high")
+    s.set_defaults(func=cmd_commerce)
 
     return p
 
