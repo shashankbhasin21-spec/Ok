@@ -122,6 +122,34 @@ def health(
     )
 
 
+_GPU_READINESS_TEST_IDEMPOTENCY_KEY = "internal-gpu-readiness-test-render-v1"
+_GPU_READINESS_TEST_PROMPT = (
+    "A cinematic product-style technology scene showing an abstract AI compute "
+    "core coming online, subtle flowing light, premium dark studio environment, "
+    "smooth controlled camera movement, highly detailed, realistic lighting, "
+    "no text, no logos, no people."
+)
+
+
+def _create_video_job(
+    db: Session,
+    svc: JobService,
+    body: VideoCreateRequest,
+) -> VideoJob:
+    """Shared job-creation path for POST /v1/videos and temporary internal probes."""
+    return svc.create_job(db, body)
+
+
+def _sanitized_gpu_readiness(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "cuda_available": summary["cuda_available"],
+        "ready_engines": summary["ready_engines"],
+        "model_loading": summary["model_loading"],
+        "vram_total_mb": summary["vram_total_mb"],
+        "vram_free_mb": summary["vram_free_mb"],
+    }
+
+
 @app.get("/internal/gpu-readiness")
 def gpu_readiness(
     _: Annotated[str, Depends(require_api_key)],
@@ -129,13 +157,41 @@ def gpu_readiness(
 ) -> dict[str, Any]:
     """Temporary sanitized GPU readiness probe; never returns worker secrets."""
     summary = summarize_worker(worker.health())
+    return _sanitized_gpu_readiness(summary)
 
+
+@app.post("/internal/gpu-readiness-test-render")
+def gpu_readiness_test_render(
+    _: Annotated[str, Depends(require_api_key)],
+    worker: Annotated[WorkerClient, Depends(_worker)],
+    db: Annotated[Session, Depends(get_db)],
+    svc: Annotated[JobService, Depends(_svc)],
+) -> dict[str, Any]:
+    """Temporary readiness-gated GPU test render; never returns worker secrets."""
+    summary = summarize_worker(worker.health())
+    readiness = _sanitized_gpu_readiness(summary)
+
+    if not summary["cuda_available"] or not summary["ready_engines"]:
+        return {
+            **readiness,
+            "submitted": False,
+            "job_id": None,
+            "status": "not_submitted",
+        }
+
+    body = VideoCreateRequest(
+        prompt=_GPU_READINESS_TEST_PROMPT,
+        duration=30.0,
+        aspect_ratio="9:16",
+        engine="auto",
+        idempotency_key=_GPU_READINESS_TEST_IDEMPOTENCY_KEY,
+    )
+    job = _create_video_job(db, svc, body)
     return {
-        "cuda_available": summary["cuda_available"],
-        "ready_engines": summary["ready_engines"],
-        "model_loading": summary["model_loading"],
-        "vram_total_mb": summary["vram_total_mb"],
-        "vram_free_mb": summary["vram_free_mb"],
+        **readiness,
+        "submitted": True,
+        "job_id": str(job.id),
+        "status": job.status,
     }
 
 
@@ -186,7 +242,7 @@ def create_video(
     db: Annotated[Session, Depends(get_db)],
     svc: Annotated[JobService, Depends(_svc)],
 ) -> VideoCreateResponse:
-    job = svc.create_job(db, body)
+    job = _create_video_job(db, svc, body)
     return VideoCreateResponse(job_id=job.id, status=job.status)
 
 
