@@ -122,6 +122,23 @@ def health(
     )
 
 
+@app.get("/internal/gpu-readiness")
+def gpu_readiness(
+    _: Annotated[str, Depends(require_api_key)],
+    worker: Annotated[WorkerClient, Depends(_worker)],
+) -> dict[str, Any]:
+    """Temporary sanitized GPU readiness probe; never returns worker secrets."""
+    summary = summarize_worker(worker.health())
+
+    return {
+        "cuda_available": summary["cuda_available"],
+        "ready_engines": summary["ready_engines"],
+        "model_loading": summary["model_loading"],
+        "vram_total_mb": summary["vram_total_mb"],
+        "vram_free_mb": summary["vram_free_mb"],
+    }
+
+
 @app.get("/version")
 def version() -> dict[str, str]:
     return {"version": __version__, "service": "video-gateway"}
