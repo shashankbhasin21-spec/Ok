@@ -49,9 +49,11 @@ class Settings(BaseSettings):
 
     @property
     def auth_required(self) -> bool:
+        # AUTH_MODE=required must fail closed even when API_KEY is missing
+        # (missing key → 503 in require_api_key, never open access).
         if self.allow_unauthenticated or self.auth_mode == "dev":
             return False
-        return bool(self.api_key)
+        return True
 
     def ensure_dirs(self) -> None:
         for sub in ("jobs", "outputs", "thumbnails", "temp"):
