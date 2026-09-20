@@ -10,6 +10,11 @@ Optional:
   RENDER_API_BASE     — default https://api.render.com/v1
 
 Never prints secret values. Keeps AUTH_MODE=required and ALLOW_UNAUTHENTICATED=false.
+
+IMPORTANT: updates env vars one key at a time via
+  PUT /services/{id}/env-vars/{key}
+Never use the collection PUT /services/{id}/env-vars — that replaces the
+entire env set and would delete every other secret on the service.
 """
 
 from __future__ import annotations
@@ -18,12 +23,12 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 
 API_BASE = os.environ.get("RENDER_API_BASE", "https://api.render.com/v1").rstrip("/")
 SERVICE_NAME = os.environ.get("RENDER_SERVICE_NAME", "video-gateway-render")
-
 
 def _req(method: str, path: str, token: str, body: dict | list | None = None):
     data = None if body is None else json.dumps(body).encode()
@@ -66,6 +71,23 @@ def _find_service(token: str) -> str:
     return matches[0]
 
 
+def _put_env_var(token: str, service_id: str, key: str, value: str) -> int:
+    """Update a single env var. Never call the collection replace endpoint."""
+    encoded_key = urllib.parse.quote(key, safe="")
+    path = f"/services/{service_id}/env-vars/{encoded_key}"
+    status, _ = _req("PUT", path, token, {"value": value})
+    return status
+
+
+def managed_env_updates(gateway_key: str) -> list[tuple[str, str]]:
+    """Return (env_key, value) pairs this script will write — for tests."""
+    return [
+        ("API_KEY", gateway_key),
+        ("AUTH_MODE", "required"),
+        ("ALLOW_UNAUTHENTICATED", "false"),
+    ]
+
+
 def main() -> int:
     render_token = os.environ.get("RENDER_API_KEY", "").strip()
     gateway_key = os.environ.get("GATEWAY_API_KEY", "").strip()
@@ -76,17 +98,22 @@ def main() -> int:
         print("GATEWAY_API_KEY is required (gateway X-API-Key value).", file=sys.stderr)
         return 2
 
-    service_id = _find_service(render_token)
-    print(f"Updating env vars on {SERVICE_NAME} ({service_id})")
+    from gateway.auth import is_usable_api_key
 
-    env_body = [
-        {"key": "API_KEY", "value": gateway_key},
-        {"key": "AUTH_MODE", "value": "required"},
-        {"key": "ALLOW_UNAUTHENTICATED", "value": "false"},
-    ]
-    # PUT replaces listed keys; Render merge endpoint varies by API version.
-    status, _ = _req("PUT", f"/services/{service_id}/env-vars", render_token, env_body)
-    print(f"Env update HTTP {status}")
+    if not is_usable_api_key(gateway_key):
+        print(
+            "GATEWAY_API_KEY is empty or a known placeholder (changeme, etc.). "
+            "Generate one with: python scripts/generate_gateway_api_key.py",
+            file=sys.stderr,
+        )
+        return 2
+
+    service_id = _find_service(render_token)
+    print(f"Updating env vars on {SERVICE_NAME} ({service_id}) via per-key PUT")
+
+    for key, value in managed_env_updates(gateway_key):
+        status = _put_env_var(render_token, service_id, key, value)
+        print(f"  {key}: HTTP {status}")
 
     # Trigger deploy so the new secret is loaded.
     status, deploy = _req(
@@ -97,7 +124,7 @@ def main() -> int:
     )
     deploy_id = deploy.get("id") if isinstance(deploy, dict) else None
     print(f"Deploy triggered HTTP {status} id={deploy_id or 'unknown'}")
-    print("Done. Secrets were not printed.")
+    print("Done. Secrets were not printed. Other service env vars were left intact.")
     return 0
 
 

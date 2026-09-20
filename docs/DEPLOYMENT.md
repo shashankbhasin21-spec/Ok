@@ -4,9 +4,24 @@
 
 ```bash
 cp .env.video.example .env
-# edit secrets
+# Generate strong secrets (do not commit .env):
+#   python scripts/generate_gateway_api_key.py
+#   python scripts/generate_gateway_api_key.py --label WORKER_TOKEN
+# Put values in .env as API_KEY=... and WORKER_TOKEN=...
+# docker compose refuses to start if API_KEY / WORKER_TOKEN are unset.
 docker compose up --build
 ```
+
+### API_KEY management
+
+| Action | How |
+|--------|-----|
+| Generate | `python scripts/generate_gateway_api_key.py` |
+| Local / Compose | set `API_KEY` + `WORKER_TOKEN` in `.env`; `AUTH_MODE=required` |
+| Render (per-key, no wipe) | `RENDER_API_KEY=... GATEWAY_API_KEY=... python scripts/set_render_gateway_api_key.py` |
+| Clients | header `X-API-Key: $API_KEY` |
+
+Known placeholders (`changeme`, `change-me-gateway-key`, …) are treated as missing → HTTP 503, never open access.
 
 Or process-based:
 

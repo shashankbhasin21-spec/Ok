@@ -10,8 +10,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      API_KEY: ${API_KEY:-changeme}
-      WORKER_TOKEN: ${WORKER_TOKEN:-changeme-worker}
+      # Require explicit secrets — no changeme defaults (fail closed).
+      API_KEY: ${API_KEY:?Set API_KEY — run: python scripts/generate_gateway_api_key.py}
+      WORKER_TOKEN: ${WORKER_TOKEN:?Set WORKER_TOKEN — run: python scripts/generate_gateway_api_key.py --label WORKER_TOKEN}
+      AUTH_MODE: ${AUTH_MODE:-required}
+      ALLOW_UNAUTHENTICATED: ${ALLOW_UNAUTHENTICATED:-false}
       VIDEO_WORKER_URL: ${VIDEO_WORKER_URL:-http://worker:8090}
       DATABASE_URL: sqlite:////data/video_gateway.db
       STORAGE_PATH: /data
@@ -29,7 +32,7 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     environment:
-      WORKER_TOKEN: ${WORKER_TOKEN:-changeme-worker}
+      WORKER_TOKEN: ${WORKER_TOKEN:?Set WORKER_TOKEN — run: python scripts/generate_gateway_api_key.py --label WORKER_TOKEN}
       MODEL_CACHE: /models
       HF_HOME: /models/hf
       HF_TOKEN: ${HF_TOKEN:-}

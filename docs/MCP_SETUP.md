@@ -4,9 +4,11 @@ The MCP server is a thin client over the gateway. It does not run inference.
 
 ```bash
 export VIDEO_GATEWAY_URL=http://127.0.0.1:8080
-export API_KEY=your-key
+export API_KEY  # same secret the gateway uses (not a placeholder)
 python -m mcp_server.server
 ```
+
+Generate a key if needed: `python scripts/generate_gateway_api_key.py`
 
 ## Tools
 
