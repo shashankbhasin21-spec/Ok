@@ -86,6 +86,7 @@ def job_to_response(job: VideoJob) -> dict[str, Any]:
     qc_status = None
     if job.qc_result:
         qc_status = "passed" if job.qc_result.get("passed") else "failed"
+    has_thumb = bool(job.thumbnail_path and Path(job.thumbnail_path).exists())
     return {
         "job_id": job.id,
         "status": job.status,
@@ -99,7 +100,8 @@ def job_to_response(job: VideoJob) -> dict[str, Any]:
         "engine": job.engine_selected,
         "model": job.model,
         "qc_status": qc_status,
-        "thumbnail": None if not job.thumbnail_path else f"job:{job.id}/thumb.jpg",
+        "thumbnail": f"/v1/videos/{job.id}/thumbnail" if has_thumb else None,
+        "has_thumbnail": has_thumb,
         "output_location": _safe_output_location(job),
         "generation_timestamp": job.completed_at,
         "prompt_hash": job.prompt_hash,
@@ -112,6 +114,13 @@ def job_to_response(job: VideoJob) -> dict[str, Any]:
         "completed_at": job.completed_at,
         "output_duration": job.output_duration,
         "render_time_sec": job.render_time_sec,
+        "engine_requested": job.engine_requested,
+        "fps": job.fps,
+        "quality": job.quality,
+        "audio_requested": bool(job.audio_requested),
+        "captions_requested": bool(job.captions_requested),
+        "stage": job.status,
+        "events_count": len(job.events or []),
     }
 
 
