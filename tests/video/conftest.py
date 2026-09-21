@@ -32,9 +32,10 @@ def client(tmp_path, monkeypatch):
     from gateway.jobs import JobService
     from gateway.worker_client import WorkerClient
 
+    worker = WorkerClient(get_settings())
     with TestClient(app) as c:
-        c.app.state.job_service = JobService(get_settings())
-        c.app.state.worker_client = WorkerClient(get_settings())
+        c.app.state.job_service = JobService(get_settings(), worker=worker)
+        c.app.state.worker_client = worker
         yield c
 
     get_settings.cache_clear()

@@ -79,8 +79,23 @@ def health(
     db: Annotated[Session, Depends(get_db)],
     worker: Annotated[WorkerClient, Depends(_worker)],
 ) -> HealthResponse:
+    from gateway import cpu_assembly
+
     wh = worker.health()
     summary = summarize_worker(wh)
+    # Merge local CPU assembly readiness — distinct from worker HTTP 200.
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+        installed = {e for e in installed if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
+    summary["installed_engines"] = sorted(installed)
+    summary["ready_engines"] = sorted(ready)
+    summary["generation_available"] = bool(ready)
+
     queue_depth = (
         db.query(VideoJob)
         .filter(
@@ -101,7 +116,7 @@ def health(
     )
     gen = bool(summary["generation_available"])
     return HealthResponse(
-        status="ok" if True else "degraded",
+        status="ok" if gen else "degraded",
         gateway="ok",
         generation_available=gen,
         gpu_worker_available=bool(summary["gpu_worker_available"]),
@@ -113,13 +128,49 @@ def health(
         worker=wh,
         details={
             "worker_configured": worker.configured,
+            "worker_available": bool(summary.get("worker_available")),
             "default_engine": settings.default_engine,
             "auth_required": settings.auth_required,
             "cuda_available": summary.get("cuda_available"),
             "vram_total_mb": summary.get("vram_total_mb"),
             "vram_free_mb": summary.get("vram_free_mb"),
+            "cpu_assembly_ready": cpu_assembly.is_ready(),
+            "note": "HTTP 200 on /health does not imply GPU diffusion readiness",
         },
     )
+
+
+@app.get("/v1/readiness")
+def generation_readiness(
+    _: Annotated[str, Depends(require_api_key)],
+    worker: Annotated[WorkerClient, Depends(_worker)],
+) -> dict[str, Any]:
+    """Authenticated readiness: worker reachability vs generation readiness."""
+    from gateway import cpu_assembly
+
+    wh = worker.health()
+    summary = summarize_worker(wh)
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
+    return {
+        "worker_available": bool(summary.get("worker_available")) or worker.configured and bool(wh and wh.get("ok")),
+        "cuda_available": bool(summary.get("cuda_available")),
+        "installed_engines": sorted(installed),
+        "ready_engines": sorted(ready),
+        "model_loading": summary.get("model_loading") or {},
+        "queue_depth": summary.get("queue_depth") or 0,
+        "vram_total_mb": summary.get("vram_total_mb"),
+        "vram_free_mb": summary.get("vram_free_mb"),
+        "generation_available": bool(ready),
+        "cpu_assembly_ready": cpu_assembly.is_ready(),
+        "ltx_ready": "ltx" in ready,
+        "gpu_worker_available": bool(summary.get("gpu_worker_available")),
+    }
 
 
 _GPU_READINESS_TEST_IDEMPOTENCY_KEY = "internal-gpu-readiness-test-render-v1"
@@ -205,11 +256,21 @@ def list_providers(
     _: Annotated[str, Depends(require_api_key)],
     worker: Annotated[WorkerClient, Depends(_worker)],
 ) -> list[ProviderInfo]:
+    from gateway import cpu_assembly
+
     wh = worker.health()
     summary = summarize_worker(wh)
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+        installed = {e for e in installed if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
     rows = providers_snapshot(
-        installed=set(summary["installed_engines"]),
-        ready=set(summary["ready_engines"]),
+        installed=installed,
+        ready=ready,
         gpu_available=bool(summary.get("cuda_available")),
         details={name: ENGINE_CATALOG[name] for name in ENGINE_CATALOG},
     )
@@ -221,17 +282,28 @@ def providers_health(
     _: Annotated[str, Depends(require_api_key)],
     worker: Annotated[WorkerClient, Depends(_worker)],
 ) -> dict[str, Any]:
+    from gateway import cpu_assembly
+
     wh = worker.health()
     summary = summarize_worker(wh)
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+        installed = {e for e in installed if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
     return {
-        "generation_available": summary["generation_available"],
-        "gpu_worker_available": summary["gpu_worker_available"],
+        "generation_available": bool(ready),
+        "gpu_worker_available": bool(summary["gpu_worker_available"]),
         "providers": providers_snapshot(
-            installed=set(summary["installed_engines"]),
-            ready=set(summary["ready_engines"]),
+            installed=installed,
+            ready=ready,
             gpu_available=bool(summary.get("cuda_available")),
         ),
         "worker": wh,
+        "cpu_assembly_ready": cpu_assembly.is_ready(),
     }
 
 

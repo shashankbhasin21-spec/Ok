@@ -18,6 +18,7 @@ ENGINE_CATALOG: dict[str, dict[str, Any]] = {
         "low_vram_friendly": True,
         "segment_strength": 0.7,
         "long_form_strength": 0.5,
+        "requires_cuda": True,
         "upstream": "https://github.com/Wan-Video/Wan2.2",
         "license": "Apache-2.0 (check model card)",
         "models": ["Wan2.2-TI2V-5B", "Wan2.2-T2V-A14B", "Wan2.2-I2V-A14B"],
@@ -29,6 +30,7 @@ ENGINE_CATALOG: dict[str, dict[str, Any]] = {
         "low_vram_friendly": True,
         "segment_strength": 0.85,
         "long_form_strength": 0.75,
+        "requires_cuda": True,
         "upstream": "https://github.com/Lightricks/LTX-Video",
         "license": "OpenRail-M (check model card)",
         "models": ["ltxv-2b-0.9.8-distilled", "ltxv-13b-0.9.8-distilled"],
@@ -40,9 +42,23 @@ ENGINE_CATALOG: dict[str, dict[str, Any]] = {
         "low_vram_friendly": True,
         "segment_strength": 0.9,
         "long_form_strength": 1.0,
+        "requires_cuda": True,
         "upstream": "https://github.com/lllyasviel/FramePack",
         "license": "Apache-2.0 (check repo)",
         "models": ["FramePackI2V_HY", "FramePack-F1"],
+    },
+    # Deterministic FFmpeg assembly — real H.264 MP4, NOT diffusion / NOT LTX.
+    "cpu_assembly": {
+        "tasks": ["text-to-video", "image-to-video"],
+        "min_vram_gb": 0.0,
+        "preferred_quality": ["draft", "standard", "high"],
+        "low_vram_friendly": True,
+        "segment_strength": 0.6,
+        "long_form_strength": 0.9,
+        "requires_cuda": False,
+        "upstream": "local-ffmpeg-assembly",
+        "license": "application (FFmpeg LGPL/GPL depending on build)",
+        "models": ["cpu-assembly-v1"],
     },
 }
 
@@ -74,11 +90,12 @@ def _hist_stats(db: Session | None, engine: str) -> dict[str, float]:
     row = db.query(EngineMetric).filter(EngineMetric.engine == engine).one_or_none()
     if not row:
         return {"success_rate": 0.5, "avg_render": 120.0}
-    total = row.success_count + row.failure_count
-    success_rate = (row.success_count / total) if total else 0.5
-    avg_render = (
-        row.total_render_time_sec / row.success_count if row.success_count else 120.0
-    )
+    success = row.success_count or 0
+    failure = row.failure_count or 0
+    total = success + failure
+    success_rate = (success / total) if total else 0.5
+    render_total = row.total_render_time_sec or 0.0
+    avg_render = (render_total / success) if success else 120.0
     return {"success_rate": success_rate, "avg_render": avg_render}
 
 
@@ -166,6 +183,15 @@ def score_engine(
 
     # Prefer lowest-resource capable engine (policy #2)
     score += max(0, 15 - float(meta["min_vram_gb"]))
+
+    # Prefer real GPU diffusion when ready; CPU assembly is a last-resort fallback.
+    if engine == "cpu_assembly":
+        if any(e != "cpu_assembly" for e in ready_engines):
+            score -= 40
+            reasons.append("cpu_fallback_deprioritized")
+        else:
+            score += 5
+            reasons.append("cpu_fallback_only_ready")
 
     return score, ",".join(reasons) or "scored"
 
@@ -264,9 +290,10 @@ def providers_snapshot(
     details = details or {}
     out = []
     for name, meta in ENGINE_CATALOG.items():
+        requires_cuda = bool(meta.get("requires_cuda", True))
         if name in disabled:
             status = "DISABLED"
-        elif not gpu_available:
+        elif requires_cuda and not gpu_available:
             status = "GPU_UNAVAILABLE"
         elif name not in installed:
             status = "MODEL_NOT_INSTALLED"

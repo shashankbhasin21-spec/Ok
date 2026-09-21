@@ -36,7 +36,7 @@
   <main>
     <section id="health" class="panel active">
       <h2>Gateway Health</h2>
-      <p class="lede">generation_available is true only when a CUDA worker with a ready engine is connected.</p>
+      <p class="lede">generation_available is true when at least one ready engine exists (GPU diffusion or CPU assembly). Worker HTTP 200 alone is not readiness.</p>
       <pre id="healthOut" class="code">Loading…</pre>
     </section>
 
@@ -71,6 +71,7 @@
               <option>wan</option>
               <option>ltx</option>
               <option>framepack</option>
+              <option>cpu_assembly</option>
             </select>
           </label>
         </div>

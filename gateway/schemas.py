@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 AspectRatio = Literal["9:16", "16:9", "1:1", "4:5"]
 Quality = Literal["draft", "standard", "high", "max"]
-EngineMode = Literal["auto", "fast", "quality", "low_vram", "wan", "ltx", "framepack"]
+EngineMode = Literal["auto", "fast", "quality", "low_vram", "wan", "ltx", "framepack", "cpu_assembly"]
 
 
 class VideoCreateRequest(BaseModel):

@@ -51,11 +51,13 @@ def configure_engine(url: str | None = None) -> Engine:
 
 def init_db() -> None:
     from gateway import models as _models  # noqa: F401
+    from gateway.migrate import backfill_engine_metric_counters
 
     if engine is None:
         configure_engine()
     assert engine is not None
     Base.metadata.create_all(bind=engine)
+    backfill_engine_metric_counters(engine)
 
 
 def get_db() -> Generator[Session, None, None]:

@@ -14,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -103,11 +104,21 @@ class EngineMetric(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     engine: Mapped[str] = mapped_column(String(32), index=True)
-    success_count: Mapped[int] = mapped_column(Integer, default=0)
-    failure_count: Mapped[int] = mapped_column(Integer, default=0)
-    total_render_time_sec: Mapped[float] = mapped_column(Float, default=0.0)
-    total_queue_latency_sec: Mapped[float] = mapped_column(Float, default=0.0)
-    qc_failure_count: Mapped[int] = mapped_column(Integer, default=0)
+    success_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default=text("0"), nullable=False
+    )
+    failure_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default=text("0"), nullable=False
+    )
+    total_render_time_sec: Mapped[float] = mapped_column(
+        Float, default=0.0, server_default=text("0"), nullable=False
+    )
+    total_queue_latency_sec: Mapped[float] = mapped_column(
+        Float, default=0.0, server_default=text("0"), nullable=False
+    )
+    qc_failure_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default=text("0"), nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
