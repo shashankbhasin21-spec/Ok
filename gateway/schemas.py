@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 AspectRatio = Literal["9:16", "16:9", "1:1", "4:5"]
 Quality = Literal["draft", "standard", "high", "max"]
-EngineMode = Literal["auto", "fast", "quality", "low_vram", "wan", "ltx", "framepack"]
+EngineMode = Literal["auto", "fast", "quality", "low_vram", "wan", "ltx", "framepack", "cpu_assembly"]
 
 
 class VideoCreateRequest(BaseModel):
@@ -68,6 +68,7 @@ class VideoJobResponse(BaseModel):
     model: str | None = None
     qc_status: str | None = None
     thumbnail: str | None = None
+    has_thumbnail: bool = False
     output_location: str | None = None
     generation_timestamp: datetime | None = None
     prompt_hash: str | None = None
@@ -80,6 +81,13 @@ class VideoJobResponse(BaseModel):
     completed_at: datetime | None = None
     output_duration: float | None = None
     render_time_sec: float | None = None
+    engine_requested: str | None = None
+    fps: int | None = None
+    quality: str | None = None
+    audio_requested: bool = False
+    captions_requested: bool = False
+    stage: str | None = None
+    events_count: int = 0
 
 
 class VideoCreateResponse(BaseModel):

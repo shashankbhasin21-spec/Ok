@@ -20,9 +20,9 @@ def _fake_worker_health(*, cuda: bool, ready: list[str]):
 
 
 def _set_health(client, *, cuda: bool, ready: list[str]):
-    client.app.state.worker_client.health = lambda: _fake_worker_health(
-        cuda=cuda, ready=ready
-    )
+    health = _fake_worker_health(cuda=cuda, ready=ready)
+    client.app.state.worker_client.health = lambda: health
+    client.app.state.job_service.worker.health = lambda: health
 
 
 def test_gpu_readiness_requires_auth(client):

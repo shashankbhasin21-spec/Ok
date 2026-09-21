@@ -79,8 +79,23 @@ def health(
     db: Annotated[Session, Depends(get_db)],
     worker: Annotated[WorkerClient, Depends(_worker)],
 ) -> HealthResponse:
+    from gateway import cpu_assembly
+
     wh = worker.health()
     summary = summarize_worker(wh)
+    # Merge local CPU assembly readiness — distinct from worker HTTP 200.
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+        installed = {e for e in installed if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
+    summary["installed_engines"] = sorted(installed)
+    summary["ready_engines"] = sorted(ready)
+    summary["generation_available"] = bool(ready)
+
     queue_depth = (
         db.query(VideoJob)
         .filter(
@@ -101,7 +116,7 @@ def health(
     )
     gen = bool(summary["generation_available"])
     return HealthResponse(
-        status="ok" if True else "degraded",
+        status="ok" if gen else "degraded",
         gateway="ok",
         generation_available=gen,
         gpu_worker_available=bool(summary["gpu_worker_available"]),
@@ -113,13 +128,49 @@ def health(
         worker=wh,
         details={
             "worker_configured": worker.configured,
+            "worker_available": bool(summary.get("worker_available")),
             "default_engine": settings.default_engine,
             "auth_required": settings.auth_required,
             "cuda_available": summary.get("cuda_available"),
             "vram_total_mb": summary.get("vram_total_mb"),
             "vram_free_mb": summary.get("vram_free_mb"),
+            "cpu_assembly_ready": cpu_assembly.is_ready(),
+            "note": "HTTP 200 on /health does not imply GPU diffusion readiness",
         },
     )
+
+
+@app.get("/v1/readiness")
+def generation_readiness(
+    _: Annotated[str, Depends(require_api_key)],
+    worker: Annotated[WorkerClient, Depends(_worker)],
+) -> dict[str, Any]:
+    """Authenticated readiness: worker reachability vs generation readiness."""
+    from gateway import cpu_assembly
+
+    wh = worker.health()
+    summary = summarize_worker(wh)
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
+    return {
+        "worker_available": bool(summary.get("worker_available")) or worker.configured and bool(wh and wh.get("ok")),
+        "cuda_available": bool(summary.get("cuda_available")),
+        "installed_engines": sorted(installed),
+        "ready_engines": sorted(ready),
+        "model_loading": summary.get("model_loading") or {},
+        "queue_depth": summary.get("queue_depth") or 0,
+        "vram_total_mb": summary.get("vram_total_mb"),
+        "vram_free_mb": summary.get("vram_free_mb"),
+        "generation_available": bool(ready),
+        "cpu_assembly_ready": cpu_assembly.is_ready(),
+        "ltx_ready": "ltx" in ready,
+        "gpu_worker_available": bool(summary.get("gpu_worker_available")),
+    }
 
 
 _GPU_READINESS_TEST_IDEMPOTENCY_KEY = "internal-gpu-readiness-test-render-v1"
@@ -205,11 +256,21 @@ def list_providers(
     _: Annotated[str, Depends(require_api_key)],
     worker: Annotated[WorkerClient, Depends(_worker)],
 ) -> list[ProviderInfo]:
+    from gateway import cpu_assembly
+
     wh = worker.health()
     summary = summarize_worker(wh)
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+        installed = {e for e in installed if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
     rows = providers_snapshot(
-        installed=set(summary["installed_engines"]),
-        ready=set(summary["ready_engines"]),
+        installed=installed,
+        ready=ready,
         gpu_available=bool(summary.get("cuda_available")),
         details={name: ENGINE_CATALOG[name] for name in ENGINE_CATALOG},
     )
@@ -221,17 +282,28 @@ def providers_health(
     _: Annotated[str, Depends(require_api_key)],
     worker: Annotated[WorkerClient, Depends(_worker)],
 ) -> dict[str, Any]:
+    from gateway import cpu_assembly
+
     wh = worker.health()
     summary = summarize_worker(wh)
+    installed = set(summary["installed_engines"])
+    ready = set(summary["ready_engines"])
+    if not summary.get("cuda_available"):
+        ready = {e for e in ready if e not in ("wan", "ltx", "framepack")}
+        installed = {e for e in installed if e not in ("wan", "ltx", "framepack")}
+    if cpu_assembly.is_ready():
+        installed.add(cpu_assembly.ENGINE_NAME)
+        ready.add(cpu_assembly.ENGINE_NAME)
     return {
-        "generation_available": summary["generation_available"],
-        "gpu_worker_available": summary["gpu_worker_available"],
+        "generation_available": bool(ready),
+        "gpu_worker_available": bool(summary["gpu_worker_available"]),
         "providers": providers_snapshot(
-            installed=set(summary["installed_engines"]),
-            ready=set(summary["ready_engines"]),
+            installed=installed,
+            ready=ready,
             gpu_available=bool(summary.get("cuda_available")),
         ),
         "worker": wh,
+        "cpu_assembly_ready": cpu_assembly.is_ready(),
     }
 
 
@@ -298,6 +370,73 @@ def download_video(
     if not path.exists():
         raise HTTPException(404, "output file missing")
     return FileResponse(path, media_type="video/mp4", filename=f"{job_id}.mp4")
+
+
+@app.get("/v1/videos/{job_id}/thumbnail")
+def download_thumbnail(
+    job_id: str,
+    _: Annotated[str, Depends(require_api_key)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Serve job thumbnail when present — never exposes filesystem paths."""
+    job = db.get(VideoJob, job_id)
+    if not job:
+        raise HTTPException(404, "job not found")
+    if not job.thumbnail_path:
+        raise HTTPException(404, "thumbnail not available")
+    path = Path(job.thumbnail_path)
+    if not path.exists():
+        raise HTTPException(404, "thumbnail file missing")
+    return FileResponse(path, media_type="image/jpeg", filename=f"{job_id}-thumb.jpg")
+
+
+@app.post("/v1/uploads/image")
+async def upload_image(
+    _: Annotated[str, Depends(require_api_key)],
+    request: Request,
+) -> dict[str, Any]:
+    """Accept a reference image for image-to-video. Returns a storage path for create requests."""
+    import uuid
+
+    from gateway.config import get_settings
+    from gateway.storage import get_storage
+
+    content_type = (request.headers.get("content-type") or "").lower()
+    if "multipart/form-data" not in content_type:
+        raise HTTPException(400, "multipart/form-data required")
+
+    form = await request.form()
+    file = form.get("file")
+    if file is None or not hasattr(file, "read"):
+        raise HTTPException(400, "file field required")
+
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "empty file")
+    if len(raw) > 12 * 1024 * 1024:
+        raise HTTPException(413, "image too large (max 12MB)")
+
+    # Basic magic-byte check
+    is_jpeg = raw[:3] == b"\xff\xd8\xff"
+    is_png = raw[:8] == b"\x89PNG\r\n\x1a\n"
+    is_webp = raw[:4] == b"RIFF" and raw[8:12] == b"WEBP"
+    if not (is_jpeg or is_png or is_webp):
+        raise HTTPException(400, "unsupported image type — use JPEG, PNG, or WebP")
+
+    ext = ".jpg" if is_jpeg else ".png" if is_png else ".webp"
+    settings = get_settings()
+    storage = get_storage(settings)
+    upload_id = uuid.uuid4().hex
+    key = f"uploads/{upload_id}{ext}"
+    dest = storage.get_path(key, category="jobs")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(raw)
+    return {
+        "upload_id": upload_id,
+        "path": str(dest),
+        "content_type": "image/jpeg" if is_jpeg else "image/png" if is_png else "image/webp",
+        "bytes": len(raw),
+    }
 
 
 @app.get("/v1/jobs")

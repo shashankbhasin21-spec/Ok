@@ -16,6 +16,8 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("AUTH_MODE", "required")
     monkeypatch.setenv("ALLOW_UNAUTHENTICATED", "false")
     monkeypatch.setenv("ALLOW_MOCK_INFERENCE", "false")
+    # Avoid OpenCV native teardown aborts when job threads exit during pytest shutdown.
+    monkeypatch.setenv("GATEWAY_QC_SKIP_OPENCV", "1")
 
     from gateway.config import get_settings
 
@@ -32,10 +34,17 @@ def client(tmp_path, monkeypatch):
     from gateway.jobs import JobService
     from gateway.worker_client import WorkerClient
 
+    worker = WorkerClient(get_settings())
+    svc = JobService(get_settings(), worker=worker)
     with TestClient(app) as c:
-        c.app.state.job_service = JobService(get_settings())
-        c.app.state.worker_client = WorkerClient(get_settings())
+        c.app.state.job_service = svc
+        c.app.state.worker_client = worker
         yield c
+        # Drain background job threads before the interpreter tears down native libs.
+        try:
+            svc.drain(timeout=90.0)
+        except Exception:  # noqa: BLE001
+            pass
 
     get_settings.cache_clear()
 

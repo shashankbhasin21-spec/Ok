@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from gateway.models import EngineMetric, JobStatus, VideoJob, utcnow
+
+logger = logging.getLogger(__name__)
+
+
+def _inc(value: int | float | None, delta: int | float) -> int | float:
+    """NULL-safe counter increment for legacy rows."""
+    return (value or 0) + delta
 
 
 def record_engine_result(
@@ -19,18 +27,59 @@ def record_engine_result(
     queue_latency_sec: float = 0.0,
     qc_failed: bool = False,
 ) -> None:
+    """Record engine success/failure. Never raises into the job path."""
+    try:
+        _record_engine_result_unsafe(
+            db,
+            engine,
+            success=success,
+            render_time_sec=render_time_sec,
+            queue_latency_sec=queue_latency_sec,
+            qc_failed=qc_failed,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "metrics bookkeeping failed engine=%s success=%s: %s",
+            engine,
+            success,
+            type(exc).__name__,
+        )
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _record_engine_result_unsafe(
+    db: Session,
+    engine: str,
+    *,
+    success: bool,
+    render_time_sec: float = 0.0,
+    queue_latency_sec: float = 0.0,
+    qc_failed: bool = False,
+) -> None:
     row = db.query(EngineMetric).filter(EngineMetric.engine == engine).one_or_none()
     if not row:
-        row = EngineMetric(engine=engine)
+        row = EngineMetric(
+            engine=engine,
+            success_count=0,
+            failure_count=0,
+            total_render_time_sec=0.0,
+            total_queue_latency_sec=0.0,
+            qc_failure_count=0,
+        )
         db.add(row)
     if success:
-        row.success_count += 1
-        row.total_render_time_sec += render_time_sec
-        row.total_queue_latency_sec += queue_latency_sec
+        row.success_count = int(_inc(row.success_count, 1))
+        row.total_render_time_sec = float(_inc(row.total_render_time_sec, render_time_sec))
+        row.total_queue_latency_sec = float(
+            _inc(row.total_queue_latency_sec, queue_latency_sec)
+        )
     else:
-        row.failure_count += 1
+        row.failure_count = int(_inc(row.failure_count, 1))
     if qc_failed:
-        row.qc_failure_count += 1
+        row.qc_failure_count = int(_inc(row.qc_failure_count, 1))
     row.updated_at = utcnow()
     db.commit()
 

@@ -2,122 +2,122 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Video Gateway</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0b0d" />
+  <meta name="description" content="Vera — cinematic AI video creation studio" />
+  <title>Vera — AI Video Studio</title>
+  <link rel="icon" href="/dashboard/assets/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/dashboard/assets/styles.css" />
 </head>
 <body>
-  <div class="bg"></div>
-  <header class="top">
-    <div class="brand">
-      <span class="mark">VG</span>
-      <div>
-        <h1>Video Gateway</h1>
-        <p class="tag">Open-model control plane · Instagram / YouTube</p>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="app-bg" aria-hidden="true"></div>
+
+  <div id="authGate" class="auth-gate" hidden>
+    <div class="auth-panel" role="dialog" aria-labelledby="authTitle">
+      <div class="auth-brand">
+        <span class="logo-mark" aria-hidden="true">V</span>
+        <div>
+          <h1 id="authTitle" class="auth-title">Vera</h1>
+          <p class="auth-sub">Cinematic AI video studio</p>
+        </div>
       </div>
+      <label class="field">
+        <span>API key</span>
+        <input id="gateApiKey" type="password" autocomplete="off" placeholder="X-API-Key" />
+      </label>
+      <p class="auth-hint">Keys stay in this browser. They are never written to page logs.</p>
+      <button type="button" class="btn btn-primary btn-block" id="gateEnter">Enter studio</button>
+      <p id="gateError" class="form-error" role="alert" hidden></p>
     </div>
-    <nav>
-      <button data-tab="health" class="active">Gateway Health</button>
-      <button data-tab="generate">Generate</button>
-      <button data-tab="jobs">Jobs</button>
-      <button data-tab="providers">Providers</button>
-      <button data-tab="models">Models</button>
-      <button data-tab="metrics">Metrics</button>
-      <button data-tab="outputs">Outputs</button>
-    </nav>
-    <div class="auth">
-      <label>API Key <input id="apiKey" type="password" placeholder="X-API-Key" /></label>
+  </div>
+
+  <div id="appShell" class="shell" hidden>
+    <aside id="sidebar" class="sidebar" aria-label="Primary">
+      <div class="sidebar-top">
+        <button type="button" class="brand-btn" data-nav="home" aria-label="Vera home">
+          <span class="logo-mark">V</span>
+          <span class="brand-text">
+            <strong>Vera</strong>
+            <em>Studio</em>
+          </span>
+        </button>
+        <button type="button" class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Collapse sidebar" aria-expanded="true">
+          <span class="icon-chevron" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <nav class="side-nav" aria-label="Studio">
+        <p class="nav-label">Create</p>
+        <button type="button" class="nav-item active" data-nav="home"><span class="nav-ico" aria-hidden="true">⌂</span><span>Home</span></button>
+        <button type="button" class="nav-item" data-nav="create"><span class="nav-ico" aria-hidden="true">✦</span><span>Create</span></button>
+        <button type="button" class="nav-item" data-nav="i2v"><span class="nav-ico" aria-hidden="true">▣</span><span>Image → Video</span></button>
+        <button type="button" class="nav-item" data-nav="t2v"><span class="nav-ico" aria-hidden="true">≡</span><span>Text → Video</span></button>
+
+        <p class="nav-label">Library</p>
+        <button type="button" class="nav-item" data-nav="projects"><span class="nav-ico" aria-hidden="true">▦</span><span>Projects</span></button>
+        <button type="button" class="nav-item" data-nav="assets"><span class="nav-ico" aria-hidden="true">◫</span><span>Assets</span></button>
+        <button type="button" class="nav-item" data-nav="queue"><span class="nav-ico" aria-hidden="true">☰</span><span>Generation Queue</span><span class="nav-badge" id="queueBadge" hidden>0</span></button>
+
+        <p class="nav-label">Ops</p>
+        <button type="button" class="nav-item" data-nav="models"><span class="nav-ico" aria-hidden="true">◎</span><span>Models</span></button>
+        <button type="button" class="nav-item" data-nav="analytics"><span class="nav-ico" aria-hidden="true">◔</span><span>Analytics</span></button>
+        <button type="button" class="nav-item" data-nav="system"><span class="nav-ico" aria-hidden="true">◉</span><span>System</span></button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button type="button" class="nav-item" data-nav="settings"><span class="nav-ico" aria-hidden="true">⚙</span><span>Settings</span></button>
+        <button type="button" class="nav-item" data-nav="api"><span class="nav-ico" aria-hidden="true">⌁</span><span>API</span></button>
+        <button type="button" class="nav-item" data-nav="account"><span class="nav-ico" aria-hidden="true">◌</span><span>Account</span></button>
+        <div class="ready-pill" id="readyPill" title="Generation readiness">
+          <span class="dot" id="readyDot"></span>
+          <span id="readyText">Checking…</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="icon-btn mobile-only" id="mobileMenuBtn" aria-label="Open menu">☰</button>
+          <h1 class="page-title" id="pageTitle">Home</h1>
+        </div>
+        <div class="topbar-right">
+          <button type="button" class="btn btn-ghost" id="cmdOpen" aria-label="Open command palette" title="⌘K">
+            <span>Search</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <button type="button" class="btn btn-primary" data-nav="create">Generate</button>
+        </div>
+      </header>
+
+      <main id="main" class="main" tabindex="-1">
+        <div id="viewRoot" class="view-root" aria-live="polite"></div>
+      </main>
     </div>
-  </header>
+  </div>
 
-  <main>
-    <section id="health" class="panel active">
-      <h2>Gateway Health</h2>
-      <p class="lede">generation_available is true only when a CUDA worker with a ready engine is connected.</p>
-      <pre id="healthOut" class="code">Loading…</pre>
-    </section>
+  <nav class="mobile-tabbar" id="mobileTabbar" aria-label="Mobile">
+    <button type="button" class="tab-item active" data-nav="home"><span>Home</span></button>
+    <button type="button" class="tab-item" data-nav="create"><span>Create</span></button>
+    <button type="button" class="tab-item" data-nav="projects"><span>Projects</span></button>
+    <button type="button" class="tab-item" data-nav="queue"><span>Queue</span></button>
+    <button type="button" class="tab-item" data-nav="system"><span>System</span></button>
+  </nav>
 
-    <section id="generate" class="panel">
-      <h2>Generate</h2>
-      <form id="genForm" class="form">
-        <label>Prompt<textarea name="prompt" rows="4" required placeholder="Cinematic futuristic AI office transformation"></textarea></label>
-        <div class="row">
-          <label>Duration (s)<input name="duration" type="number" value="30" min="1" /></label>
-          <label>Aspect
-            <select name="aspect_ratio">
-              <option value="9:16">9:16 vertical</option>
-              <option value="16:9">16:9 YouTube</option>
-              <option value="1:1">1:1</option>
-              <option value="4:5">4:5</option>
-            </select>
-          </label>
-          <label>Quality
-            <select name="quality">
-              <option>draft</option>
-              <option>standard</option>
-              <option selected>high</option>
-              <option>max</option>
-            </select>
-          </label>
-          <label>Engine
-            <select name="engine">
-              <option selected>auto</option>
-              <option>fast</option>
-              <option>quality</option>
-              <option>low_vram</option>
-              <option>wan</option>
-              <option>ltx</option>
-              <option>framepack</option>
-            </select>
-          </label>
-        </div>
-        <div class="row">
-          <label>Seed<input name="seed" type="number" placeholder="optional" /></label>
-          <label>Negative prompt<input name="negative_prompt" placeholder="optional" /></label>
-          <label>Input image path<input name="input_image" placeholder="optional local path" /></label>
-          <label>Input video path<input name="input_video" placeholder="optional local path" /></label>
-        </div>
-        <div class="row checks">
-          <label><input type="checkbox" name="audio" /> Audio</label>
-          <label><input type="checkbox" name="captions" /> Captions</label>
-          <label><input type="checkbox" name="allow_short" /> Allow &lt;30s</label>
-        </div>
-        <button type="submit" class="cta">Queue generation</button>
-      </form>
-      <div id="liveJob" class="live"></div>
-    </section>
+  <div id="cmdPalette" class="cmd-overlay" hidden>
+    <div class="cmd-dialog" role="dialog" aria-modal="true" aria-label="Command palette">
+      <input id="cmdInput" type="search" placeholder="Jump to…" autocomplete="off" />
+      <ul id="cmdList" class="cmd-list" role="listbox"></ul>
+    </div>
+  </div>
 
-    <section id="jobs" class="panel">
-      <h2>Jobs</h2>
-      <button id="refreshJobs" class="ghost">Refresh</button>
-      <div id="jobsOut" class="table"></div>
-    </section>
+  <div id="toastHost" class="toast-host" aria-live="polite" aria-relevant="additions"></div>
+  <div id="modalHost"></div>
 
-    <section id="providers" class="panel">
-      <h2>Providers</h2>
-      <p class="lede">Statuses: AVAILABLE · MODEL NOT INSTALLED · GPU UNAVAILABLE · UNHEALTHY · DISABLED</p>
-      <div id="providersOut" class="cards"></div>
-    </section>
-
-    <section id="models" class="panel">
-      <h2>Models</h2>
-      <pre id="modelsOut" class="code">Connect a worker to list models.</pre>
-    </section>
-
-    <section id="metrics" class="panel">
-      <h2>Metrics</h2>
-      <pre id="metricsOut" class="code"></pre>
-    </section>
-
-    <section id="outputs" class="panel">
-      <h2>Outputs</h2>
-      <p class="lede">READY assets only (QC passed). READY ≠ PUBLISHED.</p>
-      <div id="outputsOut" class="table"></div>
-    </section>
-  </main>
-  <script src="/dashboard/assets/app.js"></script>
+  <script type="module" src="/dashboard/assets/js/main.js"></script>
 </body>
 </html>
