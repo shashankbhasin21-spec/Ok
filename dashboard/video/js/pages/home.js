@@ -8,7 +8,7 @@ function newIdempotencyKey() {
   return `ui-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
 }
 
-export default async function renderHome(root, ctx) {
+export async function renderHome(root, ctx) {
   const { api, store, poller, navigate } = ctx;
   const caps = engineCapabilities(store.providers);
   const prefs = store.prefs;
@@ -344,3 +344,5 @@ export default async function renderHome(root, ctx) {
     drop.destroy();
   };
 }
+
+export default renderHome;

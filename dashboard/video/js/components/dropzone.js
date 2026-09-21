@@ -119,3 +119,4 @@ export function createDropzone({ onChange, onClear, upload, accept = "image/jpeg
 }
 
 export default createDropzone;
+export { createDropzone as mountDropzone };

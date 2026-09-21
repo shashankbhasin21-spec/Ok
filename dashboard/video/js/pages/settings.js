@@ -1,58 +1,140 @@
-import { el, field } from "../ui.js";
+/**
+ * Settings — API key, motion note, default generation prefs.
+ */
+
+import { el, clear, field, select, prefersReducedMotion } from "../ui.js";
 import { toast } from "../components/toast.js";
 
-export default async function renderSettings(root, ctx) {
+export async function renderSettings(root, ctx) {
   const { api, store } = ctx;
+  clear(root);
+
+  const prefs = store.prefs || {};
+  const page = el("div", { className: "ls-page" });
+  page.append(el("header", { className: "ls-hero ls-hero--compact" }, [
+    el("div", { className: "ls-hero__brand", text: "Lumen" }),
+    el("h2", { className: "ls-hero__title", text: "Settings" }),
+    el("p", { className: "ls-hero__lede", text: "Local preferences only — keys stay in your browser storage." }),
+  ]));
+
   const keyInput = el("input", {
-    className: "ls-input",
     type: "password",
-    value: api.getApiKey(),
-    placeholder: "X-API-Key",
+    className: "ls-input",
     autocomplete: "off",
+    spellcheck: "false",
     "aria-label": "API key",
+    value: api.getApiKey() || "",
   });
-  const aspect = el("select", { className: "ls-select" }, [
-    ...["9:16", "16:9", "1:1", "4:5"].map((v) => el("option", { value: v, text: v, selected: store.prefs.defaultAspect === v ? true : undefined })),
-  ]);
-  const duration = el("input", { className: "ls-input", type: "number", min: "1", max: "600", value: String(store.prefs.defaultDuration || 30) });
-  const quality = el("select", { className: "ls-select" }, [
-    ...["draft", "standard", "high", "max"].map((v) => el("option", { value: v, text: v, selected: store.prefs.defaultQuality === v ? true : undefined })),
+
+  const aspect = select("defaultAspect", [
+    { value: "9:16", label: "9:16" },
+    { value: "16:9", label: "16:9" },
+    { value: "1:1", label: "1:1" },
+    { value: "4:5", label: "4:5" },
+  ], prefs.defaultAspect || "9:16");
+
+  const duration = el("input", {
+    type: "number",
+    className: "ls-input",
+    min: "1",
+    max: "600",
+    value: String(prefs.defaultDuration || 30),
+    "aria-label": "Default duration",
+  });
+
+  const quality = select("defaultQuality", [
+    { value: "draft", label: "Draft" },
+    { value: "standard", label: "Standard" },
+    { value: "high", label: "High" },
+    { value: "max", label: "Max" },
+  ], prefs.defaultQuality || "high");
+
+  const engine = select("defaultEngine", [
+    { value: "auto", label: "Auto" },
+    { value: "wan", label: "Wan" },
+    { value: "ltx", label: "LTX" },
+    { value: "framepack", label: "FramePack" },
+  ], prefs.defaultEngine || "auto");
+
+  const systemReduced = prefersReducedMotion();
+  const reducedNote = el("p", {
+    className: "ls-field__hint",
+    text: systemReduced
+      ? "Your system currently prefers reduced motion. Lumen Studio minimizes staged animations."
+      : "System prefers full motion. Enable OS-level reduced motion anytime; the studio respects prefers-reduced-motion.",
+  });
+
+  const status = el("p", { className: "ls-composer__gate", role: "status" });
+  const saveBtn = el("button", { type: "submit", className: "ls-btn ls-btn--primary", text: "Save" });
+  const clearBtn = el("button", { type: "button", className: "ls-btn", text: "Clear API key" });
+
+  const form = el("form", { className: "ls-panel ls-settings", "aria-label": "Settings" }, [
+    el("h3", { text: "Authentication" }),
+    field("API key (X-API-Key)", keyInput),
+    el("p", { className: "ls-field__hint", text: "Stored in localStorage (lumen_api_key). Never committed or logged by this UI." }),
+
+    el("h3", { text: "Defaults" }),
+    el("div", { className: "ls-row" }, [
+      field("Default aspect", aspect),
+      field("Default duration (s)", duration),
+      field("Default quality", quality),
+      field("Default engine", engine),
+    ]),
+
+    el("h3", { text: "Motion" }),
+    reducedNote,
+
+    el("div", { className: "ls-toolbar" }, [saveBtn, clearBtn]),
+    status,
   ]);
 
-  const save = el("button", { type: "button", className: "ls-btn ls-btn--primary", text: "Save" });
-  save.addEventListener("click", async () => {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
     api.setApiKey(keyInput.value.trim());
     store.savePrefs({
       defaultAspect: aspect.value,
-      defaultDuration: Number(duration.value || 30),
+      defaultDuration: Number(duration.value) || 30,
       defaultQuality: quality.value,
+      defaultEngine: engine.value,
     });
-    toast("Settings saved locally", { type: "success", title: "Settings" });
+    status.textContent = "Saved locally. Refreshing gateway data…";
+    toast("Settings saved", { type: "success" });
     try {
       store.health = await api.health();
       if (api.getApiKey()) {
-        store.providers = await api.providers();
-        store.jobs = (await api.jobs({ limit: 50 })).jobs || [];
-        store.metrics = await api.metrics().catch(() => null);
+        const [providers, jobs, metrics] = await Promise.all([
+          api.providers(),
+          api.jobs({ limit: 50 }),
+          api.metrics().catch(() => null),
+        ]);
+        store.providers = providers || [];
+        store.jobs = jobs?.jobs || [];
+        store.metrics = metrics;
+      } else {
+        store.providers = [];
+        store.jobs = [];
+        store.metrics = null;
       }
       store.emit("data");
+      store.emit("health", store.health);
+      status.textContent = "Saved. Gateway data refreshed.";
     } catch (err) {
-      toast(err.message, { type: "error", title: "Could not refresh" });
+      status.textContent = `Saved key, but refresh failed: ${err.message || err}`;
+      toast(err.message || String(err), { type: "error", title: "Refresh" });
     }
   });
 
-  root.append(el("div", { className: "ls-page", style: "max-width:560px" }, [
-    el("div", { className: "ls-panel", style: "padding:1.25rem;display:flex;flex-direction:column;gap:1rem" }, [
-      el("h2", { text: "Settings" }),
-      el("p", { className: "ls-field__hint", text: "API key is stored in this browser only (localStorage). It is never committed or logged by the UI." }),
-      field("API key", keyInput),
-      field("Default aspect ratio", aspect),
-      field("Default duration (s)", duration),
-      field("Default quality", quality),
-      el("p", { className: "ls-field__hint", text: "Motion respects prefers-reduced-motion automatically. No separate toggle required." }),
-      save,
-    ]),
-  ]));
+  clearBtn.addEventListener("click", () => {
+    keyInput.value = "";
+    api.setApiKey("");
+    status.textContent = "API key cleared.";
+    toast("API key cleared", { type: "info" });
+  });
+
+  page.append(form);
+  root.append(page);
 
   return () => {};
 }
+
+export default renderSettings;

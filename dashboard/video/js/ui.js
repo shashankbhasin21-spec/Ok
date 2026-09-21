@@ -22,6 +22,9 @@ export function clear(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
+/** Alias used by some page modules */
+export const clearRoot = clear;
+
 export function emptyState({ title, body, action = null, icon = "◇" }) {
   const wrap = el("div", { className: "ls-empty" }, [
     el("div", { className: "ls-empty__icon", text: icon }),
@@ -200,6 +203,7 @@ export { prefersReducedMotion };
 export default {
   el,
   clear,
+  clearRoot,
   emptyState,
   skeleton,
   statusBadge,

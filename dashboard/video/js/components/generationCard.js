@@ -153,3 +153,4 @@ export function createGenerationCard({ onRetry, onCancel, onOpen } = {}) {
 }
 
 export default createGenerationCard;
+export { createGenerationCard as mountGenerationCard };

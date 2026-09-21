@@ -170,6 +170,7 @@ export async function renderProjects(root, ctx) {
   }
 
   function closeDetail() {
+    if (overlay?._cleanupKey) overlay._cleanupKey();
     player?.destroy();
     player = null;
     overlay?.remove();

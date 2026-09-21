@@ -175,3 +175,4 @@ export function createVideoPlayer({
 }
 
 export default createVideoPlayer;
+export { createVideoPlayer as mountVideoPlayer };

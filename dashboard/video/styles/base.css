@@ -26,6 +26,8 @@ button { cursor: pointer; border: none; background: none; }
 a { color: var(--ls-accent); text-decoration: none; }
 a:hover { color: var(--ls-accent-hover); }
 
+[hidden] { display: none !important; }
+
 :focus { outline: none; }
 :focus-visible { box-shadow: var(--ls-focus); }
 

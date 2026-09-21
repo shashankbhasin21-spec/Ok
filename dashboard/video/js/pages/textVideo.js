@@ -56,7 +56,9 @@ export async function renderTextVideo(root, ctx) {
     return opts;
   }
 
+  const engineHost = el("div", {});
   let engine = select("engine", engineOptions(), prefs.defaultEngine || "auto");
+  engineHost.append(engine);
   const aspect = select("aspect_ratio", [
     { value: "9:16", label: "9:16" },
     { value: "16:9", label: "16:9" },
@@ -89,7 +91,7 @@ export async function renderTextVideo(root, ctx) {
   const form = el("div", {}, [
     field("Prompt", prompt),
     el("div", { className: "ls-row" }, [
-      field("Model", engine),
+      field("Model", engineHost),
       field("Aspect", aspect),
       field("Duration (s)", duration),
       field("Resolution", resolution),
@@ -193,7 +195,9 @@ export async function renderTextVideo(root, ctx) {
 
   updateGate();
   const unsub = store.subscribe(() => {
-    const next = select("engine", engineOptions(), engine.value);
+    const opts = engineOptions();
+    const keep = opts.some((o) => o.value === engine.value && !o.disabled) ? engine.value : "auto";
+    const next = select("engine", opts, keep);
     engine.replaceWith(next);
     engine = next;
     updateGate();

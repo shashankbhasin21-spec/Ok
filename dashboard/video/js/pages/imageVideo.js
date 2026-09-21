@@ -71,7 +71,9 @@ export async function renderImageVideo(root, ctx) {
     return opts;
   }
 
+  const engineHost = el("div", {});
   let engine = select("engine", engineOptions(), "auto");
+  engineHost.append(engine);
   const aspect = select("aspect_ratio", [
     { value: "9:16", label: "9:16" },
     { value: "16:9", label: "16:9" },
@@ -96,7 +98,7 @@ export async function renderImageVideo(root, ctx) {
   const formBody = el("div", {}, [
     field("Motion prompt", prompt),
     el("div", { className: "ls-row" }, [
-      field("Model", engine),
+      field("Model", engineHost),
       field("Aspect", aspect),
       field("Duration (s)", duration),
       field("Quality", quality),
@@ -133,13 +135,14 @@ export async function renderImageVideo(root, ctx) {
   root.append(page);
 
   function refreshEngineSelect() {
-    const parent = engine.parentElement;
-    const next = select("engine", engineOptions(), engine.value === "auto" || engineOptions().some((o) => o.value === engine.value && !o.disabled) ? engine.value : "auto");
+    const opts = engineOptions();
+    const keep =
+      engine.value === "auto" || opts.some((o) => o.value === engine.value && !o.disabled)
+        ? engine.value
+        : "auto";
+    const next = select("engine", opts, keep);
     engine.replaceWith(next);
     engine = next;
-    if (parent && !parent.contains(engine)) {
-      /* select() creates new node; field wraps it — rebuild field if needed */
-    }
   }
 
   function updateAvailability() {
