@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -153,39 +154,43 @@ def run_qc(
     if duration > 0 and len(freeze) >= 3:
         result["failures"].append("excessive_frozen_frames")
 
-    # OpenCV optional corruption sampling
-    try:
-        import cv2  # type: ignore
+    # OpenCV optional corruption sampling (can abort process on unclean
+    # interpreter shutdown if a worker thread is mid-native call).
+    if os.environ.get("GATEWAY_QC_SKIP_OPENCV", "").lower() in ("1", "true", "yes"):
+        result["checks"]["opencv_skipped"] = "GATEWAY_QC_SKIP_OPENCV"
+    else:
+        try:
+            import cv2  # type: ignore
 
-        cap = cv2.VideoCapture(str(path))
-        ok_frames = 0
-        bad_frames = 0
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
-        step = max(1, total // 20) if total else 10
-        idx = 0
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            if idx % step == 0:
-                if frame is None or frame.size == 0:
-                    bad_frames += 1
-                else:
-                    mean = float(frame.mean())
-                    if mean < 1.0 or mean > 254.0:
+            cap = cv2.VideoCapture(str(path))
+            ok_frames = 0
+            bad_frames = 0
+            total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+            step = max(1, total // 20) if total else 10
+            idx = 0
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                if idx % step == 0:
+                    if frame is None or frame.size == 0:
                         bad_frames += 1
                     else:
-                        ok_frames += 1
-            idx += 1
-            if idx > (total or 300):
-                break
-        cap.release()
-        result["checks"]["sampled_ok_frames"] = ok_frames
-        result["checks"]["sampled_bad_frames"] = bad_frames
-        if ok_frames == 0 or bad_frames > ok_frames:
-            result["failures"].append("corrupted_frames")
-    except Exception as exc:  # noqa: BLE001
-        result["checks"]["opencv_skipped"] = str(exc)
+                        mean = float(frame.mean())
+                        if mean < 1.0 or mean > 254.0:
+                            bad_frames += 1
+                        else:
+                            ok_frames += 1
+                idx += 1
+                if idx > (total or 300):
+                    break
+            cap.release()
+            result["checks"]["sampled_ok_frames"] = ok_frames
+            result["checks"]["sampled_bad_frames"] = bad_frames
+            if ok_frames == 0 or bad_frames > ok_frames:
+                result["failures"].append("corrupted_frames")
+        except Exception as exc:  # noqa: BLE001
+            result["checks"]["opencv_skipped"] = str(exc)
 
     result["passed"] = len(result["failures"]) == 0
     return result

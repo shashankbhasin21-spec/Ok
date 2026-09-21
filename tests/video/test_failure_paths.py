@@ -229,11 +229,15 @@ def test_successful_cpu_assembly_mp4(client, auth_headers):
 
 
 def test_download_before_ready(client, auth_headers, monkeypatch):
-    # Slow down by never finishing — cancel after checking 409.
-    monkeypatch.setattr(
-        "gateway.jobs.JobService._execute",
-        lambda self, db, job_id: time.sleep(30),
-    )
+    # Hold the job in a waitable state — cancel after checking 409.
+    import threading
+
+    release = threading.Event()
+
+    def stuck(self, db, job_id):
+        release.wait(timeout=60)
+
+    monkeypatch.setattr("gateway.jobs.JobService._execute", stuck)
     r = client.post(
         "/v1/videos",
         headers=auth_headers,
@@ -248,6 +252,7 @@ def test_download_before_ready(client, auth_headers, monkeypatch):
     d = client.get(f"/v1/videos/{job_id}/download", headers=auth_headers)
     assert d.status_code == 409
     client.post(f"/v1/videos/{job_id}/cancel", headers=auth_headers)
+    release.set()
 
 
 def test_concurrent_idempotency(client, auth_headers):

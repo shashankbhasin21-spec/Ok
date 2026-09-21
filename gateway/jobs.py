@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -142,6 +143,7 @@ class JobService:
         self.worker = worker or WorkerClient(self.settings)
         self.audio = AudioPipeline()
         self._lock = threading.Lock()
+        self._threads: list[threading.Thread] = []
 
     def create_job(self, db: Session, req: VideoCreateRequest) -> VideoJob:
         if req.idempotency_key:
@@ -195,8 +197,28 @@ class JobService:
         return job
 
     def _spawn(self, job_id: str) -> None:
-        t = threading.Thread(target=self._run_job, args=(job_id,), daemon=True)
+        t = threading.Thread(
+            target=self._run_job,
+            args=(job_id,),
+            daemon=True,
+            name=f"video-job-{job_id[:12]}",
+        )
+        with self._lock:
+            # Drop finished threads so the list cannot grow unboundedly.
+            self._threads = [x for x in self._threads if x.is_alive()]
+            self._threads.append(t)
         t.start()
+
+    def drain(self, timeout: float = 60.0) -> None:
+        """Wait for in-flight job threads — critical for clean test/process shutdown."""
+        with self._lock:
+            threads = list(self._threads)
+        deadline = time.time() + timeout
+        for t in threads:
+            remaining = max(0.0, deadline - time.time())
+            t.join(timeout=remaining)
+        with self._lock:
+            self._threads = [x for x in self._threads if x.is_alive()]
 
     def cancel(self, db: Session, job_id: str) -> VideoJob | None:
         job = db.get(VideoJob, job_id)
