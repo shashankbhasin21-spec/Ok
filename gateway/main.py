@@ -461,6 +461,20 @@ def metrics(
     return MetricsResponse(**collect_metrics(db))
 
 
+@app.post("/v1/admin/repair-metrics")
+def repair_metrics(
+    _: Annotated[str, Depends(require_api_key)],
+) -> dict[str, Any]:
+    """Dedupe legacy engine_metrics rows that break routing (.one_or_none)."""
+    from gateway.database import engine as db_engine
+    from gateway.migrate import dedupe_engine_metrics
+
+    if db_engine is None:
+        raise HTTPException(503, "database not configured")
+    removed = dedupe_engine_metrics(db_engine)
+    return {"ok": True, "duplicates_removed": int(removed)}
+
+
 @app.get("/", response_class=HTMLResponse)
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard_index() -> HTMLResponse:

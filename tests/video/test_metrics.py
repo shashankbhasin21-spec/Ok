@@ -102,3 +102,117 @@ def test_metrics_failure_does_not_raise(client, monkeypatch):
     with dbmod.SessionLocal() as db:
         record_engine_result(db, "ltx", success=False)  # must not raise
     assert calls["n"] == 1
+
+
+def test_duplicate_engine_metrics_do_not_break_routing(client):
+    """Legacy duplicate rows must not raise MultipleResultsFound."""
+    import gateway.database as dbmod
+    from sqlalchemy import text
+
+    from gateway.metrics import get_engine_metric_row, record_engine_result
+    from gateway.router import _hist_stats
+
+    with dbmod.engine.begin() as conn:
+        conn.execute(text("DROP INDEX IF EXISTS uq_engine_metrics_engine"))
+
+    with dbmod.SessionLocal() as db:
+        for _ in range(3):
+            db.add(
+                EngineMetric(
+                    engine="ltx",
+                    success_count=1,
+                    failure_count=1,
+                    total_render_time_sec=10.0,
+                    total_queue_latency_sec=1.0,
+                    qc_failure_count=0,
+                )
+            )
+        db.commit()
+        # Would raise with .one_or_none(); must succeed with helper.
+        row = get_engine_metric_row(db, "ltx")
+        assert row is not None
+        stats = _hist_stats(db, "ltx")
+        assert 0.0 <= stats["success_rate"] <= 1.0
+        record_engine_result(db, "ltx", success=True, render_time_sec=2.0)
+
+
+def test_dedupe_engine_metrics_merges_and_indexes(client):
+    import gateway.database as dbmod
+    from sqlalchemy import text
+
+    from gateway.migrate import dedupe_engine_metrics
+
+    with dbmod.engine.begin() as conn:
+        conn.execute(text("DROP INDEX IF EXISTS uq_engine_metrics_engine"))
+
+    with dbmod.SessionLocal() as db:
+        db.add(
+            EngineMetric(
+                engine="wan",
+                success_count=2,
+                failure_count=1,
+                total_render_time_sec=5.0,
+                total_queue_latency_sec=1.0,
+                qc_failure_count=0,
+            )
+        )
+        db.add(
+            EngineMetric(
+                engine="wan",
+                success_count=3,
+                failure_count=2,
+                total_render_time_sec=7.0,
+                total_queue_latency_sec=3.0,
+                qc_failure_count=1,
+            )
+        )
+        db.commit()
+
+    removed = dedupe_engine_metrics(dbmod.engine)
+    assert removed >= 1
+    with dbmod.SessionLocal() as db:
+        rows = db.query(EngineMetric).filter(EngineMetric.engine == "wan").all()
+        assert len(rows) == 1
+        assert rows[0].success_count == 5
+        assert rows[0].failure_count == 3
+        assert float(rows[0].total_render_time_sec) == 12.0
+
+
+def test_admin_repair_metrics_endpoint(client):
+    import gateway.database as dbmod
+    from sqlalchemy import text
+
+    with dbmod.engine.begin() as conn:
+        conn.execute(text("DROP INDEX IF EXISTS uq_engine_metrics_engine"))
+
+    with dbmod.SessionLocal() as db:
+        db.add(
+            EngineMetric(
+                engine="framepack",
+                success_count=0,
+                failure_count=0,
+                total_render_time_sec=0.0,
+                total_queue_latency_sec=0.0,
+                qc_failure_count=0,
+            )
+        )
+        db.add(
+            EngineMetric(
+                engine="framepack",
+                success_count=1,
+                failure_count=0,
+                total_render_time_sec=1.0,
+                total_queue_latency_sec=0.0,
+                qc_failure_count=0,
+            )
+        )
+        db.commit()
+
+    r = client.post(
+        "/v1/admin/repair-metrics",
+        headers={"X-API-Key": "test-api-key"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert body["duplicates_removed"] >= 1

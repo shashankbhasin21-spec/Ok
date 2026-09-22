@@ -87,7 +87,9 @@ class RoutingDecision:
 def _hist_stats(db: Session | None, engine: str) -> dict[str, float]:
     if db is None:
         return {"success_rate": 0.5, "avg_render": 120.0}
-    row = db.query(EngineMetric).filter(EngineMetric.engine == engine).one_or_none()
+    from gateway.metrics import get_engine_metric_row
+
+    row = get_engine_metric_row(db, engine)
     if not row:
         return {"success_rate": 0.5, "avg_render": 120.0}
     success = row.success_count or 0

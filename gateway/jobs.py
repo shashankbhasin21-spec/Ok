@@ -150,7 +150,8 @@ class JobService:
             existing = (
                 db.query(VideoJob)
                 .filter(VideoJob.idempotency_key == req.idempotency_key)
-                .one_or_none()
+                .order_by(VideoJob.created_at.asc())
+                .first()
             )
             if existing:
                 return existing
@@ -186,7 +187,8 @@ class JobService:
                 existing = (
                     db.query(VideoJob)
                     .filter(VideoJob.idempotency_key == req.idempotency_key)
-                    .one_or_none()
+                    .order_by(VideoJob.created_at.asc())
+                    .first()
                 )
                 if existing:
                     return existing

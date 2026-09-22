@@ -18,6 +18,21 @@ def _inc(value: int | float | None, delta: int | float) -> int | float:
     return (value or 0) + delta
 
 
+def get_engine_metric_row(db: Session, engine: str) -> EngineMetric | None:
+    """Return one EngineMetric row even if legacy duplicates exist.
+
+    Prefer the lowest id (oldest survivor after startup dedupe). Never use
+    Query.one_or_none() here — duplicate rows raise MultipleResultsFound and
+    abort job routing on production.
+    """
+    return (
+        db.query(EngineMetric)
+        .filter(EngineMetric.engine == engine)
+        .order_by(EngineMetric.id.asc())
+        .first()
+    )
+
+
 def record_engine_result(
     db: Session,
     engine: str,
@@ -59,7 +74,7 @@ def _record_engine_result_unsafe(
     queue_latency_sec: float = 0.0,
     qc_failed: bool = False,
 ) -> None:
-    row = db.query(EngineMetric).filter(EngineMetric.engine == engine).one_or_none()
+    row = get_engine_metric_row(db, engine)
     if not row:
         row = EngineMetric(
             engine=engine,
