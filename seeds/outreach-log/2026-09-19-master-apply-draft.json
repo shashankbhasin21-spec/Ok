@@ -1,0 +1,26 @@
+{
+  "at": "2026-09-19T14:35:00Z",
+  "action": "refresh_master_apply_draft",
+  "owner_gmail": "shashankbhasin21@gmail.com",
+  "freelancer_unique_scanned": 89,
+  "queue": "seeds/proposals/APPLY-QUEUE-2026-09-19.json",
+  "gmail": {
+    "new_draft_id": "r4121722235428562281",
+    "new_draft_thread_id": "1a0ba0ce8e47a062",
+    "new_draft_subject": "[MASTER APPLY DRAFT 2026-09-19] 5 Freelancer pastes READY — IAWF CLOSED",
+    "old_draft_id": "r780583678775568680",
+    "old_draft_action": "subject marked SUPERSEDED"
+  },
+  "iawf": {
+    "status": "CLOSED_DEADLINE_PASSED",
+    "deadline_was": "2026-09-18",
+    "checked_url": "https://iawf.submittable.com/submit/364943/rfp-for-new-iawf-website"
+  },
+  "packets": [
+    "seeds/proposals/freelancer-claude-mcp-roofing-airbnb.md",
+    "seeds/proposals/freelancer-ghl-sms-email-workflows.md",
+    "seeds/proposals/freelancer-ghl-instagram-lead-funnel.md",
+    "seeds/proposals/freelancer-ai-document-automation-webapp.md",
+    "seeds/proposals/freelancer-reviva-wordpress-maintain.md"
+  ]
+}
