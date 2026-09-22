@@ -1,0 +1,10 @@
+# Free YouTube clipper source list
+# Add up to 10 direct YouTube video URLs below.
+#
+# IMPORTANT: Set RIGHTS_CONFIRMED=yes only for videos you own,
+# are licensed to reuse, or that are clearly public-domain / CC
+# with permission for this reuse.
+# RIGHTS_CONFIRMED=no
+#
+# Example:
+# https://www.youtube.com/watch?v=YOUR_VIDEO_ID

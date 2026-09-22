@@ -1,0 +1,50 @@
+name: Free YouTube Clipper
+
+on:
+  push:
+    paths:
+      - "clipper_free/sources.txt"
+      - "clipper_free/process.py"
+      - "clipper_free/requirements.txt"
+      - ".github/workflows/free-youtube-clipper.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: clipper_free/requirements.txt
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: pip install -r clipper_free/requirements.txt
+
+      - name: Run free clipper
+        env:
+          WHISPER_MODEL: base.en
+        run: python clipper_free/process.py
+
+      - name: Upload 25 clip candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-ready-shorts
+          path: clipper_free/output/
+          if-no-files-found: error
+          retention-days: 7
