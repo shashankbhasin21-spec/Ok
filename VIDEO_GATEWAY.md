@@ -33,7 +33,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[video]"
 cp .env.video.example .env
-export API_KEY=dev-key AUTH_MODE=required
+export API_KEY=$(python scripts/generate_gateway_api_key.py)
+export AUTH_MODE=required
 uvicorn gateway.main:app --host 0.0.0.0 --port 8080
 curl http://127.0.0.1:8080/health
 # Expect generation_available: false until a GPU worker is connected
@@ -61,7 +62,8 @@ python scripts/verify_install.py
 ## MCP
 
 ```bash
-export VIDEO_GATEWAY_URL=http://127.0.0.1:8080 API_KEY=dev-key
+export VIDEO_GATEWAY_URL=http://127.0.0.1:8080
+export API_KEY  # same value the gateway was started with
 python -m mcp_server.server
 ```
 
@@ -96,8 +98,10 @@ pytest tests/video -q
 
 ## Security
 
-- API key on gateway (`API_KEY`)
+- API key on gateway (`API_KEY`) — generate with `scripts/generate_gateway_api_key.py`
 - Worker token (`WORKER_TOKEN`)
+- Placeholders (`changeme`, …) fail closed (503) when `AUTH_MODE=required`
+- Render updates: `scripts/set_render_gateway_api_key.py` (per-key PUT; never wipes other env vars)
 - No secrets in git — use `.env.video.example`
 
 ## Licenses
