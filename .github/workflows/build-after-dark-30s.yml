@@ -1,0 +1,97 @@
+name: Build 30s After Dark Reel
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-after-dark-30s.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate four cinematic clips with our video gateway
+        shell: python
+        run: |
+          import json, time, urllib.request, urllib.error, pathlib, sys
+
+          BASE="https://gateway-smoke-production.up.railway.app"
+          MCP=BASE+"/mcp"
+          prompts=[
+            """Luxury hotel bedroom at night, same clearly adult 25+ brunette woman throughout, long wavy dark brown hair, gold hoop earrings, fitted opaque black fashion catsuit and flowing black satin robe, warm amber bedside lamps and city skyline bokeh. She enters slowly from the window side, robe trailing behind her, turns her head over her shoulder toward camera with a teasing confident expression, slow cinematic push-in, realistic body motion, premium fashion campaign, sensual but non-explicit, fully covered, no nudity, no text, no watermark.""",
+            """Continue the exact same adult brunette woman, same face, hair, gold earrings, opaque black catsuit and black satin robe, same luxury hotel bedroom and warm night lighting. She reaches the edge of the bed, sits with elegant crossed-leg posture, lets the satin robe drape around her, gives the camera a playful knowing look, subtle hair movement and breathing, slow orbiting camera, premium cinematic fashion editorial, sensual and bold but non-explicit, fully covered, no nudity, no text.""",
+            """Continue exact same adult brunette woman and identical styling in the same luxury bedroom. She stands beside the dark wall, one arm raised above her head, other hand at her waist, shifts weight into a strong fashion pose, then slowly turns from side profile into an over-the-shoulder look toward camera. Satin robe moves naturally, dramatic silhouette, close three-quarter framing, realistic fabric physics, tasteful bold fashion energy, fully covered, no nudity, no text.""",
+            """Continue exact same adult brunette woman, identical face, long dark waves, gold earrings, opaque black catsuit and satin robe, same luxury bedroom. She walks slowly past the foot of the bed toward the camera, pauses, turns back over her shoulder with a mischievous smile, robe sweeping behind her, camera pushes into a close-up of her face and hair as the city lights glow in the background. Premium cinematic finale, confident and flirtatious but non-explicit, fully covered, no nudity, no text."""
+          ]
+
+          def post(obj):
+              data=json.dumps(obj).encode()
+              req=urllib.request.Request(MCP,data=data,method="POST",headers={
+                "Content-Type":"application/json","Accept":"application/json, text/event-stream",
+                "User-Agent":"after-dark-builder/1.0"})
+              with urllib.request.urlopen(req,timeout=90) as r:
+                  raw=r.read().decode("utf-8","replace")
+              try: return json.loads(raw)
+              except:
+                  for line in raw.splitlines():
+                      if line.startswith("data:"):
+                          try: return json.loads(line[5:].strip())
+                          except: pass
+                  raise RuntimeError("Unparseable MCP response: "+raw[:500])
+
+          post({"jsonrpc":"2.0","id":1,"method":"initialize","params":{
+            "protocolVersion":"2025-03-26","capabilities":{},
+            "clientInfo":{"name":"after-dark-builder","version":"1.0"}}})
+          post({"jsonrpc":"2.0","method":"notifications/initialized","params":{}})
+
+          outdir=pathlib.Path("artifacts/after_dark_parts"); outdir.mkdir(parents=True,exist_ok=True)
+
+          for idx,prompt in enumerate(prompts,1):
+              res=post({"jsonrpc":"2.0","id":10+idx,"method":"tools/call","params":{
+                "name":"generate_video","arguments":{
+                  "prompt":prompt,"duration_seconds":8.0,"aspect_ratio":"9:16","seed":424242}}})
+              txt=res["result"]["content"][0]["text"]
+              job=json.loads(txt)
+              jid=job["job_id"]
+              print("clip",idx,"job",jid,flush=True)
+              final=None
+              for n in range(60):
+                  time.sleep(4)
+                  status=post({"jsonrpc":"2.0","id":1000+idx*100+n,"method":"tools/call","params":{
+                    "name":"get_video_job","arguments":{"job_id":jid}}})
+                  info=json.loads(status["result"]["content"][0]["text"])
+                  print("clip",idx,"poll",n,info.get("status"),flush=True)
+                  if info.get("status")=="completed":
+                      final=info["result_url"]; break
+                  if info.get("status") in ("failed","error","cancelled"):
+                      raise RuntimeError(f"clip {idx} failed: {info}")
+              if not final:
+                  raise RuntimeError(f"clip {idx} timeout")
+              target=outdir/f"clip{idx}.mp4"
+              urllib.request.urlretrieve(final,target)
+              print("saved",target,final,flush=True)
+
+      - name: Stitch into one 30-second vertical MP4
+        run: |
+          mkdir -p artifacts
+          ffmpeg -y \
+            -i artifacts/after_dark_parts/clip1.mp4 \
+            -i artifacts/after_dark_parts/clip2.mp4 \
+            -i artifacts/after_dark_parts/clip3.mp4 \
+            -i artifacts/after_dark_parts/clip4.mp4 \
+            -filter_complex "            [0:v]fps=30,scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,format=yuv420p,setpts=PTS-STARTPTS[v0];            [1:v]fps=30,scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,format=yuv420p,setpts=PTS-STARTPTS[v1];            [2:v]fps=30,scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,format=yuv420p,setpts=PTS-STARTPTS[v2];            [3:v]fps=30,scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,format=yuv420p,setpts=PTS-STARTPTS[v3];            [v0][v1]xfade=transition=fade:duration=0.67:offset=7.33[x1];            [x1][v2]xfade=transition=fade:duration=0.67:offset=14.66[x2];            [x2][v3]xfade=transition=fade:duration=0.67:offset=21.99,trim=duration=30,setpts=PTS-STARTPTS[v]" \
+            -map "[v]" -an -c:v libx264 -preset medium -crf 20 -movflags +faststart \
+            artifacts/after_dark_full_scene_30s.mp4
+          ffprobe -v error -show_entries format=duration,size -of json artifacts/after_dark_full_scene_30s.mp4
+
+      - name: Publish MP4 into repository
+        run: |
+          git config user.name "video-gateway-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add artifacts/after_dark_full_scene_30s.mp4
+          git commit -m "Add 30s After Dark cinematic gateway render" || true
+          git push
