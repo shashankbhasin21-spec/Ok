@@ -23,6 +23,13 @@ def record_engine_result(
     if not row:
         row = EngineMetric(engine=engine)
         db.add(row)
+    # SQLAlchemy defaults apply at INSERT, not when a new ORM object is built.
+    # Normalize before arithmetic so the first result cannot mask a render error
+    # or turn a successfully rendered job into an internal-error failure.
+    for field in ("success_count", "failure_count", "qc_failure_count",
+                  "total_render_time_sec", "total_queue_latency_sec"):
+        if getattr(row, field) is None:
+            setattr(row, field, 0)
     if success:
         row.success_count += 1
         row.total_render_time_sec += render_time_sec
