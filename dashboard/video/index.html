@@ -2,122 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Video Gateway</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0a0b0d" />
+  <title>Lumen — AI Video Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/dashboard/assets/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/dashboard/assets/styles/tokens.css" />
+  <link rel="stylesheet" href="/dashboard/assets/styles/base.css" />
+  <link rel="stylesheet" href="/dashboard/assets/styles/shell.css" />
+  <link rel="stylesheet" href="/dashboard/assets/styles/components.css" />
+  <link rel="stylesheet" href="/dashboard/assets/styles/pages.css" />
+  <link rel="stylesheet" href="/dashboard/assets/styles/motion.css" />
 </head>
 <body>
-  <div class="bg"></div>
-  <header class="top">
-    <div class="brand">
-      <span class="mark">VG</span>
-      <div>
-        <h1>Video Gateway</h1>
-        <p class="tag">Open-model control plane · Instagram / YouTube</p>
+  <a class="ls-skip" href="#ls-main">Skip to content</a>
+  <div class="ls-atmosphere" aria-hidden="true">
+    <div class="ls-atmosphere__glow ls-atmosphere__glow--a"></div>
+    <div class="ls-atmosphere__glow ls-atmosphere__glow--b"></div>
+    <div class="ls-atmosphere__grain"></div>
+  </div>
+
+  <div id="ls-app" class="ls-app" data-sidebar="expanded">
+    <aside class="ls-sidebar" id="ls-sidebar" aria-label="Primary">
+      <div class="ls-sidebar__brand">
+        <button type="button" class="ls-brand" data-nav="home" aria-label="Lumen home">
+          <span class="ls-brand__mark" aria-hidden="true">L</span>
+          <span class="ls-brand__text">
+            <span class="ls-brand__name">Lumen</span>
+            <span class="ls-brand__sub">AI Video Studio</span>
+          </span>
+        </button>
+        <button type="button" class="ls-icon-btn ls-sidebar__collapse" id="ls-sidebar-toggle" aria-expanded="true" aria-controls="ls-sidebar" title="Collapse sidebar">
+          <span class="ls-icon" aria-hidden="true"></span>
+        </button>
       </div>
+
+      <nav class="ls-nav" aria-label="Studio">
+        <div class="ls-nav__group" data-group="main">
+          <button type="button" class="ls-nav__item" data-nav="home"><span class="ls-nav__icon" data-icon="home"></span><span class="ls-nav__label">Home</span></button>
+          <button type="button" class="ls-nav__item" data-nav="create"><span class="ls-nav__icon" data-icon="create"></span><span class="ls-nav__label">Create</span></button>
+          <button type="button" class="ls-nav__item" data-nav="image-video"><span class="ls-nav__icon" data-icon="image"></span><span class="ls-nav__label">Image → Video</span></button>
+          <button type="button" class="ls-nav__item" data-nav="text-video"><span class="ls-nav__icon" data-icon="text"></span><span class="ls-nav__label">Text → Video</span></button>
+          <button type="button" class="ls-nav__item" data-nav="projects"><span class="ls-nav__icon" data-icon="projects"></span><span class="ls-nav__label">Projects</span></button>
+          <button type="button" class="ls-nav__item" data-nav="assets"><span class="ls-nav__icon" data-icon="assets"></span><span class="ls-nav__label">Assets</span></button>
+          <button type="button" class="ls-nav__item" data-nav="queue"><span class="ls-nav__icon" data-icon="queue"></span><span class="ls-nav__label">Generation Queue</span><span class="ls-nav__badge" id="ls-queue-badge" hidden>0</span></button>
+          <button type="button" class="ls-nav__item" data-nav="models"><span class="ls-nav__icon" data-icon="models"></span><span class="ls-nav__label">Models</span></button>
+          <button type="button" class="ls-nav__item" data-nav="analytics"><span class="ls-nav__icon" data-icon="analytics"></span><span class="ls-nav__label">Analytics</span></button>
+          <button type="button" class="ls-nav__item" data-nav="system"><span class="ls-nav__icon" data-icon="system"></span><span class="ls-nav__label">System</span></button>
+        </div>
+        <div class="ls-nav__group ls-nav__group--bottom" data-group="account">
+          <button type="button" class="ls-nav__item" data-nav="settings"><span class="ls-nav__icon" data-icon="settings"></span><span class="ls-nav__label">Settings</span></button>
+          <button type="button" class="ls-nav__item" data-nav="api"><span class="ls-nav__icon" data-icon="api"></span><span class="ls-nav__label">API</span></button>
+          <button type="button" class="ls-nav__item" data-nav="account"><span class="ls-nav__icon" data-icon="account"></span><span class="ls-nav__label">Account</span></button>
+        </div>
+      </nav>
+
+      <div class="ls-sidebar__status" id="ls-sidebar-status" aria-live="polite">
+        <span class="ls-status-dot" data-state="unknown"></span>
+        <span class="ls-sidebar__status-text">Checking…</span>
+      </div>
+    </aside>
+
+    <div class="ls-workspace">
+      <header class="ls-topbar">
+        <button type="button" class="ls-icon-btn ls-topbar__menu" id="ls-mobile-menu" aria-label="Open navigation">
+          <span class="ls-icon ls-icon--menu" aria-hidden="true"></span>
+        </button>
+        <div class="ls-topbar__title">
+          <h1 id="ls-page-title">Home</h1>
+          <p id="ls-page-sub" class="ls-topbar__sub">Create → Generate → Watch → Manage</p>
+        </div>
+        <div class="ls-topbar__actions">
+          <button type="button" class="ls-btn ls-btn--ghost" id="ls-cmd-open" aria-keyshortcuts="Meta+K Control+K">
+            <span class="ls-kbd">⌘K</span>
+            <span>Commands</span>
+          </button>
+          <button type="button" class="ls-btn ls-btn--primary ls-btn--magnetic" data-nav="create" id="ls-top-create">
+            New generation
+          </button>
+        </div>
+      </header>
+
+      <main id="ls-main" class="ls-main" tabindex="-1">
+        <div id="ls-view" class="ls-view" aria-live="polite"></div>
+      </main>
     </div>
-    <nav>
-      <button data-tab="health" class="active">Gateway Health</button>
-      <button data-tab="generate">Generate</button>
-      <button data-tab="jobs">Jobs</button>
-      <button data-tab="providers">Providers</button>
-      <button data-tab="models">Models</button>
-      <button data-tab="metrics">Metrics</button>
-      <button data-tab="outputs">Outputs</button>
+
+    <nav class="ls-mobile-nav" aria-label="Mobile">
+      <button type="button" class="ls-mobile-nav__item" data-nav="home"><span data-icon="home"></span><span>Home</span></button>
+      <button type="button" class="ls-mobile-nav__item" data-nav="create"><span data-icon="create"></span><span>Create</span></button>
+      <button type="button" class="ls-mobile-nav__item" data-nav="projects"><span data-icon="projects"></span><span>Projects</span></button>
+      <button type="button" class="ls-mobile-nav__item" data-nav="queue"><span data-icon="queue"></span><span>Queue</span></button>
+      <button type="button" class="ls-mobile-nav__item" data-nav="system"><span data-icon="system"></span><span>System</span></button>
     </nav>
-    <div class="auth">
-      <label>API Key <input id="apiKey" type="password" placeholder="X-API-Key" /></label>
-    </div>
-  </header>
+  </div>
 
-  <main>
-    <section id="health" class="panel active">
-      <h2>Gateway Health</h2>
-      <p class="lede">generation_available is true only when a CUDA worker with a ready engine is connected.</p>
-      <pre id="healthOut" class="code">Loading…</pre>
-    </section>
+  <div id="ls-toasts" class="ls-toasts" aria-live="polite" aria-relevant="additions"></div>
+  <div id="ls-cmd" class="ls-cmd" hidden></div>
+  <div id="ls-overlay" class="ls-overlay" hidden></div>
 
-    <section id="generate" class="panel">
-      <h2>Generate</h2>
-      <form id="genForm" class="form">
-        <label>Prompt<textarea name="prompt" rows="4" required placeholder="Cinematic futuristic AI office transformation"></textarea></label>
-        <div class="row">
-          <label>Duration (s)<input name="duration" type="number" value="30" min="1" /></label>
-          <label>Aspect
-            <select name="aspect_ratio">
-              <option value="9:16">9:16 vertical</option>
-              <option value="16:9">16:9 YouTube</option>
-              <option value="1:1">1:1</option>
-              <option value="4:5">4:5</option>
-            </select>
-          </label>
-          <label>Quality
-            <select name="quality">
-              <option>draft</option>
-              <option>standard</option>
-              <option selected>high</option>
-              <option>max</option>
-            </select>
-          </label>
-          <label>Engine
-            <select name="engine">
-              <option selected>auto</option>
-              <option>fast</option>
-              <option>quality</option>
-              <option>low_vram</option>
-              <option>wan</option>
-              <option>ltx</option>
-              <option>framepack</option>
-            </select>
-          </label>
-        </div>
-        <div class="row">
-          <label>Seed<input name="seed" type="number" placeholder="optional" /></label>
-          <label>Negative prompt<input name="negative_prompt" placeholder="optional" /></label>
-          <label>Input image path<input name="input_image" placeholder="optional local path" /></label>
-          <label>Input video path<input name="input_video" placeholder="optional local path" /></label>
-        </div>
-        <div class="row checks">
-          <label><input type="checkbox" name="audio" /> Audio</label>
-          <label><input type="checkbox" name="captions" /> Captions</label>
-          <label><input type="checkbox" name="allow_short" /> Allow &lt;30s</label>
-        </div>
-        <button type="submit" class="cta">Queue generation</button>
-      </form>
-      <div id="liveJob" class="live"></div>
-    </section>
-
-    <section id="jobs" class="panel">
-      <h2>Jobs</h2>
-      <button id="refreshJobs" class="ghost">Refresh</button>
-      <div id="jobsOut" class="table"></div>
-    </section>
-
-    <section id="providers" class="panel">
-      <h2>Providers</h2>
-      <p class="lede">Statuses: AVAILABLE · MODEL NOT INSTALLED · GPU UNAVAILABLE · UNHEALTHY · DISABLED</p>
-      <div id="providersOut" class="cards"></div>
-    </section>
-
-    <section id="models" class="panel">
-      <h2>Models</h2>
-      <pre id="modelsOut" class="code">Connect a worker to list models.</pre>
-    </section>
-
-    <section id="metrics" class="panel">
-      <h2>Metrics</h2>
-      <pre id="metricsOut" class="code"></pre>
-    </section>
-
-    <section id="outputs" class="panel">
-      <h2>Outputs</h2>
-      <p class="lede">READY assets only (QC passed). READY ≠ PUBLISHED.</p>
-      <div id="outputsOut" class="table"></div>
-    </section>
-  </main>
-  <script src="/dashboard/assets/app.js"></script>
+  <script type="module" src="/dashboard/assets/js/main.js"></script>
 </body>
 </html>

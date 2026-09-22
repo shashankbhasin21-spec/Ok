@@ -40,7 +40,7 @@ class StorageBackend(ABC):
 class LocalStorage(StorageBackend):
     """Filesystem storage under STORAGE_PATH. Never requires S3."""
 
-    CATEGORIES = ("jobs", "outputs", "thumbnails", "temp")
+    CATEGORIES = ("jobs", "outputs", "thumbnails", "temp", "uploads")
 
     def __init__(self, root: Path | None = None) -> None:
         settings = get_settings()

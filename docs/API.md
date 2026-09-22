@@ -15,8 +15,13 @@ Base URL: gateway host. Auth: header `X-API-Key: $API_KEY`.
 | GET | `/v1/videos/{job_id}/events` | Event log |
 | POST | `/v1/videos/{job_id}/cancel` | Cancel |
 | GET | `/v1/videos/{job_id}/download` | READY only |
+| GET | `/v1/videos/{job_id}/preview` | READY inline MP4 |
+| GET | `/v1/videos/{job_id}/thumbnail` | Thumbnail when present |
 | GET | `/v1/jobs` | List |
 | GET | `/v1/metrics` | Ops metrics |
+| POST | `/v1/assets/upload` | Multipart image upload (JPEG/PNG/WebP/GIF, ≤25MB) |
+| GET | `/v1/assets` | Uploaded images + READY generated videos |
+| GET | `/v1/assets/{asset_id}/file` | Fetch uploaded image by id |
 
 ## Create example
 
@@ -36,6 +41,16 @@ curl -X POST "$GW/v1/videos" \
 ```
 
 Response: `{"job_id":"...","status":"QUEUED"}`
+
+## Upload reference image
+
+```bash
+curl -X POST "$GW/v1/assets/upload" \
+  -H "X-API-Key: $API_KEY" \
+  -F "file=@./still.png;type=image/png"
+```
+
+Use the returned `path` as `input_image` on `POST /v1/videos`.
 
 ## Social production contract
 

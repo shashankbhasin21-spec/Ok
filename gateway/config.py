@@ -56,7 +56,7 @@ class Settings(BaseSettings):
         return True
 
     def ensure_dirs(self) -> None:
-        for sub in ("jobs", "outputs", "thumbnails", "temp"):
+        for sub in ("jobs", "outputs", "thumbnails", "temp", "uploads"):
             (self.storage_path / sub).mkdir(parents=True, exist_ok=True)
         self.model_cache.mkdir(parents=True, exist_ok=True)
         self.hf_home.mkdir(parents=True, exist_ok=True)

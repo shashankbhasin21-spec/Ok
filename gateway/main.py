@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import logging
+import mimetypes
+import re
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +32,7 @@ from gateway.schemas import (
     VideoCreateResponse,
     VideoJobResponse,
 )
+from gateway.storage import get_storage
 from gateway.worker_client import WorkerClient, summarize_worker
 
 logger = logging.getLogger(__name__)
@@ -298,6 +302,178 @@ def download_video(
     if not path.exists():
         raise HTTPException(404, "output file missing")
     return FileResponse(path, media_type="video/mp4", filename=f"{job_id}.mp4")
+
+
+@app.get("/v1/videos/{job_id}/preview")
+def preview_video(
+    job_id: str,
+    _: Annotated[str, Depends(require_api_key)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Inline MP4 preview for READY assets — same readiness gate as download."""
+    job = db.get(VideoJob, job_id)
+    if not job:
+        raise HTTPException(404, "job not found")
+    if not job.ready or not job.output_path:
+        raise HTTPException(409, "asset not READY — QC must pass before preview")
+    path = Path(job.output_path)
+    if not path.exists():
+        raise HTTPException(404, "output file missing")
+    return FileResponse(
+        path,
+        media_type="video/mp4",
+        filename=f"{job_id}.mp4",
+        content_disposition_type="inline",
+    )
+
+
+@app.get("/v1/videos/{job_id}/thumbnail")
+def video_thumbnail(
+    job_id: str,
+    _: Annotated[str, Depends(require_api_key)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    job = db.get(VideoJob, job_id)
+    if not job:
+        raise HTTPException(404, "job not found")
+    if not job.thumbnail_path:
+        raise HTTPException(404, "thumbnail not available")
+    path = Path(job.thumbnail_path)
+    if not path.exists():
+        raise HTTPException(404, "thumbnail file missing")
+    media = mimetypes.guess_type(str(path))[0] or "image/jpeg"
+    return FileResponse(path, media_type=media)
+
+
+_UPLOAD_MAX_BYTES = 25 * 1024 * 1024
+_UPLOAD_ALLOWED = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
+
+
+def _safe_upload_name(name: str | None) -> str:
+    base = Path(name or "upload").name
+    base = re.sub(r"[^A-Za-z0-9._-]+", "_", base).strip("._") or "upload"
+    return base[:80]
+
+
+@app.post("/v1/assets/upload")
+async def upload_asset(
+    _: Annotated[str, Depends(require_api_key)],
+    file: UploadFile = File(...),
+) -> dict[str, Any]:
+    """Store a reference image for image-to-video. Returns a server path for input_image."""
+    content_type = (file.content_type or "").split(";")[0].strip().lower()
+    if content_type not in _UPLOAD_ALLOWED:
+        raise HTTPException(415, "Only JPEG, PNG, WebP, or GIF images are accepted")
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "Empty upload")
+    if len(data) > _UPLOAD_MAX_BYTES:
+        raise HTTPException(413, "Image exceeds 25MB limit")
+
+    storage = get_storage()
+    asset_id = uuid.uuid4().hex[:16]
+    ext = _UPLOAD_ALLOWED[content_type]
+    original = _safe_upload_name(file.filename)
+    key = f"{asset_id}_{original}"
+    if not key.lower().endswith(ext):
+        key = f"{key}{ext}"
+    dest = storage.get_path(key, category="uploads")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+    return {
+        "asset_id": asset_id,
+        "filename": original,
+        "content_type": content_type,
+        "size_bytes": len(data),
+        "path": str(dest),
+        "kind": "uploaded_image",
+    }
+
+
+@app.get("/v1/assets")
+def list_assets(
+    _: Annotated[str, Depends(require_api_key)],
+    db: Annotated[Session, Depends(get_db)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    limit: int = Query(100, ge=1, le=200),
+) -> dict[str, Any]:
+    """List real uploaded images and READY generated videos — never invents assets."""
+    storage = get_storage(settings)
+    uploads_dir = storage.root / "uploads"
+    assets: list[dict[str, Any]] = []
+
+    if uploads_dir.exists():
+        for path in sorted(uploads_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+            if not path.is_file():
+                continue
+            assets.append(
+                {
+                    "id": path.stem.split("_", 1)[0],
+                    "kind": "uploaded_image",
+                    "filename": path.name,
+                    "path": str(path),
+                    "size_bytes": path.stat().st_size,
+                    "created_at": path.stat().st_mtime,
+                    "job_id": None,
+                    "ready": True,
+                }
+            )
+
+    jobs = (
+        db.query(VideoJob)
+        .filter(VideoJob.ready.is_(True))
+        .order_by(VideoJob.completed_at.desc())
+        .limit(limit)
+        .all()
+    )
+    for job in jobs:
+        assets.append(
+            {
+                "id": job.asset_id or job.id,
+                "kind": "generated_video",
+                "filename": f"{job.id}.mp4",
+                "path": None,  # never expose output filesystem path in list
+                "size_bytes": None,
+                "created_at": (job.completed_at or job.created_at).isoformat()
+                if (job.completed_at or job.created_at)
+                else None,
+                "job_id": job.id,
+                "ready": True,
+                "thumbnail_available": bool(job.thumbnail_path),
+                "prompt": (job.prompt or "")[:160],
+                "engine": job.engine_selected,
+                "duration": job.output_duration or job.duration,
+                "aspect_ratio": job.aspect_ratio,
+            }
+        )
+
+    return {"assets": assets[:limit], "count": min(len(assets), limit)}
+
+
+@app.get("/v1/assets/{asset_id}/file")
+def get_uploaded_asset_file(
+    asset_id: str,
+    _: Annotated[str, Depends(require_api_key)],
+    settings: Annotated[Settings, Depends(get_settings)],
+):
+    """Serve an uploaded reference image by asset id (no path traversal)."""
+    if not re.fullmatch(r"[a-f0-9]{8,32}", asset_id):
+        raise HTTPException(400, "invalid asset id")
+    storage = get_storage(settings)
+    uploads_dir = storage.root / "uploads"
+    if not uploads_dir.exists():
+        raise HTTPException(404, "asset not found")
+    matches = list(uploads_dir.glob(f"{asset_id}_*"))
+    if not matches:
+        raise HTTPException(404, "asset not found")
+    path = matches[0]
+    media = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+    return FileResponse(path, media_type=media)
 
 
 @app.get("/v1/jobs")

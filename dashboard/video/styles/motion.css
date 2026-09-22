@@ -1,0 +1,82 @@
+@keyframes ls-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes ls-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ls-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ls-scale-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ls-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ls-pulse-soft {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@keyframes ls-success-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.ls-anim-in {
+  animation: ls-rise var(--ls-duration-slow) var(--ls-ease) both;
+}
+
+.ls-stagger > * {
+  animation: ls-rise var(--ls-duration-slow) var(--ls-ease) both;
+}
+.ls-stagger > *:nth-child(1) { animation-delay: 40ms; }
+.ls-stagger > *:nth-child(2) { animation-delay: 80ms; }
+.ls-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.ls-stagger > *:nth-child(4) { animation-delay: 160ms; }
+.ls-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.ls-stagger > *:nth-child(6) { animation-delay: 240ms; }
+.ls-stagger > *:nth-child(7) { animation-delay: 280ms; }
+.ls-stagger > *:nth-child(8) { animation-delay: 320ms; }
+.ls-stagger > *:nth-child(9) { animation-delay: 360ms; }
+.ls-stagger > *:nth-child(10) { animation-delay: 400ms; }
+.ls-stagger > *:nth-child(n+11) { animation-delay: 440ms; }
+
+.ls-view.is-leaving {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 180ms var(--ls-ease), transform 180ms var(--ls-ease);
+}
+
+.ls-success-burst {
+  animation: ls-success-pop 520ms var(--ls-ease-spring) both;
+}
+
+.ls-stage.is-active {
+  animation: ls-pulse-soft 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-anim-in,
+  .ls-stagger > *,
+  .ls-success-burst,
+  .ls-stage.is-active,
+  .ls-view.is-leaving {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .ls-skeleton { animation: none; }
+}
