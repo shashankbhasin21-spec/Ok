@@ -1,0 +1,266 @@
+name: Video Gateway E2E Smoke
+
+on:
+  push:
+    paths:
+      - '.github/workflows/video-gateway-e2e-smoke.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Run MCP text-to-video smoke
+        shell: python
+        run: |
+          import json, re, time, urllib.request, urllib.error, sys
+
+          BASE = "https://gateway-smoke-production.up.railway.app"
+          MCP = BASE + "/mcp"
+          PROMPT = "A cinematic night city skyline with a glowing blue glass orb on a rooftop table, subtle wind, slow camera push-in, realistic lighting, no people, no text, no logos."
+
+          session_id = None
+          def parse_payload(raw):
+              txt = raw.decode("utf-8", "replace")
+              try:
+                  return json.loads(txt)
+              except Exception:
+                  pass
+              payloads = []
+              for line in txt.splitlines():
+                  if line.startswith("data:"):
+                      s = line[5:].strip()
+                      try:
+                          payloads.append(json.loads(s))
+                      except Exception:
+                          pass
+              if payloads:
+                  return payloads[-1]
+              return {"_raw": txt}
+
+          def post(obj, tolerate=False):
+              global session_id
+              data = json.dumps(obj).encode()
+              headers = {
+                  "Content-Type": "application/json",
+                  "Accept": "application/json, text/event-stream",
+                  "User-Agent": "quantum-brain-video-smoke/1.0",
+              }
+              if session_id:
+                  headers["Mcp-Session-Id"] = session_id
+              req = urllib.request.Request(MCP, data=data, headers=headers, method="POST")
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      sid = r.headers.get("Mcp-Session-Id")
+                      if sid:
+                          session_id = sid
+                      raw = r.read()
+                      print("HTTP", r.status, "SESSION", bool(session_id))
+                      parsed = parse_payload(raw)
+                      print(json.dumps(parsed, ensure_ascii=False)[:12000])
+                      return parsed
+              except urllib.error.HTTPError as e:
+                  raw = e.read()
+                  print("HTTP_ERROR", e.code, raw.decode("utf-8", "replace")[:8000])
+                  if tolerate:
+                      return None
+                  raise
+
+          init = {
+              "jsonrpc":"2.0","id":1,"method":"initialize",
+              "params":{
+                  "protocolVersion":"2025-03-26",
+                  "capabilities":{},
+                  "clientInfo":{"name":"video-e2e-smoke","version":"1.0"}
+              }
+          }
+          print("=== INITIALIZE ===")
+          init_res = post(init, tolerate=True)
+
+          if init_res is not None:
+              print("=== INITIALIZED NOTIFICATION ===")
+              post({"jsonrpc":"2.0","method":"notifications/initialized","params":{}}, tolerate=True)
+
+          print("=== TOOLS LIST ===")
+          tools_res = post({"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}, tolerate=True)
+          if not tools_res:
+              print("FATAL: could not list MCP tools")
+              sys.exit(20)
+
+          tools = ((tools_res.get("result") or {}).get("tools") or [])
+          if not tools:
+              print("FATAL: tools/list returned no tools")
+              sys.exit(21)
+
+          print("TOOLS:", [t.get("name") for t in tools])
+
+          def score_tool(t):
+              n=(t.get("name") or "").lower()
+              s=0
+              if "video" in n: s+=5
+              if "generate" in n: s+=5
+              if "create" in n: s+=3
+              if "text" in n: s+=2
+              if "status" in n or "get" in n or "list" in n: s-=4
+              return s
+
+          gen = max(tools, key=score_tool)
+          if score_tool(gen) < 5:
+              print("FATAL: no likely video generation tool")
+              sys.exit(22)
+          print("GEN_TOOL:", gen.get("name"))
+          schema = gen.get("inputSchema") or {}
+          props = schema.get("properties") or {}
+          required = schema.get("required") or []
+          args = {}
+
+          def enum_pick(p, preferred=None):
+              enum=p.get("enum") or []
+              if preferred in enum: return preferred
+              return enum[0] if enum else None
+
+          for k in required:
+              p=props.get(k,{})
+              kl=k.lower()
+              if "prompt" in kl or kl in ("text","description"):
+                  args[k]=PROMPT
+              elif "aspect" in kl or "ratio" in kl:
+                  args[k]=enum_pick(p,"9:16") or "9:16"
+              elif "duration" in kl or "seconds" in kl:
+                  enum=p.get("enum") or []
+                  nums=[x for x in enum if isinstance(x,(int,float))]
+                  if nums: args[k]=min(nums)
+                  else: args[k]=max(4, p.get("minimum",4))
+              elif "model" in kl or "engine" in kl:
+                  v=enum_pick(p)
+                  if v is not None: args[k]=v
+                  elif "default" in p: args[k]=p["default"]
+                  else: args[k]="auto"
+              elif "mode" in kl:
+                  v=enum_pick(p)
+                  if v is not None: args[k]=v
+              elif "name" in kl or "title" in kl:
+                  args[k]="E2E smoke test"
+              elif p.get("type")=="boolean":
+                  args[k]=False
+              elif p.get("type")=="integer":
+                  args[k]=max(1,p.get("minimum",1))
+              elif p.get("type")=="number":
+                  args[k]=max(1,p.get("minimum",1))
+              elif p.get("type")=="array":
+                  args[k]=[]
+              elif p.get("type")=="object":
+                  args[k]={}
+              else:
+                  args[k]="test"
+
+          for k,p in props.items():
+              kl=k.lower()
+              if k in args: continue
+              if "prompt" in kl:
+                  args[k]=PROMPT
+              elif ("aspect" in kl or "ratio" in kl) and (p.get("enum") or p.get("type")=="string"):
+                  args[k]=enum_pick(p,"9:16") or "9:16"
+              elif ("duration" in kl or "seconds" in kl) and p.get("type") in ("integer","number"):
+                  enum=p.get("enum") or []
+                  nums=[x for x in enum if isinstance(x,(int,float))]
+                  args[k]=min(nums) if nums else max(4,p.get("minimum",4))
+              elif ("model" in kl or "engine" in kl) and p.get("default") is not None:
+                  args[k]=p["default"]
+
+          print("GEN_ARGS:", json.dumps(args,ensure_ascii=False))
+          print("=== GENERATE ===")
+          gen_res = post({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":gen.get("name"),"arguments":args}}, tolerate=True)
+          if not gen_res:
+              print("FATAL: generation call failed")
+              sys.exit(23)
+
+          blob = json.dumps(gen_res,ensure_ascii=False)
+          print("GEN_RESPONSE_FULL:", blob[:20000])
+
+          def extract_strings(obj):
+              out=[]
+              if isinstance(obj,dict):
+                  for v in obj.values(): out += extract_strings(v)
+              elif isinstance(obj,list):
+                  for v in obj: out += extract_strings(v)
+              elif isinstance(obj,str):
+                  out.append(obj)
+              return out
+
+          strings=extract_strings(gen_res)
+          # Try JSON embedded in text content too.
+          for s in list(strings):
+              st=s.strip()
+              if st.startswith("{") or st.startswith("["):
+                  try: strings += extract_strings(json.loads(st))
+                  except Exception: pass
+
+          def find_mp4(strings):
+              for s in strings:
+                  m=re.search(r'https?://[^\s"\']+\.mp4(?:\?[^\s"\']*)?',s)
+                  if m: return m.group(0)
+                  m=re.search(r'(/files/[^\s"\']+\.mp4)',s)
+                  if m: return BASE+m.group(1)
+              return None
+
+          mp4=find_mp4(strings)
+
+          # Find candidate job id and status tool if no MP4 yet.
+          job_id=None
+          for s in strings:
+              m=re.search(r'\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b',s,re.I)
+              if m:
+                  job_id=m.group(0); break
+
+          status_tools=[t for t in tools if any(x in (t.get("name") or "").lower() for x in ("status","check","get_job","get_video","job")) and t.get("name")!=gen.get("name")]
+          print("JOB_ID:",job_id)
+          print("STATUS_TOOLS:",[t.get("name") for t in status_tools])
+
+          for attempt in range(18):
+              if mp4: break
+              if not job_id or not status_tools: break
+              st=status_tools[0]
+              sp=st.get("inputSchema") or {}
+              spp=sp.get("properties") or {}
+              sr=sp.get("required") or []
+              sa={}
+              for k in sr:
+                  kl=k.lower()
+                  if "id" in kl: sa[k]=job_id
+                  elif "job" in kl: sa[k]=job_id
+              if not sa and spp:
+                  for k in spp:
+                      if "id" in k.lower() or "job" in k.lower():
+                          sa[k]=job_id; break
+              time.sleep(5)
+              print("=== POLL",attempt+1,st.get("name"),sa,"===")
+              res=post({"jsonrpc":"2.0","id":100+attempt,"method":"tools/call","params":{"name":st.get("name"),"arguments":sa}},tolerate=True)
+              if res:
+                  strings += extract_strings(res)
+                  for s in list(extract_strings(res)):
+                      stxt=s.strip()
+                      if stxt.startswith("{") or stxt.startswith("["):
+                          try: strings += extract_strings(json.loads(stxt))
+                          except Exception: pass
+                  mp4=find_mp4(strings)
+
+          print("MP4_URL:", mp4)
+          if not mp4:
+              print("FATAL: no MP4 URL found in generation/status responses")
+              sys.exit(24)
+
+          print("=== VERIFY MP4 ===")
+          req=urllib.request.Request(mp4,headers={"Range":"bytes=0-63","User-Agent":"video-e2e-smoke/1.0"})
+          with urllib.request.urlopen(req,timeout=60) as r:
+              data=r.read(64)
+              ctype=r.headers.get("Content-Type")
+              print("MP4_HTTP",r.status)
+              print("MP4_CONTENT_TYPE",ctype)
+              print("MP4_FIRST64_HEX",data.hex())
+              valid=(len(data)>=12 and data[4:8]==b"ftyp") or ("video/mp4" in (ctype or ""))
+              print("MP4_VALID",valid)
+              if not valid:
+                  sys.exit(25)
+
+          print("SUCCESS: end-to-end text-to-video generated and verified an MP4")
