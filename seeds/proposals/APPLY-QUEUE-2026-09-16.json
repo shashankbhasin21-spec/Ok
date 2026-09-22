@@ -9,8 +9,8 @@
   "gmail_outreach": {
     "automated_via_mcp": true,
     "daily_cap": 20,
-    "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check",
-    "master_draft_thread_id": "1a0ab959a6476785",
+    "status": "held RESEARCHED batch sent; master draft refreshed after IAWF login check; world-fresh RESEARCHED held",
+    "master_draft_thread_id": "1a0ab9d9426d4650",
     "master_draft_id": "r780583678775568680",
     "held_batch_sent": [
       {
@@ -35,7 +35,7 @@
       }
     ],
     "iawf_login_check": {
-      "at": "2026-09-16T18:55:00Z",
+      "at": "2026-09-16T19:07:07Z",
       "account_created": true,
       "welcome_thread_id": "1a0ab8badbfa3a11",
       "cloud_browser_logged_in": false,
@@ -60,7 +60,7 @@
       "gmail_self_draft": true,
       "blocker": "Account welcome email received for shashankbhasin21@gmail.com; cloud browser still hits accounts.submittable.com login wall (Continue with Google available). Owner must complete login then paste packet.",
       "submittable_account_exists": true,
-      "login_checked_at": "2026-09-16T18:55:00Z"
+      "login_checked_at": "2026-09-16T19:07:07Z"
     },
     {
       "id": "fl-multilingual-us-printer",
@@ -89,19 +89,19 @@
   "rejected_auto_bid": [
     {
       "title": "Hotel Renovation Toronto",
-      "reason": "construction \u2014 not in catalog"
+      "reason": "construction — not in catalog"
     },
     {
       "title": "Android Entertainment App IAP",
-      "reason": "native mobile app \u2014 not in catalog"
+      "reason": "native mobile app — not in catalog"
     },
     {
       "title": "SaaS Acquisition Broker",
-      "reason": "M&A sales role \u2014 not delivery offer"
+      "reason": "M&A sales role — not delivery offer"
     },
     {
       "title": "Wellness Clinic Development",
-      "reason": "clinic business consulting \u2014 not website/automation catalog"
+      "reason": "clinic business consulting — not website/automation catalog"
     },
     {
       "title": "AI Object Detection System",
@@ -110,8 +110,9 @@
   ],
   "owner_action_required": [
     "Log into Submittable (Google OK) as shashankbhasin21@gmail.com",
-    "Paste IAWF packet into Submittable (do not email execdir@) \u2014 open MASTER APPLY DRAFT",
+    "Paste IAWF packet into Submittable (do not email execdir@) — open MASTER APPLY DRAFT",
     "Paste Freelancer drafts from master Gmail draft while logged into Freelancer",
-    "Reply with board_submission_receipt after each paste"
+    "Reply with board_submission_receipt after each paste",
+    "AUTHORIZE SEND before mailing world-fresh RESEARCHED leads"
   ]
 }

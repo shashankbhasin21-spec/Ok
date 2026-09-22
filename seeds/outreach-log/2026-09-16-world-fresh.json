@@ -1,0 +1,127 @@
+{
+  "created_at": "2026-09-16T20:06:47Z",
+  "campaign": "euro10k-world-fresh-2026-09-16",
+  "package": "EUR 10000 Digital Ops",
+  "mail_action": "HELD \u2014 daily stranger send cap already used; RESEARCHED only",
+  "count": 17,
+  "countries": [
+    "chile",
+    "colombia",
+    "croatia",
+    "japan",
+    "malaysia",
+    "poland",
+    "portugal",
+    "romania",
+    "serbia",
+    "singapore",
+    "thailand"
+  ],
+  "leads_csv": "seeds/leads/euro10k-world-fresh-2026-09-16.csv",
+  "pipeline_refs": [
+    {
+      "email": "info@eedentalclinic.com.my",
+      "company": "E&E Dental Johor Bahru",
+      "country": "malaysia",
+      "ref": "p-a86e94e856c8"
+    },
+    {
+      "email": "info@sentosadental.com.my",
+      "company": "Sentosa Dental Group Kulim",
+      "country": "malaysia",
+      "ref": "p-a13aea266695"
+    },
+    {
+      "email": "info@smilepoint.com.sg",
+      "company": "Smilepoint Dental Centre Singapore",
+      "country": "singapore",
+      "ref": "p-b03c7d139c7e"
+    },
+    {
+      "email": "info@dentalplus.com.sg",
+      "company": "Dental Plus Telok Blangah",
+      "country": "singapore",
+      "ref": "p-e9c26744d4c3"
+    },
+    {
+      "email": "info@methotel.hr",
+      "company": "Met Boutique Hotel Zagreb",
+      "country": "croatia",
+      "ref": "p-af6bdcec7c8d"
+    },
+    {
+      "email": "adoral@adoral.hr",
+      "company": "Adoral Boutique Hotel Rabac",
+      "country": "croatia",
+      "ref": "p-2dc140aaae24"
+    },
+    {
+      "email": "info@hotelpupin.rs",
+      "company": "Hotel Pupin Novi Sad",
+      "country": "serbia",
+      "ref": "p-4cb2c15b0ff6"
+    },
+    {
+      "email": "info@rizzohotel.ro",
+      "company": "The Rizzo Boutique Hotel Poiana Brasov",
+      "country": "romania",
+      "ref": "p-3a13edb79c0d"
+    },
+    {
+      "email": "info@glowmed.cl",
+      "company": "Cl\u00ednica GlowMed Santiago",
+      "country": "chile",
+      "ref": "p-6bf9031cc63f"
+    },
+    {
+      "email": "info@bianova.co",
+      "company": "Bianova Dental Tourism Colombia",
+      "country": "colombia",
+      "ref": "p-9baa1c95cb63"
+    },
+    {
+      "email": "info@mdecare.co",
+      "company": "MDE Care Medell\u00edn",
+      "country": "colombia",
+      "ref": "p-f63ce64a9a11"
+    },
+    {
+      "email": "info@astradent.pl",
+      "company": "Astra Dent Warsaw",
+      "country": "poland",
+      "ref": "p-de4862ff39ca"
+    },
+    {
+      "email": "info@torelpalacelisbon.com",
+      "company": "Torel Palace Lisbon",
+      "country": "portugal",
+      "ref": "p-4e31fa4b559e"
+    },
+    {
+      "email": "info@lisbondentalspa.pt",
+      "company": "Lisbon Dental Spa",
+      "country": "portugal",
+      "ref": "p-63c19491a5a3"
+    },
+    {
+      "email": "info@rodin-dental.jp",
+      "company": "Rodin Dental Office Tokyo",
+      "country": "japan",
+      "ref": "p-b0e263892055"
+    },
+    {
+      "email": "info@thebarntokyo.com",
+      "company": "The Barn Tokyo",
+      "country": "japan",
+      "ref": "p-ce99fd53df59"
+    },
+    {
+      "email": "contact@bangkokdentalcenter.com",
+      "company": "Bangkok International Dental Center",
+      "country": "thailand",
+      "ref": "p-276288fb38c2"
+    }
+  ],
+  "freelancer_paste_only": "seeds/opportunities/freelancer-fresh-world-2026-09-16.json",
+  "do_not_resend": "All prior SENT/BOUNCED emails suppressed"
+}
