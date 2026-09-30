@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-09-30T17:05:00Z",
+  "target_usd_10h": 15000,
+  "cash_collected_usd": 0,
+  "verdict": "INFEASIBLE_AS_CASH_IN_10H — nearest attributable path is Chickasaw USD 16500 already in review",
+  "mail_audit": "seeds/outreach-log/2026-09-30-mail-audit.json",
+  "status_report": "reports/PIPELINE_STATUS_2026-09-30.md",
+  "queue": [
+    {
+      "id": "chickasaw-amp-16500",
+      "channel": "email_rfp",
+      "fee_usd": 16500,
+      "currency": "USD",
+      "status": "SUBMITTED_IN_REVIEW",
+      "contacts": ["kellie.rushing@chickasaw.net", "triniti.house@chickasaw.net"],
+      "deadline": "2026-10-08",
+      "last_inbound": "2026-09-25 Q&A PDF + ack mail",
+      "action": "Hold; no spam. Optional polite check ~3-5 Oct if silent."
+    },
+    {
+      "id": "policywise-98500-cad",
+      "channel": "email_rfp",
+      "fee_cad": 98500,
+      "status": "PROPOSAL_RECEIVED",
+      "contact": "communications@policywise.com",
+      "received_at": "2026-09-28",
+      "action": "Wait for evaluation. Do not remail PDF."
+    },
+    {
+      "id": "halton-rfp-01-26",
+      "channel": "email_rfp",
+      "fee_band_cad": "60000-70000 implementation context; 5yr TCO quoted 114500",
+      "deadline": "2026-10-01",
+      "status": "BLOCKED_NEEDS_SOC2_OR_ISO_FOR_PROPONENT",
+      "packet": "seeds/proposals/halton-police-board-website-rfp-01-26.md",
+      "eligibility_confirmed_at": "2026-09-30T14:52:00Z",
+      "submit_to": "Jessica.Warren@haltonpoliceboard.ca",
+      "blocker": "Q&A mandates SOC 2 Type II or ISO 27001 for proponent organization AND host; independent pen test; CA data residency.",
+      "action": "Owner confirms certs or Canadian prime; then PDF + send. Else skip."
+    },
+    {
+      "id": "fl-autonomous-freight",
+      "channel": "freelancer",
+      "url": "https://www.freelancer.com/projects/ai-workflow-automation/Autonomous-Freight-Platform-Development.html",
+      "bid_usd": 720,
+      "packet": "seeds/proposals/freelancer-autonomous-ai-freight-2026-09-30.md",
+      "status": "DRAFT_READY_PASTE",
+      "auto_submitted": false
+    },
+    {
+      "id": "agile-receivables-bd",
+      "channel": "email",
+      "status": "AWAITING_KUNAL_REPLY",
+      "note": "Call held 21 Sep; nudge 25 Sep; Superhuman reminder 29 Sep; no new reply"
+    }
+  ]
+}
