@@ -1,0 +1,47 @@
+{
+  "audited_at": "2026-09-30T17:05:00Z",
+  "mailbox": "shashankbhasin21@gmail.com",
+  "method": "Gmail MCP search_threads + get_thread",
+  "findings": {
+    "freelance_award_emails": 0,
+    "freelancer_community_noise": true,
+    "client_project_updates_last_48h": [
+      {
+        "party": "Halton Police Board / Jessica Warren",
+        "at": "2026-09-30T14:52:13Z",
+        "summary": "Confirmed remote submit path to her inbox before 1 Oct",
+        "thread_id": "1a0a114d4dc09956"
+      }
+    ],
+    "open_pipeline": [
+      {
+        "name": "Chickasaw AMP",
+        "fee_usd": 16500,
+        "state": "in_review",
+        "last_client_mail": "2026-09-25",
+        "thread_id": "1a0a111b807de24a"
+      },
+      {
+        "name": "PolicyWise",
+        "fee_cad": 98500,
+        "state": "proposal_received",
+        "last_client_mail": "2026-09-28",
+        "thread_id": "1a0abcdcdccfe92f"
+      },
+      {
+        "name": "Agile Receivables",
+        "state": "awaiting_kunal",
+        "thread_id": "1a0aff48087b868f"
+      }
+    ],
+    "premature_outbound": {
+      "at": "2026-09-30T15:48:39Z",
+      "to": "Jessica.Warren@haltonpoliceboard.ca",
+      "body": "When we can start work and contract",
+      "note": "Sent before proposal PDF; recommend follow with actual proposal only"
+    },
+    "grok_revenue_curator": {
+      "latest": "2026-09-30 CVWMA row added, no mail — means no new outreach send that cycle"
+    }
+  }
+}
